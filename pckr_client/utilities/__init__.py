@@ -1,5 +1,6 @@
 import requests
 import socket
+import json
 
 def get_user_ip_port(number):
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
@@ -14,4 +15,4 @@ def send_frame(frame, ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((ip.strip(), port))
     sock.send(str(frame).encode())
-    return sock.recv(4096)
+    return json.loads(sock.recv(4096).decode())

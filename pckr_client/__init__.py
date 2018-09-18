@@ -63,7 +63,6 @@ def initiate_user():
 
 
 def request_public_key():
-    (ip, port) = get_user_ip_port(args.other_number)
     public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public.key"))
     public_key_text = open(public_key_path).read()
 
@@ -74,8 +73,10 @@ def request_public_key():
         ), 
         action="request_public_key"
     )
+
+    (ip, port) = get_user_ip_port(args.other_number)
     response = send_frame(frame, ip, port)
-    pprint.pprint(json.loads(response.decode()), indent=4)
+    pprint.pprint(response, indent=4)
 
 
 def verify_user():
@@ -93,14 +94,15 @@ def broadcast_user():
     token = keyring.get_password("pckr", args.number)
     bc = Broadcaster(args.number, args.port)
     bc.start()
+
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     response = requests.post('http://127.0.0.1:5000/user/broadcast/', headers=headers, data=json.dumps(dict(
         phone_number=args.number,
         login_token=token,
         ip=bc.serversocket.getsockname()[0],
         port=bc.port
-    )))
-    
+    ))).json()
+    print(colored("registered with coordination server: {}".format(response), "yellow"))
     print(colored("broadcasting on {}:{}".format(bc.serversocket.getsockname()[0], bc.port), "green"))
     bc.join()
 
@@ -109,7 +111,7 @@ def ping_user():
     (ip, port) = get_user_ip_port(args.other_number)
     frame = Frame(content=dict(), action="ping")
     response = send_frame(frame, ip, port)
-    pprint.pprint(json.loads(response.decode()), indent=4)
+    pprint.pprint(response, indent=4)
 
 
 def send_file():
