@@ -46,7 +46,7 @@ class Frame(object):
         encryption_key=None,
         index=0,
         count=1,
-        mime_type='text',
+        mime_type='application/json',
         frame_id=None,
         message_id=None
     ):
@@ -96,7 +96,6 @@ class Frame(object):
         else:
             payload_content = self.content
 
-
         return json.dumps(dict(
             action=self.action,
             payload=payload_content,
@@ -104,10 +103,12 @@ class Frame(object):
         ))
 
     @staticmethod
-    def make_frames(content, action, encryption_type, encryption_key, mime_type='text', message_id=None):
+    def make_frames(content, action, encryption_type, encryption_key, mime_type='application/json', message_id=None):
         contents = split_contents(content)
+
         if message_id is None:
             message_id = str(uuid.uuid4())
+
         return [Frame(
             content=content,
             action=action,

@@ -27,6 +27,7 @@ args, _ = argparser.parse_known_args()
 BS = 16
 pad = lambda s: bytes(s + (BS - len(s) % BS) * chr(BS - len(s) % BS),encoding='utf8')
 
+
 def initiate_user():
     path = os.path.join("~/pckr/", args.number)
     path = os.path.expanduser(path)
@@ -131,6 +132,7 @@ def send_file():
         content=dict(encryption_key=encryption_key),
         mime_type='application/json',
         encryption_type='public_key',
+
         # TODO JHILL: well this is mega broken now!
         encryption_key='',
         message_id=message_id
@@ -148,6 +150,7 @@ def send_file():
 
     for frame in frames:
         send_frame(frame, ip, port)
+
 
 def process_public_key_responses():
     responses_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_key_responses"))
@@ -184,6 +187,7 @@ def process_public_key_requests():
                 request_path = os.path.join(d, f)
                 with open(request_path) as f:
                     data = json.loads(f.read())
+
                     print("public key request from: data['number']")
                     choice = input("send it to them? [y/n]")
 
@@ -191,6 +195,7 @@ def process_public_key_requests():
                         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
                         response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(data['number']), headers=headers).json()
 
+                        # TODO JHILL: make this actually unique
                         password = 'abcdefghijkl'
                         cipher = Blowfish.new(password.encode(), Blowfish.MODE_ECB)
 
@@ -218,12 +223,10 @@ def process_public_key_requests():
                             mime_type='application/json'
                         )
 
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        sock.connect((response['users'][0]['ip'].strip(), response['users'][0]['port']))
+                        (ip, port) = get_user_ip_port(data['number'])
 
-                        sock.send(str(frame).encode())
-                        frame_response = sock.recv(4096)
-                        print(frame_response)
+                        frame_response = send_frame(frame, ip, port)
+                        pprint.pprint(frame_response)
 
                         # TODO JHILL: delete the file if it's all good?
 
