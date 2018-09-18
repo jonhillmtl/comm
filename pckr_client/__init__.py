@@ -16,7 +16,7 @@ import pprint
 import requests
 import socket
 import uuid
-from .utilities import get_user_ip_port, send_frame
+from .utilities import get_user_ip_port, send_frame, post_json_request, get_user_path
 
 
 argparser = argparse.ArgumentParser()
@@ -29,21 +29,21 @@ pad = lambda s: bytes(s + (BS - len(s) % BS) * chr(BS - len(s) % BS),encoding='u
 
 
 def initiate_user():
-    path = os.path.join("~/pckr/", args.number)
-    path = os.path.expanduser(path)
+    user_path = get_user_path(args.number)
 
-    if os.path.exists(path):
+    if os.path.exists(user_path):
         # TODO JHILL: ALSO CHECK SERVER
         print("already there")
     else:
         # TODO JHILL: tuck this away somewhere safe
-        os.makedirs(path)
+        os.makedirs(user_path)
+
         new_key = RSA.generate(2048, e=65537) 
         public_key = new_key.publickey().exportKey("PEM") 
         private_key = new_key.exportKey("PEM") 
 
-        public_path = os.path.join(path, "public.key")
-        private_path = os.path.join(path, "private.key")
+        public_path = os.path.join(user_path, "public.key")
+        private_path = os.path.join(user_path, "private.key")
 
         with open(public_path, "wb") as f:
             f.write(public_key)
@@ -51,12 +51,11 @@ def initiate_user():
         with open(private_path, "wb") as f:
             f.write(private_key)
 
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        response = requests.post('http://127.0.0.1:5000/user/initiate/', headers=headers, data=json.dumps(dict(
+        response = post_json_request('http://127.0.0.1:5000/user/initiate/', dict(
             phone_number=args.number,
             public_key=public_key.decode()
-        )))
-        token = response.json()['token']
+        ))
+        token = response['token']
         keyring.set_password("pckr", args.number, token)
 
         return True
@@ -82,12 +81,11 @@ def request_public_key():
 def verify_user():
     token = keyring.get_password("pckr", args.number)
 
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.post('http://127.0.0.1:5000/user/verify/', headers=headers, data=json.dumps(dict(
+    response = post_json_request('http://127.0.0.1:5000/user/verify/', data=dict(
         phone_number=args.number,
         login_token=token
-    )))
-    print(response.json())
+    ))
+    print(response)
 
 
 def broadcast_user():
@@ -95,13 +93,13 @@ def broadcast_user():
     bc = Broadcaster(args.number, args.port)
     bc.start()
 
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.post('http://127.0.0.1:5000/user/broadcast/', headers=headers, data=json.dumps(dict(
+    response = post_json_request('http://127.0.0.1:5000/user/broadcast/', dict(
         phone_number=args.number,
         login_token=token,
         ip=bc.serversocket.getsockname()[0],
         port=bc.port
-    ))).json()
+    ))
+
     print(colored("registered with coordination server: {}".format(response), "yellow"))
     print(colored("broadcasting on {}:{}".format(bc.serversocket.getsockname()[0], bc.port), "green"))
     bc.join()
@@ -162,10 +160,11 @@ def process_public_key_responses():
                 request_path = os.path.join(d, f)
                 with open(request_path) as f:
                     data = json.loads(f.read())
-                    print(data)
+
                     public_keys_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_keys", data['number']))
                     if not os.path.exists(public_keys_path):
                         os.makedirs(public_keys_path)
+    
                     public_key_path = os.path.join(public_keys_path, 'public.key')
                     with open(public_key_path, "w+") as pkf:
                         private_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "private.key"))
@@ -174,9 +173,14 @@ def process_public_key_responses():
                         rsakey = PKCS1_OAEP.new(rsakey)
 
                         public_key_password = rsakey.decrypt(binascii.unhexlify(data['password']))
+                        
+                        # TODO JHILL: don't store the password inside json for fuck's sake,
+                        # just put it as the value
                         public_key_password = json.loads(public_key_password)['password'].encode()
                         c1  = Blowfish.new(public_key_password, Blowfish.MODE_ECB)
                         decrypted_text = c1.decrypt(binascii.unhexlify(data['public_key']))
+                        
+                        # TODO JHILL: this needs to be depadded
                         print(decrypted_text)
                         pkf.write(decrypted_text.decode())
 
@@ -194,9 +198,6 @@ def process_public_key_requests():
                     choice = input("send it to them? [y/n]")
 
                     if choice == 'y':
-                        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-                        response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(data['number']), headers=headers).json()
-
                         # TODO JHILL: make this actually unique
                         password = 'abcdefghijkl'
                         cipher = Blowfish.new(password.encode(), Blowfish.MODE_ECB)
@@ -226,7 +227,6 @@ def process_public_key_requests():
                         )
 
                         (ip, port) = get_user_ip_port(data['number'])
-
                         frame_response = send_frame(frame, ip, port)
                         pprint.pprint(frame_response)
 

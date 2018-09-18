@@ -1,6 +1,23 @@
 import requests
 import socket
 import json
+import os
+
+
+def normalize_path(path):
+    return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+
+
+def get_user_path(number):
+    path = os.path.join("~/pckr/", number)
+    return normalize_path(path)
+    
+
+def post_json_request(endpoint, data):
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    response = requests.post(endpoint, headers=headers, data=json.dumps(data))
+    return response.json()
+
 
 def get_user_ip_port(number):
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
