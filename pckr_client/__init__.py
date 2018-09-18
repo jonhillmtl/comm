@@ -1,15 +1,19 @@
-import socket
-import argparse
-import os
-from Crypto.PublicKey import RSA 
 from .broadcaster import Broadcaster
-import requests
+from .frame import Frame
+
+from Crypto.PublicKey import RSA 
+from termcolor import colored
+
+import argparse
+import binascii
 import json
 import keyring
-from Crypto.Cipher import PKCS1_OAEP
-import binascii
+import os
 import pprint
-from .frame import Frame
+import requests
+import socket
+import uuid
+
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('command')
@@ -21,9 +25,10 @@ def initiate_user():
     path = os.path.expanduser(path)
 
     if os.path.exists(path):
-        # TODO ALSO CHECK SERVER
+        # TODO JHILL: ALSO CHECK SERVER
         print("already there")
     else:
+        # TODO JHILL: tuck this away somewhere safe
         os.makedirs(path)
         new_key = RSA.generate(2048, e=65537) 
         public_key = new_key.publickey().exportKey("PEM") 
@@ -43,17 +48,9 @@ def initiate_user():
             phone_number=args.number,
             public_key=public_key.decode()
         )))
-        print(response.json())
         token = response.json()['token']
         keyring.set_password("pckr", args.number, token)
 
-        # the server will send back a response token signed with your
-        # public key, this will be your login token that you need to send
-        # with every transmission
-        # then poeple can query the registry for the ip and port of your number 
-        # and get it back
-        # safely, knowing only you can listen on that ip and port
-        # obviously only communicate over SSL to the coordinating server
         return True
 
 
@@ -70,7 +67,7 @@ def verify_user():
 
 def broadcast_user():
     token = keyring.get_password("pckr", args.number)
-    bc = Broadcaster(args.port)
+    bc = Broadcaster(args.number, args.port)
     bc.start()
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     response = requests.post('http://127.0.0.1:5000/user/broadcast/', headers=headers, data=json.dumps(dict(
@@ -79,6 +76,8 @@ def broadcast_user():
         ip=bc.serversocket.getsockname()[0],
         port=bc.port
     )))
+    
+    print(colored("broadcasting on {}:{}".format(bc.serversocket.getsockname()[0], bc.port), "green"))
     bc.join()
 
 
@@ -105,20 +104,50 @@ def send_file():
         with open(args.filename, "r") as f:
             content = f.read()
 
-    print(len(content))
     mime_type = args.mime_type
-    frames = Frame.make_frames(content, "send_file", mime_type=mime_type)
-    print(len(frames))
 
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(args.other_number), headers=headers).json()
+
+    encryption_key = str(uuid.uuid4())
+    message_id = str(uuid.uuid4())
+    public_key_text = response['users'][0]['public_key']
+
+    key_frame = Frame(
+        action='send_file_transmit_key',
+        content=dict(encryption_key=encryption_key),
+        mime_type='application/json',
+        encryption_type='public_key',
+        encryption_key=public_key_text,
+        message_id=message_id
+    )
+    # print(key_frame)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((response['users'][0]['ip'].strip(), response['users'][0]['port']))
+
+    sock.send(str(key_frame).encode())
+    key_response = sock.recv(4096)
+    # print(key_response)
+
+    frames = Frame.make_frames(
+        content,
+        "send_file",
+        encryption_type='symmetric_key',
+        encryption_key=encryption_key,
+        mime_type=mime_type,
+        message_id=message_id
+    )
+
     for frame in frames:
+        # TODO JHILL: tuck this away somewhere with more error checking
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((response['users'][0]['ip'].strip(), response['users'][0]['port']))
+        print(len(str(frame).encode()))
         sock.send(str(frame).encode())
-        sock_response = sock.recv(1024)
-        print(sock_response)
-        
+        frame_response = sock.recv(4096)
+        # print(frame_response)
+
 
 def main():
     global args
@@ -132,7 +161,7 @@ def main():
         argparser.add_argument("--port", type=int, required=True)
         args = argparser.parse_args()
         broadcast_user()
-    
+
     elif args.command == 'verify_user':
         argparser.add_argument("--number", required=True)
         args = argparser.parse_args()
@@ -144,6 +173,7 @@ def main():
 
         args = argparser.parse_args()
         ping_user()
+
     elif args.command == 'send_file':
         argparser.add_argument("--number", required=True)
         argparser.add_argument("--other_number", required=True)
