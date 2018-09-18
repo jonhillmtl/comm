@@ -16,6 +16,7 @@ import pprint
 import requests
 import socket
 import uuid
+from .utilities import get_user_ip_port, send_frame
 
 
 argparser = argparse.ArgumentParser()
@@ -61,13 +62,7 @@ def initiate_user():
 
 
 def request_public_key():
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(args.other_number), headers=headers)
-
-    # oh boy tons of improvements required here
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((response.json()['users'][0]['ip'].strip(), response.json()['users'][0]['port']))
-
+    (ip, port) = get_user_ip_port(args.other_number)
     public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public.key"))
     public_key_text = open(public_key_path).read()
 
@@ -78,11 +73,10 @@ def request_public_key():
         ), 
         action="request_public_key"
     )
-    sock.send(str(frame).encode())
-
-    response = sock.recv(1024)
+    response = send_frame(frame, ip, port)
     pprint.pprint(json.loads(response.decode()), indent=4)
-    
+
+
 def verify_user():
     token = keyring.get_password("pckr", args.number)
 
@@ -111,17 +105,9 @@ def broadcast_user():
 
 
 def ping_user():
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(args.other_number), headers=headers)
-
-    # oh boy tons of improvements required here
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((response.json()['users'][0]['ip'].strip(), response.json()['users'][0]['port']))
-
+    (ip, port) = get_user_ip_port(args.other_number)
     frame = Frame(content=dict(), action="ping")
-    sock.send(str(frame).encode())
-
-    response = sock.recv(1024)
+    response = send_frame(frame, ip, port)
     pprint.pprint(json.loads(response.decode()), indent=4)
 
 
@@ -135,29 +121,21 @@ def send_file():
 
     mime_type = args.mime_type
 
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(args.other_number), headers=headers).json()
+    (ip, port) = get_user_ip_port(args.other_number)
 
     encryption_key = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
-    public_key_text = response['users'][0]['public_key']
 
     key_frame = Frame(
         action='send_file_transmit_key',
         content=dict(encryption_key=encryption_key),
         mime_type='application/json',
         encryption_type='public_key',
-        encryption_key=public_key_text,
+        # TODO JHILL: well this is mega broken now!
+        encryption_key='',
         message_id=message_id
     )
-    # print(key_frame)
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((response['users'][0]['ip'].strip(), response['users'][0]['port']))
-
-    sock.send(str(key_frame).encode())
-    key_response = sock.recv(4096)
-    # print(key_response)
+    send_frame(key_frame, ip, port)
 
     frames = Frame.make_frames(
         content,
@@ -169,12 +147,7 @@ def send_file():
     )
 
     for frame in frames:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((response['users'][0]['ip'].strip(), response['users'][0]['port']))
-        print(len(str(frame).encode()))
-        sock.send(str(frame).encode())
-        frame_response = sock.recv(4096)
-
+        send_frame(frame, ip, port)
 
 def process_public_key_responses():
     responses_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_key_responses"))
