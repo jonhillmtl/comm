@@ -3,6 +3,9 @@ from .frame import Frame
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
+from Crypto.Cipher import Blowfish
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 
 import argparse
 import binascii
@@ -19,6 +22,9 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument('command')
 args, _ = argparser.parse_known_args()
 
+# TODO JHILL: put into utilities file
+BS = 16
+pad = lambda s: bytes(s + (BS - len(s) % BS) * chr(BS - len(s) % BS),encoding='utf8')
 
 def initiate_user():
     path = os.path.join("~/pckr/", args.number)
@@ -54,6 +60,23 @@ def initiate_user():
         return True
 
 
+def request_public_key():
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(args.other_number), headers=headers)
+
+    # oh boy tons of improvements required here
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((response.json()['users'][0]['ip'].strip(), response.json()['users'][0]['port']))
+
+    public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public.key"))
+    public_key_text = open(public_key_path).read()
+
+    frame = Frame(content=dict(number=args.number, public_key=public_key_text), action="request_public_key", encryption_type=None, encryption_key=None)
+    sock.send(str(frame).encode())
+
+    response = sock.recv(1024)
+    pprint.pprint(json.loads(response.decode()), indent=4)
+    
 def verify_user():
     token = keyring.get_password("pckr", args.number)
 
@@ -140,14 +163,92 @@ def send_file():
     )
 
     for frame in frames:
-        # TODO JHILL: tuck this away somewhere with more error checking
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((response['users'][0]['ip'].strip(), response['users'][0]['port']))
         print(len(str(frame).encode()))
         sock.send(str(frame).encode())
         frame_response = sock.recv(4096)
-        # print(frame_response)
 
+
+def process_public_key_responses():
+    responses_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_key_responses"))
+    for d, sds, files in os.walk(responses_path):
+        for f in files:
+            if f[-5:] == '.json':
+                request_path = os.path.join(d, f)
+                with open(request_path) as f:
+                    data = json.loads(f.read())
+                    print(data)
+                    public_keys_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_keys", data['number']))
+                    if not os.path.exists(public_keys_path):
+                        os.makedirs(public_keys_path)
+                    public_key_path = os.path.join(public_keys_path, 'public.key')
+                    with open(public_key_path, "w+") as pkf:
+                        private_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "private.key"))
+                        private_key_text = open(private_key_path).read()
+                        rsakey = RSA.importKey(private_key_text)
+                        rsakey = PKCS1_OAEP.new(rsakey)
+
+                        public_key_password = rsakey.decrypt(binascii.unhexlify(data['password']))
+                        public_key_password = json.loads(public_key_password)['password'].encode()
+                        c1  = Blowfish.new(public_key_password, Blowfish.MODE_ECB)
+                        decrypted_text = c1.decrypt(binascii.unhexlify(data['public_key']))
+                        print(decrypted_text)
+                        pkf.write(decrypted_text.decode())
+
+
+def process_public_key_requests():
+    requests_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_key_requests"))
+    for d, sds, files in os.walk(requests_path):
+        for f in files:
+            if f[-5:] == '.json':
+                request_path = os.path.join(d, f)
+                with open(request_path) as f:
+                    data = json.loads(f.read())
+                    print("public key request from: data['number']")
+                    choice = input("send it to them? [y/n]")
+
+                    if choice == 'y':
+                        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+                        response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(data['number']), headers=headers).json()
+
+                        password = 'abcdefghijkl'
+                        cipher = Blowfish.new(password.encode(), Blowfish.MODE_ECB)
+
+                        public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public.key"))
+                        public_key_text = open(public_key_path).read()
+                        public_key_encrypted = cipher.encrypt(pad(public_key_text))
+                        public_key_encrypted = binascii.hexlify(public_key_encrypted).decode()
+
+                        rsa_key = RSA.importKey(data['public_key'])
+                        rsa_key = PKCS1_OAEP.new(rsa_key)
+                        payload = dict(
+                            password=password
+                        )
+
+                        password_rsaed = rsa_key.encrypt(json.dumps(payload).encode())
+                        password_rsaed = binascii.hexlify(password_rsaed).decode()
+
+                        frame = Frame(
+                            action='send_public_key',
+                            content=dict(
+                                public_key=public_key_encrypted,
+                                number=args.number,
+                                password=password_rsaed
+                            ),
+                            mime_type='application/json',
+                            encryption_type=None,
+                            encryption_key=None
+                        )
+
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.connect((response['users'][0]['ip'].strip(), response['users'][0]['port']))
+
+                        sock.send(str(frame).encode())
+                        frame_response = sock.recv(4096)
+                        print(frame_response)
+
+                        # TODO JHILL: delete the file if it's all good?
 
 def main():
     global args
@@ -182,6 +283,24 @@ def main():
 
         args = argparser.parse_args()
         send_file()
+
+    elif args.command == 'request_public_key':
+        argparser.add_argument("--number", required=True)
+        argparser.add_argument("--other_number", required=True)
+
+        args = argparser.parse_args()
+        request_public_key()
+
+    elif args.command == 'process_public_key_requests':
+        argparser.add_argument("--number", required=True)
+        args = argparser.parse_args()
+        process_public_key_requests()
+
+    elif args.command == 'process_public_key_responses':
+        argparser.add_argument("--number", required=True)
+        args = argparser.parse_args()
+        process_public_key_responses()
+
     else:
         print("no")
     

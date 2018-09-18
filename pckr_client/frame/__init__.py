@@ -82,6 +82,7 @@ class Frame(object):
             cipher = Blowfish.new(self.encryption_key.encode(), Blowfish.MODE_ECB)
             payload = self.__dict__
             payload_content = cipher.encrypt(pad(json.dumps(payload)))
+            payload_content = binascii.hexlify(payload_content).decode()
         elif self.encryption_type == 'public_key':
             rsa_key = RSA.importKey(self.encryption_key)
             rsa_key = PKCS1_OAEP.new(rsa_key)
@@ -90,10 +91,10 @@ class Frame(object):
             )
 
             payload_content = rsa_key.encrypt(json.dumps(payload).encode())
+            payload_content = binascii.hexlify(payload_content).decode()
         else:
-            raise MalformedFrameError()
+            payload_content = self.content
 
-        payload_content = binascii.hexlify(payload_content).decode()
 
         return json.dumps(dict(
             action=self.action,

@@ -45,12 +45,31 @@ class SocketThread(threading.Thread):
                 print(output_path)
 
 
+    def _receive_request_public_key(self, request):
+        request_path = os.path.expanduser(os.path.join("~/pckr/", self.phone_number, "public_key_requests"))
+        print(request_path)
+        if not os.path.exists(request_path):
+            os.makedirs(request_path)
+        with open(os.path.join(request_path, "{}.json".format(request['message_id'])), "w+") as f:
+            f.write(json.dumps(request['payload']))
+        return json.dumps(dict(success=True)).encode()
+
+
+    def _receive_send_public_key(self, request):
+        request_path = os.path.expanduser(os.path.join("~/pckr/", self.phone_number, "public_key_responses"))
+        print(request_path)
+        if not os.path.exists(request_path):
+            os.makedirs(request_path)
+        with open(os.path.join(request_path, "{}.json".format(request['message_id'])), "w+") as f:
+            f.write(json.dumps(request['payload']))
+        return json.dumps(dict(success=True)).encode()
+
+
     def _receive_send_file(self, request):
         key_path = os.path.expanduser(os.path.join("~/pckr/", self.phone_number, "transmit_key", request['message_id'], "key.json"))
         key_data = json.loads(open(key_path).read())
         c1  = Blowfish.new(key_data['encryption_key'].encode(), Blowfish.MODE_ECB)
         decrypted_text = c1.decrypt(binascii.unhexlify(request['payload']))
-
 
         decrypted_text = decrypted_text.replace(b'\r', b'')
         decrypted_text = decrypted_text.replace(b'\x04', b'')
@@ -124,6 +143,10 @@ class SocketThread(threading.Thread):
                 return self._receive_send_file(request_data)
             elif request_data['action'] == 'send_file_transmit_key':
                 return self._receive_send_file_transmit_key(request_data)
+            elif request_data['action'] == 'request_public_key':
+                return self._receive_request_public_key(request_data)
+            elif request_data['action'] == 'send_public_key':
+                return self._receive_send_public_key(request_data)
             else:
                 return json.dumps(dict(
                     success=False,
