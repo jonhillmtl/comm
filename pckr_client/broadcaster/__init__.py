@@ -180,10 +180,16 @@ class Broadcaster(threading.Thread):
         self.port = port
         self.phone_number = phone_number
 
-        self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.serversocket.bind((socket.gethostname(), self.port))
-        self.serversocket.listen(5)
-
+        while True:
+            try:
+                self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.serversocket.bind((socket.gethostname(), self.port))
+                self.serversocket.listen(5)
+                break
+            except OSError:
+                print(colored("trying next port", "yellow"))
+                self.port = self.port + 1
+            
         self.hostname = socket.gethostname()
 
     def run(self):
