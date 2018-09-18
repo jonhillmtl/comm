@@ -17,9 +17,7 @@ class SocketThread(threading.Thread):
         super(SocketThread, self).__init__()
         self.clientsocket = clientsocket
         self.phone_number = phone_number
-    
-    def get_public_key(self):
-        pass
+
 
     def _attempt_stitch_files(self, request):
         # print(request)
@@ -106,6 +104,7 @@ class SocketThread(threading.Thread):
             filename=path
         )).encode()
 
+
     def _receive_send_file_transmit_key(self, request):
         private_key_path = os.path.expanduser(os.path.join("~/pckr/", self.phone_number, "private.key"))
         private_key_text = open(private_key_path).read()
@@ -126,9 +125,9 @@ class SocketThread(threading.Thread):
             message_id=request['message_id']
         )).encode()
 
+
     def process_request(self, request_text):
-        print(len(request_text))
-        # print(request_text)
+        print(request_text)
         try:
             request_data = json.loads(request_text)
 
@@ -189,7 +188,7 @@ class Broadcaster(threading.Thread):
             except OSError:
                 print(colored("trying next port", "yellow"))
                 self.port = self.port + 1
-            
+
         self.hostname = socket.gethostname()
 
     def run(self):

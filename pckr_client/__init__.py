@@ -71,7 +71,13 @@ def request_public_key():
     public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public.key"))
     public_key_text = open(public_key_path).read()
 
-    frame = Frame(content=dict(number=args.number, public_key=public_key_text), action="request_public_key", encryption_type=None, encryption_key=None)
+    frame = Frame(
+        content=dict(
+            number=args.number,
+            public_key=public_key_text
+        ), 
+        action="request_public_key"
+    )
     sock.send(str(frame).encode())
 
     response = sock.recv(1024)
@@ -236,9 +242,7 @@ def process_public_key_requests():
                                 number=args.number,
                                 password=password_rsaed
                             ),
-                            mime_type='application/json',
-                            encryption_type=None,
-                            encryption_key=None
+                            mime_type='application/json'
                         )
 
                         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

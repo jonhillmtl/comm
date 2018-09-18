@@ -1,5 +1,4 @@
-CREATE TABLE user_ip (
-    public_key      VARCHAR NOT NULL,
+CREATE TABLE users (
     ip              CHAR(20),
     port            int NOT NULL,
     phone_number    VARCHAR NOT NULL,

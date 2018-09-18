@@ -9,6 +9,7 @@ from Crypto.Cipher import Blowfish
 class MalformedFrameError(Exception):
     pass
 
+
 # TODO JHILL: put in utility file
 # TODO JHILL: could be one-liner somehow, or use itertools
 def split_contents(contents, split_size=4096):
@@ -41,8 +42,8 @@ class Frame(object):
         self,
         content,
         action,
-        encryption_type,
-        encryption_key,
+        encryption_type=None,
+        encryption_key=None,
         index=0,
         count=1,
         mime_type='text',
