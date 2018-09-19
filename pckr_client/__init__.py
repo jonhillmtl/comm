@@ -49,6 +49,33 @@ def initiate_user():
         return True
 
 
+def challenge_user():
+    user = User(args.username)
+    challenge_text = str(uuid.uuid4())
+
+    frame = Frame(
+        content=dict(
+            from_username=args.username,
+            challenge_text=challenge_text
+        ),
+        action="challenge_user"
+    )
+
+    (ip, port) = get_user_ip_port(args.u2)
+    response = send_frame(frame, ip, port)
+    encrypted_challenge = binascii.unhexlify(response['encrypted_challenge'])
+
+    rsakey = user.rsakey
+    decrypted_challenge = rsakey.decrypt(encrypted_challenge).decode()
+    print(colored(challenge_text, "blue"))
+    print(colored(decrypted_challenge, "blue"))
+    
+    if challenge_text == decrypted_challenge:
+        print(colored("good", "green"))
+    else:
+        print(colored("bad", "red"))
+
+
 def request_public_key():
     user = User(args.username)
 
@@ -245,6 +272,13 @@ def main():
         massage_args()
 
         send_file()
+    
+    elif args.command == 'challenge_user':
+        argparser.add_argument("--username", required=False)
+        argparser.add_argument("--u2", required=True)
+        massage_args()
+
+        challenge_user()
 
     elif args.command == 'request_public_key':
         argparser.add_argument("--username", required=False)

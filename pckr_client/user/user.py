@@ -67,7 +67,7 @@ class User(object):
                     with open(request_path) as f:
                         requests.append(json.loads(f.read()))
         return requests
-    
+
     @property
     def rsakey(self):
         with open(self.private_key_path) as f:
@@ -75,6 +75,10 @@ class User(object):
 
         return None
 
+    def get_contact_public_key(self, contact):
+        path = os.path.join(self.public_keys_path, contact, "public.key")
+        return open(path).read()
+        
     def initiate_directory_structure(self):
         assert os.path.exists(self.path) is False
         os.makedirs(self.path)
@@ -135,7 +139,7 @@ class User(object):
         with open(public_key_path, "w+") as pkf:
             rsakey = self.rsakey
             password = rsakey.decrypt(binascii.unhexlify(response['password']))
-            
+
             decrypted_text = decrypt_symmetric(binascii.unhexlify(response['public_key']), password)
 
             # TODO JHILL: this needs to be depadded

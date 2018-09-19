@@ -45,22 +45,36 @@ class SocketThread(threading.Thread):
 
                 print(output_path)
 
+
     def _receive_request_public_key(self, request):
         self.user.store_public_key_request(request)
 
         # TODO JHILL: make this nicer
-        return json.dumps(dict(
+        return dict(
             success=True,
-            message_id=request['message_id'])
-        ).encode()
+            message_id=request['message_id']
+        )
 
 
     def _receive_public_key_response(self, request):
         self.user.store_public_key_response(request) 
-        return json.dumps(dict(success=True, message_id=request['message_id'])).encode()
+        return dict(success=True, message_id=request['message_id'])
+
+
+    def _receive_challenge_user(self, request):
+        # TODO JHILL: move this somewhere
+        public_key = self.user.get_contact_public_key(request["payload"]["from_username"])
+        rsa_key = RSA.importKey(public_key)
+        rsa_key = PKCS1_OAEP.new(rsa_key)
+
+        challenge_rsaed = rsa_key.encrypt(request["payload"]["challenge_text"].encode())
+        challenge_rsaed = binascii.hexlify(challenge_rsaed).decode()
+
+        return dict(success=True, encrypted_challenge=challenge_rsaed)
 
 
     def _receive_send_file(self, request):
+        # TODO JHILL: definitely put this all away behind a message object
         user = User(self.username)
         # TODO JHILL: get the key from the user object?
         key_path = os.path.expanduser(os.path.join("~/pckr/", self.username, "transmit_key", request['message_id'], "key.json"))
@@ -102,10 +116,10 @@ class SocketThread(threading.Thread):
 
         self._attempt_stitch_files(payload)
 
-        return json.dumps(dict(
+        return dict(
             success=True,
             filename=path
-        )).encode()
+        )
 
     def _receive_send_file_transmit_key(self, request):
         # TODO JHILL: have a user object here
@@ -123,24 +137,21 @@ class SocketThread(threading.Thread):
         with open(os.path.join(key_path, "key.json"), "w+") as f:
             f.write(json.dumps(payload['content']))
 
-        return json.dumps(dict(
+        return dict(
             success=True,
             message_id=request['message_id']
-        )).encode()
+        )
 
     def process_request(self, request_text):
-        print(request_text)
         try:
             request_data = json.loads(request_text)
 
-            # TODO JHILL: error handler!!!
             if request_data['action'] == 'ping':
-                return json.dumps(dict(
+                return dict(
                     success=True,
                     message="pong"
-                )).encode()
+                )
             elif request_data['action'] == 'send_file':
-                print("*"*100)
                 return self._receive_send_file(request_data)
             elif request_data['action'] == 'send_file_transmit_key':
                 return self._receive_send_file_transmit_key(request_data)
@@ -148,6 +159,8 @@ class SocketThread(threading.Thread):
                 return self._receive_request_public_key(request_data)
             elif request_data['action'] == 'public_key_response':
                 return self._receive_public_key_response(request_data)
+            elif request_data['action'] == 'challenge_user':
+                return self._receive_challenge_user(request_data)
             else:
                 return json.dumps(dict(
                     success=False,
@@ -158,12 +171,20 @@ class SocketThread(threading.Thread):
             print(e)
             print(request_text)
 
-        return b"{}"
+        return dict(
+            success=False,
+            error='unrecognized action {}'.format(request_data['action'])
+        )
 
     def run(self):
         request_text = self.clientsocket.recv(32368*2).decode()
-
         response = self.process_request(request_text)
+
+        if type(response) == dict:
+            response = json.dumps(response).encode()
+        else:
+            print(colored("passing anything but dicts is deprecated", "red"))
+            assert False
 
         self.clientsocket.sendall(response)
         self.clientsocket.close()
