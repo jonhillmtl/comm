@@ -17,6 +17,7 @@ def post_json_request(endpoint, data):
 def get_user_ip_port(number):
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(number), headers=headers).json()
+    print(response)
     if 'users' in response and len(response['users']) == 1:
         return response['users'][0]['ip'], response['users'][0]['port']
     return None, None

@@ -127,3 +127,17 @@ def users():
         success=True
     ))
 
+
+@app.route('/db/clear/', methods=['POST'])
+def clear_db():
+    dbc = db_conn()
+    cur = dbc.cursor(cursor_factory=RealDictCursor)
+    cur.execute("""
+        DELETE FROM users
+    """)
+    dbc.commit()
+
+    return jsonify(dict(
+        success=True
+    ))
+

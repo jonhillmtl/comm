@@ -7,16 +7,18 @@ import json
 import os
 import socket
 import threading
-
+from ..user import User
 
 class SocketThread(threading.Thread):
     clientsocket = None
-    username = None
+    user = None
 
     def __init__(self, clientsocket, username):
         super(SocketThread, self).__init__()
         self.clientsocket = clientsocket
-        self.username = username
+        self.user = User(username)
+
+        # TODO JHILL: assert the user exists?
 
     def _attempt_stitch_files(self, request):
         # print(request)
@@ -42,22 +44,19 @@ class SocketThread(threading.Thread):
                 print(output_path)
 
     def _receive_request_public_key(self, request):
-        request_path = os.path.expanduser(os.path.join("~/pckr/", self.username, "public_key_requests"))
-        print(request_path)
-        if not os.path.exists(request_path):
-            os.makedirs(request_path)
-        with open(os.path.join(request_path, "{}.json".format(request['message_id'])), "w+") as f:
-            f.write(json.dumps(request['payload']))
-        return json.dumps(dict(success=True)).encode()
+        self.user.store_public_key_request(request)
 
-    def _receive_send_public_key(self, request):
-        request_path = os.path.expanduser(os.path.join("~/pckr/", self.username, "public_key_responses"))
-        print(request_path)
-        if not os.path.exists(request_path):
-            os.makedirs(request_path)
-        with open(os.path.join(request_path, "{}.json".format(request['message_id'])), "w+") as f:
-            f.write(json.dumps(request['payload']))
-        return json.dumps(dict(success=True)).encode()
+        # TODO JHILL: make this nicer
+        return json.dumps(dict(
+            success=True,
+            message_id=request['message_id'])
+        ).encode()
+
+
+    def _receive_public_key_response(self, request):
+        self.user.store_public_key_response(request) 
+        return json.dumps(dict(success=True, message_id=request['message_id'])).encode()
+
 
     def _receive_send_file(self, request):
         user = User(self.username)
@@ -146,8 +145,8 @@ class SocketThread(threading.Thread):
                 return self._receive_send_file_transmit_key(request_data)
             elif request_data['action'] == 'request_public_key':
                 return self._receive_request_public_key(request_data)
-            elif request_data['action'] == 'send_public_key':
-                return self._receive_send_public_key(request_data)
+            elif request_data['action'] == 'public_key_response':
+                return self._receive_public_key_response(request_data)
             else:
                 return json.dumps(dict(
                     success=False,
