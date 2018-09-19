@@ -1,11 +1,10 @@
 from .broadcaster import Broadcaster
 from .frame import Frame
 from .user import User
-from .utilities import get_user_ip_port, send_frame, post_json_request
+from .utilities import get_user_ip_port, send_frame, post_json_request, encrypt_symmetric
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
-from Crypto.Cipher import Blowfish
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 
@@ -146,29 +145,7 @@ def process_public_key_responses():
     # TODO JHILL: needs to be tested!
     user = User(args.username)
     for response in user.public_key_responses:
-        public_keys_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public_keys", response['number']))
-        if not os.path.exists(public_keys_path):
-            os.makedirs(public_keys_path)
-
-        public_key_path = os.path.join(public_keys_path, 'public.key')
-        with open(public_key_path, "w+") as pkf:
-            private_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "private.key"))
-            private_key_text = open(private_key_path).read()
-            rsakey = RSA.importKey(private_key_text)
-            rsakey = PKCS1_OAEP.new(rsakey)
-
-            public_key_password = rsakey.decrypt(binascii.unhexlify(response['password']))
-
-            # TODO JHILL: don't store the password inside json for fuck's sake,
-            # just put it as the value
-            public_key_password = json.loads(public_key_password)['password'].encode()
-            c1  = Blowfish.new(public_key_password, Blowfish.MODE_ECB)
-            decrypted_text = c1.decrypt(binascii.unhexlify(response['public_key']))
-
-            # TODO JHILL: this needs to be depadded
-            print(decrypted_text)
-            pkf.write(decrypted_text.decode())
-
+        user.process_public_key_response(response)
 
 def process_public_key_requests():
     user = User(args.username)
@@ -181,21 +158,19 @@ def process_public_key_requests():
         # TODO JHILL: none of this should be here
         if choice == 'y':
             # TODO JHILL: make this actually unique
-            password = 'abcdefghijkl'
-            cipher = Blowfish.new(password.encode(), Blowfish.MODE_ECB)
+            password = b'abcdefghijkl'
 
             # TODO JHILL: this is available on the user object now
             public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public.key"))
             public_key_text = open(public_key_path).read()
-            
-            # put this somewhere in the utility class
-            public_key_encrypted = cipher.encrypt(pad(public_key_text))
+
+            public_key_encrypted = encrypt_symmetric(public_key_text, password)
             public_key_encrypted = binascii.hexlify(public_key_encrypted).decode()
 
             rsa_key = RSA.importKey(request['public_key'])
             rsa_key = PKCS1_OAEP.new(rsa_key)
 
-            password_rsaed = rsa_key.encrypt(password.encode())
+            password_rsaed = rsa_key.encrypt(password)
             password_rsaed = binascii.hexlify(password_rsaed).decode()
 
             frame = Frame(

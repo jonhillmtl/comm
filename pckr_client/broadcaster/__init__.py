@@ -22,6 +22,8 @@ class SocketThread(threading.Thread):
 
     def _attempt_stitch_files(self, request):
         # print(request)
+        # TODO JHILL: use the self.user object here for this!
+        # also instantiate this directory in the instantiate_directory_structure function
         path = os.path.expanduser("~/pckr/received/")
         path = os.path.join(path, request['message_id'])
         for d, sds, files in os.walk(path):
@@ -41,6 +43,7 @@ class SocketThread(threading.Thread):
                 output_path = os.path.join(path, "out.png")
                 with open(output_path, "wb+") as f:
                     f.write(content)
+
                 print(output_path)
 
     def _receive_request_public_key(self, request):
@@ -83,7 +86,7 @@ class SocketThread(threading.Thread):
             payload['index'],
             payload['count']
         )
-        
+
         # TODO JHILL: make this better.... maybe have a transfer facade?
         path = os.path.expanduser(os.path.join("~/pckr/received/", request['message_id']))
         if not os.path.exists(path):
@@ -91,7 +94,7 @@ class SocketThread(threading.Thread):
         path = os.path.join(path, filename)
 
         # TODO JHILL: obviously split the handling on binary or not, mime_types!
-        # and yeah this would be as good a time as any to introduce 
+        # and yeah this would be as good a time as any to introduce a transfer object
         if payload['mime_type'] == 'image/png':
             with open(path, "wb+") as f:
                 f.write(binascii.unhexlify(payload['content']))

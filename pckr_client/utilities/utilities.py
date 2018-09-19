@@ -2,7 +2,27 @@ import requests
 import socket
 import json
 import os
+import blowfish
 
+def pad_content(content):
+    content = content + (" " * (16 - (len(content) % 16)))
+    return content
+
+
+def encrypt_symmetric(content, password):
+    if type(password) is not bytes:
+        password = password.encode()
+
+    content = pad_content(content)
+    if type(content) is not bytes:
+        content = content.encode()
+
+    cipher = blowfish.Cipher(password)
+    data_encrypted = b"".join(cipher.encrypt_ecb(content))
+    data_decrypted = b"".join(cipher.decrypt_ecb(data_encrypted))
+    assert content == data_decrypted
+
+    return data_encrypted
 
 def normalize_path(path):
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))

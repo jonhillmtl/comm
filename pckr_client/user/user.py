@@ -1,7 +1,11 @@
 import os
-from Crypto.PublicKey import RSA 
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5 
+from Crypto.Cipher import Blowfish
 from ..utilities import normalize_path
 import json
+import binascii
 
 USER_ROOT = "~/pckr/"
 
@@ -46,8 +50,7 @@ class User(object):
     @property
     def public_key_responses(self):
         responses = []
-        responses_path = os.path.expanduser(self.path, "public_key_responses")
-        for d, sds, files in os.walk(responses_path):
+        for d, sds, files in os.walk(self.public_key_responses_path):
             for f in files:
                 if f[-5:] == '.json':
                     response_path = os.path.join(d, f)
@@ -66,6 +69,13 @@ class User(object):
                     with open(request_path) as f:
                         requests.append(json.loads(f.read()))
         return requests
+    
+    @property
+    def rsakey(self):
+        with open(self.private_key_path) as f:
+            return PKCS1_OAEP.new(RSA.importKey(f.read()))
+
+        return None
 
     def initiate_directory_structure(self):
         assert os.path.exists(self.path) is False
@@ -103,7 +113,6 @@ class User(object):
 
         return True
 
-
     def store_public_key_response(self, request):
         response_path = os.path.join(
             self.public_key_responses_path,
@@ -117,3 +126,25 @@ class User(object):
             f.write(json.dumps(request['payload']))
 
         return True
+
+    def process_public_key_response(self, response):
+        print(response)
+        public_keys_path = os.path.join(self.public_keys_path, response['from_username'])
+        if not os.path.exists(public_keys_path):
+            os.makedirs(public_keys_path)
+
+        public_key_path = os.path.join(public_keys_path, 'public.key')
+        with open(public_key_path, "w+") as pkf:
+            rsakey = self.rsakey
+            public_key_password = rsakey.decrypt(binascii.unhexlify(response['password']))
+            print(public_key_password)
+            
+            # TODO JHILL: luckily this still works but wrap it in decrypt_symmetric
+            # and make sure it's trimmed before writing it to the file
+            c1  = Blowfish.new(public_key_password, Blowfish.MODE_ECB)
+            decrypted_text = c1.decrypt(binascii.unhexlify(response['public_key']))
+
+            # TODO JHILL: this needs to be depadded
+            print(decrypted_text)
+            pkf.write(decrypted_text.decode())
+        
