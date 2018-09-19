@@ -7,6 +7,7 @@ import binascii
 import bcrypt
 from psycopg2.extras import RealDictCursor
 
+# TODO JHILL: do something with this
 salt = b'$2b$12$h/8Z0LAm87pytJQs3EuHTu'
 
 
@@ -14,6 +15,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 
+# TODO JHILL: move these to a utility file and environment variables
 def db_conn():
     return psycopg2.connect(
         **dict(host='localhost', user='jon', password='jon', port='5432', dbname='pckr')
@@ -60,14 +62,13 @@ def initiate_user():
     login_token = bcrypt.hashpw(token.encode('utf-8'), salt)
 
     data = dict(
-        public_key=post_data['public_key'],
-        phone_number=post_data['phone_number'],
+        username=post_data['username'],
         ip='',
         port=8001,
         updated_at=datetime.datetime.now(),
         login_token=binascii.hexlify(login_token).decode()
     )
-    pg_insert_dict(db_conn(), "user_ip", data)
+    pg_insert_dict(db_conn(), "users", data)
 
     return jsonify(dict(
         token=token,
@@ -81,7 +82,7 @@ def verify_user():
 
     dbc = db_conn()
     cur = dbc.cursor()
-    cur.execute("SELECT login_token FROM user_ip WHERE phone_number = '{}'".format(post_data['phone_number']))
+    cur.execute("SELECT login_token FROM users WHERE username = '{}'".format(post_data['username']))
     results = cur.fetchall()
 
     success = bcrypt.checkpw(post_data['login_token'].encode('utf-8'), binascii.unhexlify(results[0][0]))
@@ -92,16 +93,16 @@ def verify_user():
 
 @app.route('/user/broadcast/', methods=['POST'])
 def broadcast():
-    # TODO JHILL: check their login credentials
+    # TODO JHILL: check their login credentials with a decorator
     post_data = request.json
-
+    print(post_data)
     dbc = db_conn()
     cur = dbc.cursor()
     cur.execute("""
-        UPDATE user_ip 
+        UPDATE users 
         SET ip='{}', port={}
-        WHERE phone_number='{}'
-    """.format(post_data['ip'], post_data['port'], post_data['phone_number']))
+        WHERE username='{}'
+    """.format(post_data['ip'], post_data['port'], post_data['username']))
     dbc.commit()
 
     return jsonify(dict(
@@ -111,15 +112,15 @@ def broadcast():
 
 @app.route('/users/', methods=['GET'])
 def users():
-    # TODO JHILL: check their login credentials
-    other_number = request.args.get('number')
+    # TODO JHILL: check their login credentials with a decorator
+    number = request.args.get('number')
     dbc = db_conn()
     cur = dbc.cursor(cursor_factory=RealDictCursor)
     cur.execute("""
-        SELECT public_key, ip, port
-        FROM user_ip
-        WHERE phone_number='{}'
-    """.format(other_number))
+        SELECT ip, port
+        FROM users
+        WHERE username='{}'
+    """.format(number))
 
     return jsonify(dict(
         users=cur.fetchall(),

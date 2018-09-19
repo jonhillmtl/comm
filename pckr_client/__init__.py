@@ -1,5 +1,7 @@
 from .broadcaster import Broadcaster
 from .frame import Frame
+from .user import User
+from .utilities import get_user_ip_port, send_frame, post_json_request
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -16,7 +18,7 @@ import pprint
 import requests
 import socket
 import uuid
-from .utilities import get_user_ip_port, send_frame, post_json_request, get_user_path
+
 
 
 argparser = argparse.ArgumentParser()
@@ -29,72 +31,59 @@ pad = lambda s: bytes(s + (BS - len(s) % BS) * chr(BS - len(s) % BS),encoding='u
 
 
 def initiate_user():
-    user_path = get_user_path(args.number)
+    user = User(args.username)
 
-    if os.path.exists(user_path):
+    if user.exists:
         # TODO JHILL: ALSO CHECK SERVER
         print("already there")
     else:
         # TODO JHILL: tuck this away somewhere safe
-        os.makedirs(user_path)
-
-        new_key = RSA.generate(2048, e=65537) 
-        public_key = new_key.publickey().exportKey("PEM") 
-        private_key = new_key.exportKey("PEM") 
-
-        public_path = os.path.join(user_path, "public.key")
-        private_path = os.path.join(user_path, "private.key")
-
-        with open(public_path, "wb") as f:
-            f.write(public_key)
-
-        with open(private_path, "wb") as f:
-            f.write(private_key)
+        os.makedirs(user.path)
+        user.initiate_rsa()
 
         response = post_json_request('http://127.0.0.1:5000/user/initiate/', dict(
-            phone_number=args.number,
-            public_key=public_key.decode()
+            username=user.username
         ))
         token = response['token']
-        keyring.set_password("pckr", args.number, token)
+        keyring.set_password("pckr", args.username, token)
 
         return True
 
 
 def request_public_key():
-    public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public.key"))
-    public_key_text = open(public_key_path).read()
+    user = User(args.username)
 
     frame = Frame(
         content=dict(
-            number=args.number,
-            public_key=public_key_text
+            number=args.username,
+            public_key=user.public_key_text
         ), 
         action="request_public_key"
     )
 
-    (ip, port) = get_user_ip_port(args.other_number)
+    (ip, port) = get_user_ip_port(args.u2)
     response = send_frame(frame, ip, port)
     pprint.pprint(response, indent=4)
 
 
 def verify_user():
-    token = keyring.get_password("pckr", args.number)
+    token = keyring.get_password("pckr", args.username)
 
     response = post_json_request('http://127.0.0.1:5000/user/verify/', data=dict(
-        phone_number=args.number,
+        username=args.username,
         login_token=token
     ))
     print(response)
 
 
 def broadcast_user():
-    token = keyring.get_password("pckr", args.number)
-    bc = Broadcaster(args.number, args.port)
+    # TODO JHILL: verify the user exists, both here and on the server!
+    token = keyring.get_password("pckr", args.username)
+    bc = Broadcaster(args.username, args.port)
     bc.start()
 
     response = post_json_request('http://127.0.0.1:5000/user/broadcast/', dict(
-        phone_number=args.number,
+        username=args.username,
         login_token=token,
         ip=bc.serversocket.getsockname()[0],
         port=bc.port
@@ -106,13 +95,14 @@ def broadcast_user():
 
 
 def ping_user():
-    (ip, port) = get_user_ip_port(args.other_number)
+    (ip, port) = get_user_ip_port(args.u2)
     frame = Frame(content=dict(), action="ping")
     response = send_frame(frame, ip, port)
     pprint.pprint(response, indent=4)
 
 
 def send_file():
+    # TODO JHILL: Put this into a transfer object
     if args.mime_type == "image/png":
         with open(args.filename, "rb") as f:
             content = f.read()
@@ -122,7 +112,7 @@ def send_file():
 
     mime_type = args.mime_type
 
-    (ip, port) = get_user_ip_port(args.other_number)
+    (ip, port) = get_user_ip_port(args.u2)
 
     encryption_key = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
@@ -153,7 +143,7 @@ def send_file():
 
 
 def process_public_key_responses():
-    responses_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_key_responses"))
+    responses_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public_key_responses"))
     for d, sds, files in os.walk(responses_path):
         for f in files:
             if f[-5:] == '.json':
@@ -161,32 +151,32 @@ def process_public_key_responses():
                 with open(request_path) as f:
                     data = json.loads(f.read())
 
-                    public_keys_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_keys", data['number']))
+                    public_keys_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public_keys", data['number']))
                     if not os.path.exists(public_keys_path):
                         os.makedirs(public_keys_path)
-    
+
                     public_key_path = os.path.join(public_keys_path, 'public.key')
                     with open(public_key_path, "w+") as pkf:
-                        private_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "private.key"))
+                        private_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "private.key"))
                         private_key_text = open(private_key_path).read()
                         rsakey = RSA.importKey(private_key_text)
                         rsakey = PKCS1_OAEP.new(rsakey)
 
                         public_key_password = rsakey.decrypt(binascii.unhexlify(data['password']))
-                        
+
                         # TODO JHILL: don't store the password inside json for fuck's sake,
                         # just put it as the value
                         public_key_password = json.loads(public_key_password)['password'].encode()
                         c1  = Blowfish.new(public_key_password, Blowfish.MODE_ECB)
                         decrypted_text = c1.decrypt(binascii.unhexlify(data['public_key']))
-                        
+
                         # TODO JHILL: this needs to be depadded
                         print(decrypted_text)
                         pkf.write(decrypted_text.decode())
 
 
 def process_public_key_requests():
-    requests_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public_key_requests"))
+    requests_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public_key_requests"))
     for d, sds, files in os.walk(requests_path):
         for f in files:
             if f[-5:] == '.json':
@@ -202,7 +192,7 @@ def process_public_key_requests():
                         password = 'abcdefghijkl'
                         cipher = Blowfish.new(password.encode(), Blowfish.MODE_ECB)
 
-                        public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.number, "public.key"))
+                        public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public.key"))
                         public_key_text = open(public_key_path).read()
                         public_key_encrypted = cipher.encrypt(pad(public_key_text))
                         public_key_encrypted = binascii.hexlify(public_key_encrypted).decode()
@@ -220,7 +210,7 @@ def process_public_key_requests():
                             action='send_public_key',
                             content=dict(
                                 public_key=public_key_encrypted,
-                                number=args.number,
+                                number=args.username,
                                 password=password_rsaed
                             ),
                             mime_type='application/json'
@@ -233,54 +223,61 @@ def process_public_key_requests():
                         # TODO JHILL: delete the file if it's all good?
 
 def main():
+    # TODO JHILL: this file could be a lot smaller
+    # TODO JHILL: read the username from the environment if it's not present?
     global args
     if args.command == 'initiate_user':
-        argparser.add_argument("--number", required=True)
+        argparser.add_argument("--username", required=True)
         args = argparser.parse_args()
+
         initiate_user()
 
     elif args.command == 'broadcast_user':
-        argparser.add_argument("--number", required=True)
-        argparser.add_argument("--port", type=int, required=True)
+        argparser.add_argument("--username", required=True)
+        argparser.add_argument("--port", type=int, required=False, default=8050)
         args = argparser.parse_args()
+
         broadcast_user()
 
     elif args.command == 'verify_user':
-        argparser.add_argument("--number", required=True)
+        argparser.add_argument("--username", required=True)
         args = argparser.parse_args()
+
         verify_user()
 
     elif args.command == 'ping_user':
-        argparser.add_argument("--number", required=True)
-        argparser.add_argument("--other_number", required=True)
-
+        argparser.add_argument("--username", required=True)
+        argparser.add_argument("--u2", required=True)
         args = argparser.parse_args()
+
         ping_user()
 
     elif args.command == 'send_file':
-        argparser.add_argument("--number", required=True)
-        argparser.add_argument("--other_number", required=True)
+        argparser.add_argument("--username", required=True)
+        argparser.add_argument("--u2", required=True)
         argparser.add_argument("--filename", required=True)
-        argparser.add_argument("--mime_type", required=True)
-
+        argparser.add_argument("--mime_type", required=False, default='image/png')
         args = argparser.parse_args()
+
         send_file()
 
     elif args.command == 'request_public_key':
-        argparser.add_argument("--number", required=True)
-        argparser.add_argument("--other_number", required=True)
-
+        argparser.add_argument("--username", required=True)
+        argparser.add_argument("--u2", required=True)
         args = argparser.parse_args()
+
         request_public_key()
 
     elif args.command == 'process_public_key_requests':
-        argparser.add_argument("--number", required=True)
+        argparser.add_argument("--username", required=True)
         args = argparser.parse_args()
+
         process_public_key_requests()
 
     elif args.command == 'process_public_key_responses':
-        argparser.add_argument("--number", required=True)
+        argparser.add_argument("--username", required=True)
         args = argparser.parse_args()
+
         process_public_key_responses()
 
     else:
