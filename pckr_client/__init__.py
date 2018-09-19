@@ -178,23 +178,24 @@ def process_public_key_requests():
         print("request_public_key message from: {}".format(request['from_username']))
         choice = input("send it to them? [y/n]")
 
+        # TODO JHILL: none of this should be here
         if choice == 'y':
             # TODO JHILL: make this actually unique
             password = 'abcdefghijkl'
             cipher = Blowfish.new(password.encode(), Blowfish.MODE_ECB)
 
+            # TODO JHILL: this is available on the user object now
             public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public.key"))
             public_key_text = open(public_key_path).read()
+            
+            # put this somewhere in the utility class
             public_key_encrypted = cipher.encrypt(pad(public_key_text))
             public_key_encrypted = binascii.hexlify(public_key_encrypted).decode()
 
             rsa_key = RSA.importKey(request['public_key'])
             rsa_key = PKCS1_OAEP.new(rsa_key)
-            payload = dict(
-                password=password
-            )
 
-            password_rsaed = rsa_key.encrypt(json.dumps(payload).encode())
+            password_rsaed = rsa_key.encrypt(password.encode())
             password_rsaed = binascii.hexlify(password_rsaed).decode()
 
             frame = Frame(

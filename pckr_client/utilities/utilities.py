@@ -23,8 +23,12 @@ def get_user_ip_port(number):
     return None, None
 
 
+# TODO JHILL: modify it to take the username and gather it by itself.... also to throw a top-level error
+# if we can't connect... something that says they are offline and we should try again soon
+# also, we should cache this... and maybe ask for the cache of everyone in our "buddy list"
+# when we boot up.... if the cache goes stale we can just exit and tell the user to try again in a minute
+# after we refresh the cache
 def send_frame(frame, ip, port):
-    print(ip, port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((ip.strip(), port))
     sock.send(str(frame).encode())
