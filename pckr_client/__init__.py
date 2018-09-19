@@ -63,10 +63,11 @@ def challenge_user():
 
     (ip, port) = get_user_ip_port(args.u2)
     response = send_frame(frame, ip, port)
-    encrypted_challenge = binascii.unhexlify(response['encrypted_challenge'])
 
-    rsakey = user.rsakey
-    decrypted_challenge = rsakey.decrypt(encrypted_challenge).decode()
+    # TODO JHILL: check return for success or not...
+    # don't just charge through it
+    encrypted_challenge = binascii.unhexlify(response['encrypted_challenge'])
+    decrypted_challenge = user.rsakey.decrypt(encrypted_challenge).decode()
     print(colored(challenge_text, "blue"))
     print(colored(decrypted_challenge, "blue"))
     
@@ -174,6 +175,7 @@ def process_public_key_responses():
     for response in user.public_key_responses:
         user.process_public_key_response(response)
 
+
 def process_public_key_requests():
     user = User(args.username)
     print(user.public_key_requests)
@@ -192,12 +194,17 @@ def process_public_key_requests():
             public_key_text = open(public_key_path).read()
 
             public_key_encrypted = encrypt_symmetric(public_key_text, password)
+            
+            # TODO JHILL: use bin2hexstr
             public_key_encrypted = binascii.hexlify(public_key_encrypted).decode()
 
+            # TODO JHILL: put in utilities file now
             rsa_key = RSA.importKey(request['public_key'])
             rsa_key = PKCS1_OAEP.new(rsa_key)
 
             password_rsaed = rsa_key.encrypt(password)
+
+            # TODO JHILL: use bin2hexstr
             password_rsaed = binascii.hexlify(password_rsaed).decode()
 
             frame = Frame(

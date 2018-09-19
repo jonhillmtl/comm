@@ -64,13 +64,20 @@ class SocketThread(threading.Thread):
     def _receive_challenge_user(self, request):
         # TODO JHILL: move this somewhere
         public_key = self.user.get_contact_public_key(request["payload"]["from_username"])
+        
+        # TODO JHILL: check if the file exists, don't just charge through it
         rsa_key = RSA.importKey(public_key)
         rsa_key = PKCS1_OAEP.new(rsa_key)
 
         challenge_rsaed = rsa_key.encrypt(request["payload"]["challenge_text"].encode())
+        
+        # TODO JHILL: use bin2hexstr
         challenge_rsaed = binascii.hexlify(challenge_rsaed).decode()
 
-        return dict(success=True, encrypted_challenge=challenge_rsaed)
+        return dict(
+            success=True,
+            encrypted_challenge=challenge_rsaed
+        )
 
 
     def _receive_send_file(self, request):
