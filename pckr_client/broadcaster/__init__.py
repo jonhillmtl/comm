@@ -21,7 +21,6 @@ class SocketThread(threading.Thread):
         # TODO JHILL: assert the user exists?
 
     def _attempt_stitch_files(self, request):
-        # print(request)
         # TODO JHILL: use the self.user object here for this!
         # also instantiate this directory in the instantiate_directory_structure function
         path = os.path.expanduser("~/pckr/received/")
@@ -64,7 +63,6 @@ class SocketThread(threading.Thread):
     def _receive_send_file(self, request):
         user = User(self.username)
         # TODO JHILL: get the key from the user object?
-
         key_path = os.path.expanduser(os.path.join("~/pckr/", self.username, "transmit_key", request['message_id'], "key.json"))
         key_data = json.loads(open(key_path).read())
 

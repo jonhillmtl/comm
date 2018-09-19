@@ -88,6 +88,7 @@ class Frame(object):
             payload_content = cipher.encrypt(pad(json.dumps(payload)))
             payload_content = binascii.hexlify(payload_content).decode()
         elif self.encryption_type == 'public_key':
+            # TODO JHILL: put this in a utility function for sure
             rsa_key = RSA.importKey(self.encryption_key)
             rsa_key = PKCS1_OAEP.new(rsa_key)
             payload = dict(

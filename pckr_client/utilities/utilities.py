@@ -24,6 +24,19 @@ def encrypt_symmetric(content, password):
 
     return data_encrypted
 
+
+def decrypt_symmetric(content, password):
+    if type(password) is not bytes:
+        password = password.encode()
+
+    if type(content) is not bytes:
+        content = content.encode()
+
+    cipher = blowfish.Cipher(password)
+    data_decrypted = b"".join(cipher.decrypt_ecb(content))
+    return data_decrypted.decode().strip()
+
+
 def normalize_path(path):
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
@@ -50,6 +63,9 @@ def get_user_ip_port(number):
 # after we refresh the cache
 def send_frame(frame, ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((ip.strip(), port))
-    sock.send(str(frame).encode())
-    return json.loads(sock.recv(4096).decode())
+    try:
+        sock.connect((ip.strip(), port))
+        sock.send(str(frame).encode())
+        return json.loads(sock.recv(4096).decode())
+    except ConnectionRefusedError:
+        return dict(success=False, error="connection refused")

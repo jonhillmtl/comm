@@ -1,9 +1,7 @@
 import os
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
-from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5 
-from Crypto.Cipher import Blowfish
-from ..utilities import normalize_path
+from ..utilities import normalize_path, decrypt_symmetric
 import json
 import binascii
 
@@ -136,15 +134,11 @@ class User(object):
         public_key_path = os.path.join(public_keys_path, 'public.key')
         with open(public_key_path, "w+") as pkf:
             rsakey = self.rsakey
-            public_key_password = rsakey.decrypt(binascii.unhexlify(response['password']))
-            print(public_key_password)
+            password = rsakey.decrypt(binascii.unhexlify(response['password']))
             
-            # TODO JHILL: luckily this still works but wrap it in decrypt_symmetric
-            # and make sure it's trimmed before writing it to the file
-            c1  = Blowfish.new(public_key_password, Blowfish.MODE_ECB)
-            decrypted_text = c1.decrypt(binascii.unhexlify(response['public_key']))
+            decrypted_text = decrypt_symmetric(binascii.unhexlify(response['public_key']), password)
 
             # TODO JHILL: this needs to be depadded
             print(decrypted_text)
-            pkf.write(decrypted_text.decode())
+            pkf.write(decrypted_text)
         
