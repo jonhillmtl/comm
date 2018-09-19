@@ -113,14 +113,14 @@ def broadcast():
 @app.route('/users/', methods=['GET'])
 def users():
     # TODO JHILL: check their login credentials with a decorator
-    number = request.args.get('number')
+    username = request.args.get('username')
     dbc = db_conn()
     cur = dbc.cursor(cursor_factory=RealDictCursor)
     cur.execute("""
         SELECT ip, port
         FROM users
         WHERE username='{}'
-    """.format(number))
+    """.format(username))
 
     return jsonify(dict(
         users=cur.fetchall(),

@@ -61,8 +61,7 @@ def challenge_user():
         action="challenge_user"
     )
 
-    (ip, port) = get_user_ip_port(args.u2)
-    response = send_frame(frame, ip, port)
+    response = send_frame(frame, args.u2)
 
     # TODO JHILL: check return for success or not...
     # don't just charge through it
@@ -88,8 +87,7 @@ def request_public_key():
         action="request_public_key"
     )
 
-    (ip, port) = get_user_ip_port(args.u2)
-    response = send_frame(frame, ip, port)
+    response = send_frame(frame, args.u2)
     pprint.pprint(response, indent=4)
 
 
@@ -122,9 +120,8 @@ def broadcast_user():
 
 
 def ping_user():
-    (ip, port) = get_user_ip_port(args.u2)
     frame = Frame(content=dict(), action="ping")
-    response = send_frame(frame, ip, port)
+    response = send_frame(frame, args.u2)
     pprint.pprint(response, indent=4)
 
 
@@ -139,8 +136,6 @@ def send_file():
 
     mime_type = args.mime_type
 
-    (ip, port) = get_user_ip_port(args.u2)
-
     encryption_key = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
 
@@ -154,7 +149,7 @@ def send_file():
         encryption_key='',
         message_id=message_id
     )
-    send_frame(key_frame, ip, port)
+    send_frame(key_frame, args.u2)
 
     frames = Frame.make_frames(
         content,
@@ -166,7 +161,7 @@ def send_file():
     )
 
     for frame in frames:
-        send_frame(frame, ip, port)
+        send_frame(frame, args.u2)
 
 
 def process_public_key_responses():
@@ -217,8 +212,7 @@ def process_public_key_requests():
                 mime_type='application/json'
             )
 
-            (ip, port) = get_user_ip_port(request['from_username'])
-            frame_response = send_frame(frame, ip, port)
+            frame_response = send_frame(frame, request['from_username'])
             pprint.pprint(frame_response)
 
             # TODO JHILL: delete the file if it's all good?

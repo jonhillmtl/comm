@@ -60,12 +60,13 @@ def post_json_request(endpoint, data):
     return response.json()
 
 
-def get_user_ip_port(number):
+def get_user_ip_port(username):
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.get('http://127.0.0.1:5000/users/?number={}'.format(number), headers=headers).json()
-    print(response)
+    response = requests.get('http://127.0.0.1:5000/users/?username={}'.format(username), headers=headers).json()
+
     if 'users' in response and len(response['users']) == 1:
         return response['users'][0]['ip'], response['users'][0]['port']
+
     return None, None
 
 
@@ -74,7 +75,8 @@ def get_user_ip_port(number):
 # also, we should cache this... and maybe ask for the cache of everyone in our "buddy list"
 # when we boot up.... if the cache goes stale we can just exit and tell the user to try again in a minute
 # after we refresh the cache
-def send_frame(frame, ip, port):
+def send_frame(frame, username):
+    (ip, port) = get_user_ip_port(username)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((ip.strip(), port))
