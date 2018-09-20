@@ -9,7 +9,7 @@ class IPCache(object):
         self.user = user
 
     def set_ip_port(self, username, ip, port):
-        
+        pass
 
     def get_ip_port(self, username):
         pass
