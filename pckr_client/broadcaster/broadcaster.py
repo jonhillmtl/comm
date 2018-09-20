@@ -20,32 +20,6 @@ class SocketThread(threading.Thread):
 
         # TODO JHILL: assert the user exists?
 
-    def _attempt_stitch_files(self, request):
-        # TODO JHILL: use the self.user object here for this!
-        # also instantiate this directory in the instantiate_directory_structure function
-        path = os.path.join(self.user.messages_path, request['message_id'])
-        for d, sds, files in os.walk(path):
-            print("files:", len(files))
-            if len(files) == request['count']:
-                print("***"*30)
-                indexed = dict()
-                for file in files:
-                    index = int(file.split('_')[1])
-                    print(index)
-                    indexed[index] = file
-
-                content = b''
-                for i in range(0, request['count']):
-                    file_path = os.path.join(path, indexed[i])
-                    with open(file_path, 'rb') as f:
-                        content = content + f.read()
-                output_path = os.path.join(path, "out.png")
-                with open(output_path, "wb+") as f:
-                    f.write(content)
-
-                print(output_path)
-
-
     def _receive_request_public_key(self, request):
         self.user.store_public_key_request(request)
 
@@ -95,23 +69,10 @@ class SocketThread(threading.Thread):
         )
 
         payload = json.loads(decrypted_text)
-        """"
-        # TODO JHILL: unpad the thing instead of doing this, it'll break for sure
-        decrypted_text = decrypted_text.replace(b'\r', b'')
-        decrypted_text = decrypted_text.replace(b'\x04', b'')
-        decrypted_text = decrypted_text.replace(b'\x0b', b'')
-        decrypted_text = decrypted_text.replace(b'\x0c', b'')
-        decrypted_text = decrypted_text.replace(b'\x0f', b'')
-        decrypted_text = decrypted_text.replace(b'\x0e', b'')
-        decrypted_text = decrypted_text.replace(b'\x02', b'')
-        payload = json.loads(decrypted_text.decode())
-        """
-
-        filename = "{}_{}_{}".format(
-            payload['frame_id'],
-            payload['index'],
-            payload['count']
-        )
+        if payload['mime_type'] == 'image/png':
+            filename = "out.png"
+        else:
+            filename = "out.txt"
 
         # TODO JHILL: make this better.... maybe have a transfer facade?
         path = os.path.join(self.user.messages_path, request['message_id'])
@@ -122,13 +83,11 @@ class SocketThread(threading.Thread):
         # TODO JHILL: obviously split the handling on binary or not, mime_types!
         # and yeah this would be as good a time as any to introduce a transfer object
         if payload['mime_type'] == 'image/png':
-            with open(path, "wb+") as f:
+            with open(path, "ab+") as f:
                 f.write(hexstr2bytes(payload['content']))
         else:
-            with open(path, "w+") as f:
+            with open(path, "a+") as f:
                 f.write(payload['content'])
-
-        self._attempt_stitch_files(payload)
 
         return dict(
             success=True,
@@ -190,7 +149,7 @@ class SocketThread(threading.Thread):
             )
 
     def run(self):
-        request_text = self.clientsocket.recv(32368*2).decode()
+        request_text = self.clientsocket.recv(65536).decode()
         response = self.process_request(request_text)
 
         if type(response) == dict:

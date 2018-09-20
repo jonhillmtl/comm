@@ -11,7 +11,7 @@ class MalformedFrameError(Exception):
 
 # TODO JHILL: put in utility file
 # TODO JHILL: could be one-liner somehow, or use itertools
-def split_contents(contents, split_size=4096):
+def split_contents(contents, split_size=4096*2):
     splits = []
     index = 0
     while index < len(contents):

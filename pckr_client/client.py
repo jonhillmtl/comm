@@ -1,7 +1,7 @@
 from .broadcaster import Broadcaster
 from .frame import Frame
 from .user import User
-from .utilities import send_frame, post_json_request, encrypt_symmetric, hexstr2bytes, bytes2hexstr
+from .utilities import send_frame, post_json_request, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -124,6 +124,10 @@ def ping_user():
 
 
 def send_message():
+    import time
+    t = time.time()
+    # TODO JHILL: ping the user first...
+    # and if it doesn't work take them out of the IP cache
     user = User(args.username)
     public_key_text = user.get_contact_public_key(args.u2)
     if public_key_text is None:
@@ -141,6 +145,7 @@ def send_message():
     encryption_key = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
 
+    (ip, port) = get_user_ip_port(args.u2)
     key_frame = Frame(
         action='send_message_key',
         content=dict(encryption_key=encryption_key),
@@ -149,7 +154,7 @@ def send_message():
         encryption_key=public_key_text,
         message_id=message_id
     )
-    send_frame(key_frame, args.u2)
+    send_frame(key_frame, ip=ip, port=port)
 
     frames = Frame.make_frames(
         content,
@@ -161,7 +166,8 @@ def send_message():
     )
 
     for frame in frames:
-        send_frame(frame, args.u2)
+        send_frame(frame, ip=ip, port=port)
+    print(time.time() - t)
 
 
 def process_public_key_responses():
