@@ -46,6 +46,8 @@ class SocketThread(threading.Thread):
 
     def _receive_challenge_user(self, request):
         # TODO JHILL: move this somewhere
+        # TODO JHILL: obviously this could fail if we don't know their public_key
+        # TODO JHILL: also be more careful about charging into dictionaries
         public_key = self.user.get_contact_public_key(request["payload"]["from_username"])
 
         # TODO JHILL: check if the file exists, don't just charge through it
@@ -93,11 +95,9 @@ class SocketThread(threading.Thread):
         )
 
     def _receive_send_message_key(self, request):
-        rsakey = self.user.rsakey
-
         # TODO JHILL: hide this all in the user object or a message object?
         payload = hexstr2bytes(request['payload'])
-        payload_data = json.loads(rsakey.decrypt(payload))
+        payload_data = json.loads(self.user.private_rsakey.decrypt(payload))
 
         key_path = os.path.join(self.user.message_keys_path, request['message_id'])
         if not os.path.exists(key_path):

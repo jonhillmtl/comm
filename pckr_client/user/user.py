@@ -69,7 +69,7 @@ class User(object):
         return requests
 
     @property
-    def rsakey(self):
+    def private_rsakey(self):
         # TODO JHILL: error handling! bad one...
         with open(self.private_key_path) as f:
             return PKCS1_OAEP.new(RSA.importKey(f.read()))
@@ -155,7 +155,7 @@ class User(object):
 
         public_key_path = os.path.join(public_keys_path, 'public.key')
         with open(public_key_path, "w+") as pkf:
-            rsakey = self.rsakey
-            password = rsakey.decrypt(hexstr2bytes(response['password']))
+            private_rsakey = self.private_rsakey
+            password = private_rsakey.decrypt(hexstr2bytes(response['password']))
             decrypted_text = decrypt_symmetric(hexstr2bytes(response['public_key']), password)
             pkf.write(decrypted_text)

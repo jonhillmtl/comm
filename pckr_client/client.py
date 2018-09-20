@@ -64,7 +64,7 @@ def challenge_user():
     # TODO JHILL: check return for success or not...
     # don't just charge through it
     encrypted_challenge = hexstr2bytes(response['encrypted_challenge'])
-    decrypted_challenge = user.rsakey.decrypt(encrypted_challenge).decode()
+    decrypted_challenge = user.private_rsakey.decrypt(encrypted_challenge).decode()
     print(colored(challenge_text, "blue"))
     print(colored(decrypted_challenge, "blue"))
 
