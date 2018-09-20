@@ -84,6 +84,10 @@ class User(object):
     def message_keys_path(self):
         return os.path.join(self.path, "message_keys")
 
+    @property
+    def ipcache_path(self):
+        return os.path.join(self,path, "ipcache")
+
     def get_contact_public_key(self, contact):
         try:
             path = os.path.join(self.public_keys_path, contact, "public.key")
