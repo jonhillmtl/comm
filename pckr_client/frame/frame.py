@@ -5,6 +5,7 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 from Crypto.PublicKey import RSA 
 from Crypto.Cipher import Blowfish
+from ..utilities import encrypt_symmetric, bytes2hexstr
 
 class MalformedFrameError(Exception):
     pass
@@ -20,11 +21,6 @@ def split_contents(contents, split_size=4096):
          index = index + split_size
     return splits
 
-# TODO JHILL: put in utility file
-# TODO JHILL: could be one-liner somehow, or use itertools
-BS = 16
-pad = lambda s: bytes(s + (BS - len(s) % BS) * chr(BS - len(s) % BS),encoding='utf8')
-
 class Frame(object):
     index = None
     count = None
@@ -33,11 +29,11 @@ class Frame(object):
     mime_type = None
     content = None
     action = None
-    encryption_type = None
-    encryption_key = None
 
     # TODO JHILL: do this?
     # md5_hash = None
+    
+    # TODO JHILL: add a from_username to this for sure
 
     # TODO JHILL
     def __init__(
@@ -77,16 +73,20 @@ class Frame(object):
         self.encryption_type = encryption_type
         self.encryption_key = encryption_key
 
+
     def __unicode__(self):
         return str(self)
+
 
     def __str__(self):
         # TODO JHILL: don't do this here
         if self.encryption_type == 'symmetric_key':
-            cipher = Blowfish.new(self.encryption_key.encode(), Blowfish.MODE_ECB)
             payload = self.__dict__
-            payload_content = cipher.encrypt(pad(json.dumps(payload)))
-            payload_content = binascii.hexlify(payload_content).decode()
+            payload_content = encrypt_symmetric(
+                json.dumps(payload),
+                self.encryption_key.encode()
+            )
+            payload_content = bytes2hexstr(payload_content)
         elif self.encryption_type == 'public_key':
             # TODO JHILL: put this in a utility function for sure
             rsa_key = RSA.importKey(self.encryption_key)

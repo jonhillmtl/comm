@@ -1,7 +1,7 @@
 from .broadcaster import Broadcaster
 from .frame import Frame
 from .user import User
-from .utilities import get_user_ip_port, send_frame, post_json_request, encrypt_symmetric
+from .utilities import get_user_ip_port, send_frame, post_json_request, encrypt_symmetric, hexstr2bytes
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -24,10 +24,6 @@ import sys
 argparser = argparse.ArgumentParser()
 argparser.add_argument('command')
 args, _ = argparser.parse_known_args()
-
-# TODO JHILL: put into utilities file
-BS = 16
-pad = lambda s: bytes(s + (BS - len(s) % BS) * chr(BS - len(s) % BS),encoding='utf8')
 
 
 def initiate_user():
@@ -138,15 +134,15 @@ def send_file():
 
     encryption_key = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
-
+    
+    user = User(args.username)
+    public_key_text = user.get_contact_public_key(args.u2)
     key_frame = Frame(
         action='send_file_transmit_key',
         content=dict(encryption_key=encryption_key),
         mime_type='application/json',
         encryption_type='public_key',
-
-        # TODO JHILL: well this is mega broken now!
-        encryption_key='',
+        encryption_key=public_key_text,
         message_id=message_id
     )
     send_frame(key_frame, args.u2)

@@ -8,19 +8,18 @@ import binascii
 
 def hexstr2bytes(hs):
     assert type(hs) == str
-    assert False
     return binascii.unhexlify(hs)
 
 
 def bytes2hexstr(bs):
     assert type(bs) == bytes
-    assert False
     return binascii.hexlify(bs).decode()
 
 
 def pad_content(content):
     content = content + (" " * (16 - (len(content) % 16)))
     return content
+
 
 def encrypt_symmetric(content, password):
     if type(password) is not bytes:
