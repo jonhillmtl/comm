@@ -54,7 +54,7 @@ def pg_insert_dict(conn, tablename, data, conflict=''):
 
 
 @app.route('/user/initiate/', methods=['POST'])
-def initiate_user():
+def init_user():
     post_data = request.json
 
     # TODO JHILL: generate random token

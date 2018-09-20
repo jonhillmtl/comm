@@ -15,7 +15,7 @@ class User(object):
 
     @property
     def exists(self):
-        return False
+        return os.path.exists(self.path)
 
     @property
     def path(self):
@@ -85,8 +85,11 @@ class User(object):
         return os.path.join(self.path, "message_keys")
 
     def get_contact_public_key(self, contact):
-        path = os.path.join(self.public_keys_path, contact, "public.key")
-        return open(path).read()
+        try:
+            path = os.path.join(self.public_keys_path, contact, "public.key")
+            return open(path).read()
+        except FileNotFoundError as e:
+            return None
 
     def initiate_directory_structure(self):
         assert os.path.exists(self.path) is False
