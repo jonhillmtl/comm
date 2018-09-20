@@ -2,9 +2,7 @@ import uuid
 import json
 import binascii
 from Crypto.Cipher import PKCS1_OAEP
-from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 from Crypto.PublicKey import RSA 
-from Crypto.Cipher import Blowfish
 from ..utilities import encrypt_symmetric, bytes2hexstr
 
 class MalformedFrameError(Exception):

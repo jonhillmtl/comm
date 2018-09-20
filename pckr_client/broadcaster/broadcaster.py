@@ -1,4 +1,3 @@
-from Crypto.Cipher import Blowfish
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from termcolor import colored
@@ -24,7 +23,7 @@ class SocketThread(threading.Thread):
     def _attempt_stitch_files(self, request):
         # TODO JHILL: use the self.user object here for this!
         # also instantiate this directory in the instantiate_directory_structure function
-        path = os.path.join(self.user.path, "received", request['message_id'])
+        path = os.path.join(self.user.messages_path, request['message_id'])
         for d, sds, files in os.walk(path):
             print("files:", len(files))
             if len(files) == request['count']:
@@ -81,12 +80,13 @@ class SocketThread(threading.Thread):
         )
 
 
-    def _receive_send_file(self, request):
+    def _receive_send_message(self, request):
         # TODO JHILL: definitely put this all away behind a message object
         print(request)
 
         # TODO JHILL: get the key from the user object?
-        key_path = os.path.join(self.user.path, "message_keys", request['message_id'], "key.json")
+        # TODO JHILL: a function to just get a message key?
+        key_path = os.path.join(self.user.message_keys_path, request['message_id'], "key.json")
         key_data = json.loads(open(key_path).read())
 
         # use decrypt_symmetric here for sure
@@ -115,7 +115,7 @@ class SocketThread(threading.Thread):
         )
 
         # TODO JHILL: make this better.... maybe have a transfer facade?
-        path = os.path.join(self.user.path, "received", request['message_id'])
+        path = os.path.join(self.user.messages_path, request['message_id'])
         if not os.path.exists(path):
             os.makedirs(path)
         path = os.path.join(path, filename)
@@ -136,17 +136,14 @@ class SocketThread(threading.Thread):
             filename=path
         )
 
-    def _receive_send_file_transmit_key(self, request):
+    def _receive_send_message_key(self, request):
         rsakey = self.user.rsakey
 
         # TODO JHILL: hide this all in the user object or a message object?
-        # use hexstr2bytes here
         payload = hexstr2bytes(request['payload'])
         payload_data = json.loads(rsakey.decrypt(payload))
-        print(payload_data)
 
-        key_path = os.path.join(self.user.path, "message_keys", request['message_id'])
-        print(key_path)
+        key_path = os.path.join(self.user.message_keys_path, request['message_id'])
         if not os.path.exists(key_path):
             os.makedirs(key_path)
 
@@ -168,10 +165,10 @@ class SocketThread(threading.Thread):
                     success=True,
                     message="pong"
                 )
-            elif request_data['action'] == 'send_file':
-                return self._receive_send_file(request_data)
-            elif request_data['action'] == 'send_file_transmit_key':
-                return self._receive_send_file_transmit_key(request_data)
+            elif request_data['action'] == 'send_message':
+                return self._receive_send_message(request_data)
+            elif request_data['action'] == 'send_message_key':
+                return self._receive_send_message_key(request_data)
             elif request_data['action'] == 'request_public_key':
                 return self._receive_request_public_key(request_data)
             elif request_data['action'] == 'public_key_response':

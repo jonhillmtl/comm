@@ -12,7 +12,8 @@ setup(name='pckr_client',
     install_requires=[
         'boto',
         'flask',
-        'pycryptodome'
+        'pycryptodome',
+        'blowfish'
     ],
 
     entry_points={

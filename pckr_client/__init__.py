@@ -1,7 +1,7 @@
 from .broadcaster import Broadcaster
 from .frame import Frame
 from .user import User
-from .utilities import get_user_ip_port, send_frame, post_json_request, encrypt_symmetric, hexstr2bytes
+from .utilities import send_frame, post_json_request, encrypt_symmetric, hexstr2bytes
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -65,7 +65,7 @@ def challenge_user():
     decrypted_challenge = user.rsakey.decrypt(encrypted_challenge).decode()
     print(colored(challenge_text, "blue"))
     print(colored(decrypted_challenge, "blue"))
-    
+
     if challenge_text == decrypted_challenge:
         print(colored("good", "green"))
     else:
@@ -121,7 +121,7 @@ def ping_user():
     pprint.pprint(response, indent=4)
 
 
-def send_file():
+def send_message():
     # TODO JHILL: Put this into a transfer object
     if args.mime_type == "image/png":
         with open(args.filename, "rb") as f:
@@ -134,11 +134,11 @@ def send_file():
 
     encryption_key = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
-    
+
     user = User(args.username)
     public_key_text = user.get_contact_public_key(args.u2)
     key_frame = Frame(
-        action='send_file_transmit_key',
+        action='send_message_key',
         content=dict(encryption_key=encryption_key),
         mime_type='application/json',
         encryption_type='public_key',
@@ -149,7 +149,7 @@ def send_file():
 
     frames = Frame.make_frames(
         content,
-        "send_file",
+        "send_message",
         encryption_type='symmetric_key',
         encryption_key=encryption_key,
         mime_type=mime_type,
@@ -161,7 +161,6 @@ def send_file():
 
 
 def process_public_key_responses():
-    # TODO JHILL: needs to be tested!
     user = User(args.username)
     for response in user.public_key_responses:
         user.process_public_key_response(response)
@@ -185,7 +184,6 @@ def process_public_key_requests():
             public_key_text = open(public_key_path).read()
 
             public_key_encrypted = encrypt_symmetric(public_key_text, password)
-            
             # TODO JHILL: use bin2hexstr
             public_key_encrypted = binascii.hexlify(public_key_encrypted).decode()
 
@@ -212,6 +210,7 @@ def process_public_key_requests():
             pprint.pprint(frame_response)
 
             # TODO JHILL: delete the file if it's all good?
+
 
 def massage_args():
     global args
@@ -261,14 +260,14 @@ def main():
 
         ping_user()
 
-    elif args.command == 'send_file':
+    elif args.command == 'send_message':
         argparser.add_argument("--username", required=False)
         argparser.add_argument("--u2", required=True)
         argparser.add_argument("--filename", required=True)
         argparser.add_argument("--mime_type", required=False, default='image/png')
         massage_args()
 
-        send_file()
+        send_message()
     
     elif args.command == 'challenge_user':
         argparser.add_argument("--username", required=False)
