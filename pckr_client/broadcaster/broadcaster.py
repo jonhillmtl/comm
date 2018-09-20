@@ -1,13 +1,15 @@
+from ..user import User
+from ..utilities import hexstr2bytes, decrypt_symmetric, bytes2hexstr
+
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from termcolor import colored
+
 import binascii
 import json
 import os
 import socket
 import threading
-from ..user import User
-from ..utilities import hexstr2bytes, decrypt_symmetric, bytes2hexstr
 
 class SocketThread(threading.Thread):
     clientsocket = None
@@ -19,6 +21,13 @@ class SocketThread(threading.Thread):
         self.user = User(username)
 
         # TODO JHILL: assert the user exists?
+
+    def _receive_ping(self, request):
+        return dict(
+            success=True,
+            message="pong"
+        )
+
 
     def _receive_request_public_key(self, request):
         self.user.store_public_key_request(request)
@@ -44,7 +53,6 @@ class SocketThread(threading.Thread):
         rsa_key = PKCS1_OAEP.new(rsa_key)
 
         challenge_rsaed = rsa_key.encrypt(request["payload"]["challenge_text"].encode())
-
         challenge_rsaed = bytes2hexstr(challenge_rsaed)
 
         return dict(
@@ -59,17 +67,7 @@ class SocketThread(threading.Thread):
 
         # TODO JHILL: get the key from the user object?
         # TODO JHILL: a function to just get a message key?
-        key_path = os.path.join(self.user.message_keys_path, request['message_id'], "key.json")
-        key_data = json.loads(open(key_path).read())
-
-        # use decrypt_symmetric here for sure
-        decrypted_text = decrypt_symmetric(
-            hexstr2bytes(request['payload']),
-            key_data['encryption_key'].encode()
-        )
-
-        payload = json.loads(decrypted_text)
-        if payload['mime_type'] == 'image/png':
+        if request['payload']['mime_type'] == 'image/png':
             filename = "out.png"
         else:
             filename = "out.txt"
@@ -84,7 +82,7 @@ class SocketThread(threading.Thread):
         # and yeah this would be as good a time as any to introduce a transfer object
         if payload['mime_type'] == 'image/png':
             with open(path, "ab+") as f:
-                f.write(hexstr2bytes(payload['content']))
+                f.write(hexstr2bytes(request['payload']['content']))
         else:
             with open(path, "a+") as f:
                 f.write(payload['content'])
@@ -114,15 +112,12 @@ class SocketThread(threading.Thread):
         )
 
     def process_request(self, request_text):
-        print(request_text)
+        print("*"*100)
         try:
             request_data = json.loads(request_text)
 
             if request_data['action'] == 'ping':
-                return dict(
-                    success=True,
-                    message="pong"
-                )
+                return self._receive_ping(request_data)
             elif request_data['action'] == 'send_message':
                 return self._receive_send_message(request_data)
             elif request_data['action'] == 'send_message_key':
@@ -139,26 +134,23 @@ class SocketThread(threading.Thread):
                     error="unknown action '{}'".format(request_data['action'])
                 )
         except json.decoder.JSONDecodeError as e:
-            print("!"*100)
-            print(e)
-            print("text:", request_text)
-
             return dict(
                 success=False,
-                error=str(e)
+                error=str(e),
+                request_text=request_text
             )
 
     def run(self):
-        request_text = self.clientsocket.recv(65536).decode()
+        request_text = self.clientsocket.recv(int(65536 / 2)).decode()
         response = self.process_request(request_text)
 
         if type(response) == dict:
-            response = json.dumps(response).encode()
+            response = json.dumps(response)
         else:
             print(colored("passing anything but dicts is deprecated", "red"))
             assert False
 
-        self.clientsocket.sendall(response)
+        self.clientsocket.sendall(response.encode())
         self.clientsocket.close()
 
 

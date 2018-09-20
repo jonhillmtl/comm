@@ -145,29 +145,37 @@ def send_message():
     encryption_key = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
 
+    rsa_key = RSA.importKey(public_key_text)
+    rsa_key = PKCS1_OAEP.new(rsa_key)
+    payload_content = rsa_key.encrypt(encryption_key.encode())
+    payload_content = bytes2hexstr(payload_content)
+
     (ip, port) = get_user_ip_port(args.u2)
     key_frame = Frame(
         action='send_message_key',
-        content=dict(encryption_key=encryption_key),
-        mime_type='application/json',
-        encryption_type='public_key',
-        encryption_key=public_key_text,
-        message_id=message_id
+        message_id=message_id,
+        content=payload_content
     )
     send_frame(key_frame, ip=ip, port=port)
 
-    frames = Frame.make_frames(
+    ft = time.time()
+    encrypted_content = encrypt_symmetric(
         content,
+        encryption_key.encode()
+    )
+
+    frames = Frame.make_frames(
+        bytes2hexstr(encrypted_content),
         "send_message",
-        encryption_type='symmetric_key',
-        encryption_key=encryption_key,
         mime_type=args.mime_type,
         message_id=message_id
     )
+    print(time.time() -ft)
 
     for frame in frames:
         send_frame(frame, ip=ip, port=port)
-    print(time.time() - t)
+
+    print("sent {} megabytes in {} seconds".format(len(content) / 1024 * 1024, time.time() - t))
 
 
 def process_public_key_responses():

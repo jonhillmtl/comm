@@ -5,6 +5,14 @@ import os
 import blowfish
 import binascii
 
+def split_contents(contents, split_size=4096*2):
+    splits = []
+    index = 0
+    while index < len(contents):
+         splits.append(contents[index:index+split_size])
+         index = index + split_size
+    return splits
+
 
 def hexstr2bytes(hs):
     assert type(hs) == str
@@ -17,7 +25,10 @@ def bytes2hexstr(bs):
 
 
 def pad_content(content):
-    content = content + (" " * (16 - (len(content) % 16)))
+    padded = ' '
+    if type(content) == bytes:
+        padder = b' '
+    content = content + (padder * (16 - (len(content) % 16)))
     return content
 
 
@@ -89,7 +100,11 @@ def send_frame(frame, username=None, ip=None, port=None):
 
     try:
         sock.connect((ip.strip(), port))
-        sock.send(str(frame).encode())
-        return json.loads(sock.recv(4096).decode())
+        frame_str = str(frame).encode()
+        len_sent = sock.send(frame_str)
+        assert len_sent == len(frame_str)
+        response = json.loads(sock.recv(4096).decode())
+        sock.close()
+        return response
     except ConnectionRefusedError:
         return dict(success=False, error="connection refused")

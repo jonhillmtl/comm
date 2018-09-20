@@ -159,4 +159,3 @@ class User(object):
             password = rsakey.decrypt(hexstr2bytes(response['password']))
             decrypted_text = decrypt_symmetric(hexstr2bytes(response['public_key']), password)
             pkf.write(decrypted_text)
-        
