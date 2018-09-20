@@ -62,7 +62,7 @@ class Frame(object):
 
         # TODO JHILL: encrypt here and store, not in __str__ function!
         if mime_type == 'image/png':
-            self.content = binascii.hexlify(content).decode()
+            self.content = bytes2hexstr(content)
         else:
             self.content = content
 
@@ -94,7 +94,7 @@ class Frame(object):
             )
 
             payload_content = rsa_key.encrypt(json.dumps(payload).encode())
-            payload_content = binascii.hexlify(payload_content).decode()
+            payload_content = bytes2hexstr(payload_content)
         else:
             payload_content = self.content
 

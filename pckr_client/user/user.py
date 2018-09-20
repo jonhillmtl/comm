@@ -1,7 +1,7 @@
 import os
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
-from ..utilities import normalize_path, decrypt_symmetric
+from ..utilities import normalize_path, decrypt_symmetric, hexstr2bytes
 import json
 import binascii
 
@@ -156,7 +156,7 @@ class User(object):
         public_key_path = os.path.join(public_keys_path, 'public.key')
         with open(public_key_path, "w+") as pkf:
             rsakey = self.rsakey
-            password = rsakey.decrypt(binascii.unhexlify(response['password']))
-            decrypted_text = decrypt_symmetric(binascii.unhexlify(response['public_key']), password)
+            password = rsakey.decrypt(hexstr2bytes(response['password']))
+            decrypted_text = decrypt_symmetric(hexstr2bytes(response['public_key']), password)
             pkf.write(decrypted_text)
         

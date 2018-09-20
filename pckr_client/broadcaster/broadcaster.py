@@ -7,7 +7,7 @@ import os
 import socket
 import threading
 from ..user import User
-from ..utilities import hexstr2bytes, decrypt_symmetric
+from ..utilities import hexstr2bytes, decrypt_symmetric, bytes2hexstr
 
 class SocketThread(threading.Thread):
     clientsocket = None
@@ -64,15 +64,14 @@ class SocketThread(threading.Thread):
     def _receive_challenge_user(self, request):
         # TODO JHILL: move this somewhere
         public_key = self.user.get_contact_public_key(request["payload"]["from_username"])
-        
+
         # TODO JHILL: check if the file exists, don't just charge through it
         rsa_key = RSA.importKey(public_key)
         rsa_key = PKCS1_OAEP.new(rsa_key)
 
         challenge_rsaed = rsa_key.encrypt(request["payload"]["challenge_text"].encode())
-        
-        # TODO JHILL: use bin2hexstr
-        challenge_rsaed = binascii.hexlify(challenge_rsaed).decode()
+
+        challenge_rsaed = bytes2hexstr(challenge_rsaed)
 
         return dict(
             success=True,
@@ -91,7 +90,7 @@ class SocketThread(threading.Thread):
 
         # use decrypt_symmetric here for sure
         decrypted_text = decrypt_symmetric(
-            binascii.unhexlify(request['payload']),
+            hexstr2bytes(request['payload']),
             key_data['encryption_key'].encode()
         )
 
@@ -124,7 +123,7 @@ class SocketThread(threading.Thread):
         # and yeah this would be as good a time as any to introduce a transfer object
         if payload['mime_type'] == 'image/png':
             with open(path, "wb+") as f:
-                f.write(binascii.unhexlify(payload['content']))
+                f.write(hexstr2bytes(payload['content']))
         else:
             with open(path, "w+") as f:
                 f.write(payload['content'])
