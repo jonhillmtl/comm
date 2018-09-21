@@ -72,10 +72,10 @@ def request_public_key():
         ), 
         action="request_public_key"
     )
-    
+
     ipcache = IPCache(user)
     (ip, port) = ipcache.get_ip_port(args.u2)
-    
+
     response = send_frame(frame, ip, port)
     pprint.pprint(response, indent=4)
 
@@ -123,12 +123,24 @@ def seek_user():
     # TODO JHILL: attach our IP, port, and public_key
     # TODO JHILL: encrypt a password using their public_key
     # TODO JHILL: encrypt our credentials using that password
-
+    host_info = dict(
+        ip='<something>',
+        port='<something>',
+        public_key=public_key_text,
+        from_username=args.username
+    )
+    
     # send the message out to everyone we know
     ipcache = IPCache(user)
     for k, v in ipcache.data.items():
         ip, port = v['ip'], v['port']
-        frame = Frame(content=dict(), action='seek_user')
+
+        frame = Frame(content=dict(
+            skip_count=0,
+            host_info=host_info,
+            password='<also encrypted using their public key',
+        ), action='seek_user')
+
         response = send_frame(frame, ip, port)
         print(response)
 

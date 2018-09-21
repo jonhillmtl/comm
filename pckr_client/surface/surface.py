@@ -1,5 +1,7 @@
 from ..user import User
-from ..utilities import hexstr2bytes, decrypt_symmetric, bytes2hexstr
+from ..utilities import hexstr2bytes, decrypt_symmetric, bytes2hexstr, send_frame
+from ..frame import Frame
+from ..ipcache import IPCache
 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
@@ -29,6 +31,20 @@ class SocketThread(threading.Thread):
         )
 
     def _receive_seek_user(self, request):
+        print(request)
+        # 1) try to decrypt the message using our own private key
+        # if we can decrypt it we should answer the other host
+
+        # 2) if we can't decrypt and respond we should pass the message along
+        ipcache = IPCache(self.user)
+        for k, v in ipcache.data.items():
+            frame = Frame(
+                action=request['action'],
+                message_id=request['message_id'],
+                content=request['payload']
+            )
+            send_frame(frame, v['ip'], v['port'])
+
         return dict(success=True)
 
     def _receive_request_public_key(self, request):
