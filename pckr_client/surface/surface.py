@@ -154,14 +154,14 @@ class SocketThread(threading.Thread):
         self.clientsocket.close()
 
 
-class Broadcaster(threading.Thread):
+class Surface(threading.Thread):
     login_token = None
     serversocket = None
     hostname = None
     username = None
 
     def __init__(self, username, port):
-        super(Broadcaster, self).__init__()
+        super(Surface, self).__init__()
         self.port = port
         self.username = username
 

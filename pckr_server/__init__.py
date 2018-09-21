@@ -76,25 +76,6 @@ def init_user():
     ))
 
 
-@app.route('/user/verify/', methods=['POST'])
-def verify_user():
-    post_data = request.json
-
-    dbc = db_conn()
-    cur = dbc.cursor()
-    cur.execute("SELECT login_token FROM users WHERE username = '{}'".format(post_data['username']))
-    results = cur.fetchall()
-
-    # TODO JHILL: entirely possible we didn't get anyone back
-    success = bcrypt.checkpw(
-        post_data['login_token'].encode('utf-8'),
-        binascii.unhexlify(results[0][0])
-    )
-    return jsonify(dict(
-        success=success
-    ))
-
-
 @app.route('/user/broadcast/', methods=['POST'])
 def broadcast():
     # TODO JHILL: check their login credentials with a decorator

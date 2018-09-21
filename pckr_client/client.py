@@ -1,8 +1,8 @@
-from .broadcaster import Broadcaster
+from .surface import Surface
 from .frame import Frame
 from .ipcache import IPCache
 from .user import User
-from .utilities import send_frame, post_json_request, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port
+from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -36,13 +36,6 @@ def init_user():
     else:
         user.initiate_directory_structure()
         user.initiate_rsa()
-
-        response = post_json_request('http://127.0.0.1:5000/user/initiate/', dict(
-            username=user.username
-        ))
-        token = response['token']
-        keyring.set_password("pckr", args.username, token)
-
         print(colored("created user: {}".format(args.username), "green"))
 
     return True
@@ -90,32 +83,17 @@ def request_public_key():
     pprint.pprint(response, indent=4)
 
 
-def verify_user():
-    token = keyring.get_password("pckr", args.username)
-
-    response = post_json_request('http://127.0.0.1:5000/user/verify/', data=dict(
-        username=args.username,
-        login_token=token
-    ))
-    print(response)
-
-
-def broadcast_user():
+def surface_user():
     # TODO JHILL: verify the user exists, both here and on the server!
     token = keyring.get_password("pckr", args.username)
-    bc = Broadcaster(args.username, args.port)
-    bc.start()
+    surface = Surface(args.username, args.port)
+    surface.start()
 
-    response = post_json_request('http://127.0.0.1:5000/user/broadcast/', dict(
-        username=args.username,
-        login_token=token,
-        ip=bc.serversocket.getsockname()[0],
-        port=bc.port
-    ))
+    # TODO JHILL: surface to all users in ipcache
+    # print(colored("registered with coordination server: {}".format(response), "yellow"))
+    print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
+    surface.join()
 
-    print(colored("registered with coordination server: {}".format(response), "yellow"))
-    print(colored("broadcasting on {}:{}".format(bc.serversocket.getsockname()[0], bc.port), "green"))
-    bc.join()
 
 def add_ipcache():
     user = User(args.username)
@@ -257,8 +235,7 @@ def massage_args():
 
 COMMANDS = [
     'init_user',
-    'broadcast_user',
-    'verify_user',
+    'surface_user',
     'ping_user',
     'send_message',
     'challenge_user',
@@ -271,8 +248,7 @@ COMMANDS = [
 
 COMMAND_ALIASES = dict(
     iu='init_user',
-    bu='broadcast_user',
-    vu='verify_user',
+    bu='surface_user',
     pu='ping_user',
     sm='send_message',
     cu='challenge_user',
@@ -302,11 +278,8 @@ def main():
         check_user_exists = False
         pass
 
-    elif command == 'broadcast_user':
+    elif command == 'surface_user':
         argparser.add_argument("--port", type=int, required=False, default=8050)
-
-    elif command == 'verify_user':
-        pass
 
     elif command == 'ping_user':
         argparser.add_argument("--u2", required=True)

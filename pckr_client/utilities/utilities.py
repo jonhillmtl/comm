@@ -66,12 +66,6 @@ def normalize_path(path):
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
 
-def post_json_request(endpoint, data):
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.post(endpoint, headers=headers, data=json.dumps(data))
-    return response.json()
-
-
 def get_user_ip_port(user, u2):
     ipcache = IPCache(user)
     return ipcache.get_ip_port(u2)
