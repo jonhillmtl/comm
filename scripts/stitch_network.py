@@ -36,7 +36,7 @@ def main():
     path = os.path.expanduser("~/pckr/surfaced.json")
     data = json.loads(open(path).read())
 
-    users = ['123', '234', '345']
+    users = ['123', '234', '345', '456', '567', '678', '789', '890']
 
     for i, _ in enumerate(users):
         for j, _ in enumerate(users):
