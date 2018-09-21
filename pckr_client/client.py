@@ -137,60 +137,7 @@ def remove_ipcache():
 
 def seek_user():
     user = User(args.username)
-
-    public_key_text = user.get_contact_public_key(args.u2)
-    if public_key_text is None:
-        print(colored("public_key for {} not found, can't seek_user".format(args.u2), "red"))
-        sys.exit(1)
-    
-    path = os.path.join(user.path, "current_ip_port.json")
-    with open(path, "r") as f:
-        current_ip_port = json.loads(open(path).read())
-
-    seek_token = str(uuid.uuid4())
-    seek_token_path = os.path.join(user.seek_tokens_path, "{}.json".format(args.u2))
-    with open(seek_token_path, "w+") as f:
-        f.write(json.dumps(
-            dict(seek_token=seek_token)
-        ))
-    print(seek_token_path)
-
-    # TODO JHILL: attach our IP, port, and public_key
-    # TODO JHILL: encrypt a password using their public_key
-    # TODO JHILL: encrypt our credentials using that password
-    host_info = dict(
-        ip=current_ip_port['ip'],
-        port=current_ip_port['port'],
-        public_key=user.public_key_text,
-        from_username=args.username,
-        seek_token=seek_token
-    )
-    print(host_info)
-
-    password = str(uuid.uuid4())
-    rsa_key = RSA.importKey(public_key_text)
-    rsa_key = PKCS1_OAEP.new(rsa_key)
-    password_encrypted = rsa_key.encrypt(password.encode())
-    password_encrypted = bytes2hexstr(password_encrypted)
-
-    encrypted_host_info = bytes2hexstr(encrypt_symmetric(
-        json.dumps(host_info).encode(),
-        password.encode()
-    ))
-
-    # send the message out to everyone we know
-    ipcache = IPCache(user)
-    for k, v in ipcache.data.items():
-        ip, port = v['ip'], v['port']
-
-        frame = Frame(content=dict(
-            host_info=encrypted_host_info,
-            password=password_encrypted,
-            custody_chain=[str2hashed_hexstr(user.username)]
-        ), action='seek_user')
-
-        response = send_frame(frame, ip, port)
-        print(response)
+    user.seek_user(args.u2)
 
 
 def ping_user():

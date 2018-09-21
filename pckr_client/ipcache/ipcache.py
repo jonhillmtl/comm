@@ -1,5 +1,4 @@
 import os
-from ..user import User
 import json
 
 class IPCache(object):

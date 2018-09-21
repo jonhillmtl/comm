@@ -380,6 +380,8 @@ class SurfaceUserThread(threading.Thread):
         for k, v in ipcache.data.items():
             public_key_text = user.get_contact_public_key(k)
             if public_key_text is not None:
+                # TODO JHILL: put this somewhere else
+                # and really clean up the public key thing, please
                 password = str(uuid.uuid4())
                 rsa_key = RSA.importKey(public_key_text)
                 rsa_key = PKCS1_OAEP.new(rsa_key)
@@ -410,6 +412,8 @@ class SurfaceUserThread(threading.Thread):
                     v['ip'],
                     int(v['port'])
                 )
+
+                user.seek_user(k)
 
 class Surface(threading.Thread):
     login_token = None

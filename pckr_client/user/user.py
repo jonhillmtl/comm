@@ -1,9 +1,12 @@
 import os
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
-from ..utilities import normalize_path, decrypt_symmetric, hexstr2bytes
+from ..utilities import normalize_path, decrypt_symmetric, hexstr2bytes, bytes2hexstr, encrypt_symmetric, str2hashed_hexstr, send_frame
 import json
 import binascii
+import uuid
+from ..ipcache import IPCache
+from ..frame import Frame
 
 USER_ROOT = "~/pckr/"
 
@@ -91,6 +94,61 @@ class User(object):
     @property
     def seek_tokens_path(self):
         return os.path.join(self.path, "seek_tokens")
+
+    def seek_user(self, u2):
+        public_key_text = self.get_contact_public_key(u2)
+        if public_key_text is None:
+            print(colored("public_key for {} not found, can't seek_user".format(u2), "red"))
+            sys.exit(1)
+
+        path = os.path.join(self.path, "current_ip_port.json")
+        with open(path, "r") as f:
+            current_ip_port = json.loads(open(path).read())
+
+        seek_token = str(uuid.uuid4())
+        seek_token_path = os.path.join(self.seek_tokens_path, "{}.json".format(u2))
+        with open(seek_token_path, "w+") as f:
+            f.write(json.dumps(
+                dict(seek_token=seek_token)
+            ))
+        print(seek_token_path)
+
+        # TODO JHILL: attach our IP, port, and public_key
+        # TODO JHILL: encrypt a password using their public_key
+        # TODO JHILL: encrypt our credentials using that password
+        host_info = dict(
+            ip=current_ip_port['ip'],
+            port=current_ip_port['port'],
+            public_key=self.public_key_text,
+            from_username=self.username,
+            seek_token=seek_token
+        )
+        print(host_info)
+
+        password = str(uuid.uuid4())
+        rsa_key = RSA.importKey(public_key_text)
+        rsa_key = PKCS1_OAEP.new(rsa_key)
+        password_encrypted = rsa_key.encrypt(password.encode())
+        password_encrypted = bytes2hexstr(password_encrypted)
+
+        encrypted_host_info = bytes2hexstr(encrypt_symmetric(
+            json.dumps(host_info).encode(),
+            password.encode()
+        ))
+
+        # send the message out to everyone we know
+        ipcache = IPCache(self)
+        for k, v in ipcache.data.items():
+            ip, port = v['ip'], v['port']
+
+            frame = Frame(content=dict(
+                host_info=encrypted_host_info,
+                password=password_encrypted,
+                custody_chain=[str2hashed_hexstr(self.username)]
+            ), action='seek_user')
+
+            response = send_frame(frame, ip, port)
+            print(response)
 
     def get_contact_public_key(self, contact):
         try:
