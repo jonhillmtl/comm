@@ -55,12 +55,12 @@ class SocketThread(threading.Thread):
             seek_token_encrypted = rsa_key.encrypt(host_info['seek_token'].encode())
             seek_token_encrypted = bytes2hexstr(seek_token_encrypted)
 
-            host_info = dict(
+            our_ip_port = dict(
                 ip='<something>',
-                port='<something>'
+                port=0
             )
             host_info_encrypted = bytes2hexstr(encrypt_symmetric(
-                json.dumps(host_info).encode(),
+                json.dumps(our_ip_port).encode(),
                 password.encode()
             ))
 
@@ -76,11 +76,11 @@ class SocketThread(threading.Thread):
                 action='seek_user_response',
                 content=response_dict
             )
-            response = send_frame(frame, host_info['ip'], host_info['port'])
+            response = send_frame(frame, host_info['ip'], int(host_info['port']))
             print(response)
             responded = True
-        except ValueError:
-            pass
+        except ValueError as e:
+            print(e)
 
         if responded == False:
             # 2) if we can't decrypt and respond we should pass the message along
