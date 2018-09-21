@@ -14,7 +14,9 @@ import socket
 import threading
 import uuid
 import pprint
+import random
 import time
+import sys
 
 class SocketThread(threading.Thread):
     clientsocket = None
@@ -211,8 +213,8 @@ class SocketThread(threading.Thread):
 
     def _receive_send_message_key(self, request):
         # TODO JHILL: hide this all in the user object or a message object?
-        payload = hexstr2bytes(request['payload'])
-        payload_data = json.loads(self.user.private_rsakey.decrypt(payload))
+        payload = hexstr2bytes(request['payload']['password'])
+        payload_data = json.loads(self.user.private_rsakey.decrypt(payload).decode())
 
         key_path = os.path.join(self.user.message_keys_path, request['message_id'])
         if not os.path.exists(key_path):
@@ -302,41 +304,34 @@ class SocketThread(threading.Thread):
             
     def process_request(self, request_text):
         print(colored("*"*100, "blue"))
-        try:
-            request_data = json.loads(request_text)
-            print("action: ", colored(request_data['action'], "green"))
-            print("request:")
-            pprint.pprint(request_data)
-            print("-" * 100)
+        request_data = json.loads(request_text)
+        print("action: ", colored(request_data['action'], "green"))
+        print("request:")
+        pprint.pprint(request_data)
+        print("-" * 100)
 
-            if request_data['action'] == 'ping':
-                return self._receive_ping(request_data)
-            elif request_data['action'] == 'send_message':
-                return self._receive_send_message(request_data)
-            elif request_data['action'] == 'send_message_key':
-                return self._receive_send_message_key(request_data)
-            elif request_data['action'] == 'request_public_key':
-                return self._receive_request_public_key(request_data)
-            elif request_data['action'] == 'public_key_response':
-                return self._receive_public_key_response(request_data)
-            elif request_data['action'] == 'challenge_user':
-                return self._receive_challenge_user(request_data)
-            elif request_data['action'] == 'seek_user':
-                return self._receive_seek_user(request_data)
-            elif request_data['action'] == 'seek_user_response':
-                return self._receive_seek_user_response(request_data)
-            elif request_data['action'] == 'surface_user':
-                return self._receive_surface_user(request_data)
-            else:
-                return dict(
-                    success=False,
-                    error="unknown action '{}'".format(request_data['action'])
-                )
-        except json.decoder.JSONDecodeError as e:
+        if request_data['action'] == 'ping':
+            return self._receive_ping(request_data)
+        elif request_data['action'] == 'send_message':
+            return self._receive_send_message(request_data)
+        elif request_data['action'] == 'send_message_key':
+            return self._receive_send_message_key(request_data)
+        elif request_data['action'] == 'request_public_key':
+            return self._receive_request_public_key(request_data)
+        elif request_data['action'] == 'public_key_response':
+            return self._receive_public_key_response(request_data)
+        elif request_data['action'] == 'challenge_user':
+            return self._receive_challenge_user(request_data)
+        elif request_data['action'] == 'seek_user':
+            return self._receive_seek_user(request_data)
+        elif request_data['action'] == 'seek_user_response':
+            return self._receive_seek_user_response(request_data)
+        elif request_data['action'] == 'surface_user':
+            return self._receive_surface_user(request_data)
+        else:
             return dict(
                 success=False,
-                error=str(e),
-                request_text=request_text
+                error="unknown action '{}'".format(request_data['action'])
             )
 
     def run(self):
@@ -367,7 +362,7 @@ class SurfaceUserThread(threading.Thread):
     def run(self):
         while True:
             self._surface_user()
-            time.sleep(10)
+            time.sleep(random.randint(20, 40))
 
     def _surface_user(self):
         user = User(self.username)

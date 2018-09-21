@@ -85,11 +85,6 @@ def normalize_path(path):
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
 
-def get_user_ip_port(user, u2):
-    ipcache = IPCache(user)
-    return ipcache.get_ip_port(u2)
-
-
 # TODO JHILL: modify it to take the username and gather it by itself.... also to throw a top-level error
 # if we can't connect... something that says they are offline and we should try again soon
 # also, we should cache this... and maybe ask for the cache of everyone in our "buddy list"

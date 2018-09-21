@@ -99,7 +99,7 @@ class User(object):
         public_key_text = self.get_contact_public_key(u2)
         if public_key_text is None:
             print(colored("public_key for {} not found, can't seek_user".format(u2), "red"))
-            sys.exit(1)
+            return
 
         path = os.path.join(self.path, "current_ip_port.json")
         with open(path, "r") as f:
@@ -111,7 +111,6 @@ class User(object):
             f.write(json.dumps(
                 dict(seek_token=seek_token)
             ))
-        print(seek_token_path)
 
         # TODO JHILL: attach our IP, port, and public_key
         # TODO JHILL: encrypt a password using their public_key
@@ -123,7 +122,6 @@ class User(object):
             from_username=self.username,
             seek_token=seek_token
         )
-        print(host_info)
 
         password = str(uuid.uuid4())
         rsa_key = RSA.importKey(public_key_text)
@@ -148,7 +146,6 @@ class User(object):
             ), action='seek_user')
 
             response = send_frame(frame, ip, port)
-            print(response)
 
     def get_contact_public_key(self, contact):
         try:

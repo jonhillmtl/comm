@@ -2,7 +2,7 @@ from .surface import Surface, SurfaceUserThread
 from .frame import Frame
 from .ipcache import IPCache
 from .user import User
-from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port, str2hashed_hexstr, command_header
+from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, str2hashed_hexstr, command_header
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -175,13 +175,15 @@ def send_message():
     rsa_key = RSA.importKey(public_key_text)
     rsa_key = PKCS1_OAEP.new(rsa_key)
     payload_content = rsa_key.encrypt(encryption_key.encode())
-    payload_content = bytes2hexstr(payload_content)
+    payload_content = dict(password=bytes2hexstr(payload_content))
 
-    (ip, port) = get_user_ip_port(args.u2)
+    ipcache = IPCache(user)
+    ip, port = ipcache.get_ip_port(args.u2)
+
     key_frame = Frame(
         action='send_message_key',
-        message_id=message_id,
-        content=payload_content
+        content=payload_content,
+        message_id=message_id
     )
     send_frame(key_frame, ip=ip, port=port)
 
