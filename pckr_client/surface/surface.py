@@ -1,5 +1,5 @@
 from ..user import User
-from ..utilities import hexstr2bytes, decrypt_symmetric, bytes2hexstr, send_frame
+from ..utilities import hexstr2bytes, encrypt_symmetric, decrypt_symmetric, bytes2hexstr, send_frame
 from ..frame import Frame
 from ..ipcache import IPCache
 
@@ -12,6 +12,8 @@ import json
 import os
 import socket
 import threading
+import uuid
+
 
 class SocketThread(threading.Thread):
     clientsocket = None
@@ -42,8 +44,38 @@ class SocketThread(threading.Thread):
             # now we have to open up the message and challenge that user
             decrypted_text = decrypt_symmetric(hexstr2bytes(request['payload']['host_info']), password_decrypted)
             host_info = json.loads(decrypted_text)
-            print(host_info)
-            frame = Frame(action='ping', content=dict())
+
+            password = str(uuid.uuid4())
+            rsa_key = RSA.importKey(host_info['public_key'])
+            rsa_key = PKCS1_OAEP.new(rsa_key)
+
+            password_encrypted = rsa_key.encrypt(password.encode())
+            password_encrypted = bytes2hexstr(password_encrypted)
+
+            seek_token_encrypted = rsa_key.encrypt(host_info['seek_token'].encode())
+            seek_token_encrypted = bytes2hexstr(seek_token_encrypted)
+
+            host_info = dict(
+                ip='<something>',
+                port='<something>'
+            )
+            host_info_encrypted = bytes2hexstr(encrypt_symmetric(
+                json.dumps(host_info).encode(),
+                password.encode()
+            ))
+
+            # TODO JHILL: before we do this, challenge the user...
+            response_dict = dict(
+                seek_token=seek_token_encrypted,
+                password=password_encrypted,
+                host_info=host_info_encrypted
+            )
+            print(response_dict)
+            # now end back a response
+            frame = Frame(
+                action='seek_user_response',
+                content=response_dict
+            )
             response = send_frame(frame, host_info['ip'], host_info['port'])
             print(response)
             responded = True
@@ -144,6 +176,14 @@ class SocketThread(threading.Thread):
             success=True,
             message_id=request['message_id']
         )
+    
+    def _receive_seek_user_response(self, request):
+        print(request)
+
+        return dict(
+            success=True,
+            message_id=request['message_id']
+        )
 
     def process_request(self, request_text):
         print("*"*100)
@@ -164,6 +204,8 @@ class SocketThread(threading.Thread):
                 return self._receive_challenge_user(request_data)
             elif request_data['action'] == 'seek_user':
                 return self._receive_seek_user(request_data)
+            elif request_data['action'] == 'seek_user_response':
+                return self._receive_seek_user_response(request_data)
             else:
                 return dict(
                     success=False,

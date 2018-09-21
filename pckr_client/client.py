@@ -131,6 +131,12 @@ def seek_user():
         current_ip_port = json.loads(open(path).read())
     
     seek_token = str(uuid.uuid4())
+    seek_token_path = os.path.join(user.seek_tokens_path, "{}.json".format(args.u2))
+    with open(seek_token_path, "w+") as f:
+        f.write(json.dumps(
+            dict(seek_token=seek_token)
+        ))
+    print(seek_token_path)
 
     # TODO JHILL: attach our IP, port, and public_key
     # TODO JHILL: encrypt a password using their public_key
