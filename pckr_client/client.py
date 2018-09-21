@@ -47,19 +47,23 @@ def challenge_user():
         action="challenge_user"
     )
 
-    response = send_frame(frame, args.u2)
+    ipcache = IPCache(user)
+    (ip, port) = ipcache.get_ip_port(args.u2)
+    response = send_frame(frame, ip, port)
+    print(response)
 
-    # TODO JHILL: check return for success or not...
-    # don't just charge through it
-    encrypted_challenge = hexstr2bytes(response['encrypted_challenge'])
-    decrypted_challenge = user.private_rsakey.decrypt(encrypted_challenge).decode()
-    print(colored(challenge_text, "blue"))
-    print(colored(decrypted_challenge, "blue"))
+    if response['success'] is True:
+        # TODO JHILL: check return for success or not...
+        # don't just charge through it
+        encrypted_challenge = hexstr2bytes(response['encrypted_challenge'])
+        decrypted_challenge = user.private_rsakey.decrypt(encrypted_challenge).decode()
+        print(colored(challenge_text, "blue"))
+        print(colored(decrypted_challenge, "blue"))
 
-    if challenge_text == decrypted_challenge:
-        print(colored("good", "green"))
+        if challenge_text == decrypted_challenge:
+            print(colored("good", "green"))
     else:
-        print(colored("bad", "red"))
+        print(colored(response['error'], "red"))
 
 
 def request_public_key():

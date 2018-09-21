@@ -13,7 +13,7 @@ import os
 import socket
 import threading
 import uuid
-
+import pprint
 
 class SocketThread(threading.Thread):
     clientsocket = None
@@ -162,17 +162,20 @@ class SocketThread(threading.Thread):
         # TODO JHILL: also be more careful about charging into dictionaries
         public_key = self.user.get_contact_public_key(request["payload"]["from_username"])
 
-        # TODO JHILL: check if the file exists, don't just charge through it
-        rsa_key = RSA.importKey(public_key)
-        rsa_key = PKCS1_OAEP.new(rsa_key)
+        if public_key is None:
+            return dict(success=False, error="we don't have the asking users public_key so this won't work at all")
+        else:
+            # TODO JHILL: check if the file exists, don't just charge through it
+            rsa_key = RSA.importKey(public_key)
+            rsa_key = PKCS1_OAEP.new(rsa_key)
 
-        challenge_rsaed = rsa_key.encrypt(request["payload"]["challenge_text"].encode())
-        challenge_rsaed = bytes2hexstr(challenge_rsaed)
+            challenge_rsaed = rsa_key.encrypt(request["payload"]["challenge_text"].encode())
+            challenge_rsaed = bytes2hexstr(challenge_rsaed)
 
-        return dict(
-            success=True,
-            encrypted_challenge=challenge_rsaed
-        )
+            return dict(
+                success=True,
+                encrypted_challenge=challenge_rsaed
+            )
 
 
     def _receive_send_message(self, request):
@@ -265,11 +268,12 @@ class SocketThread(threading.Thread):
             )
             
     def process_request(self, request_text):
-        print("*"*100)
+        print(colored("*"*100, "blue"))
         try:
             request_data = json.loads(request_text)
-            print(request_data['action'])
-            print(request_data)
+            print("action: ", colored(request_data['action'], "green"))
+            print("request:")
+            pprint.pprint(request_data)
             print("-" * 100)
 
             if request_data['action'] == 'ping':
@@ -309,7 +313,10 @@ class SocketThread(threading.Thread):
         else:
             print(colored("passing anything but dicts is deprecated", "red"))
             assert False
-        print("reponse", response)
+        
+        print("\n")
+        print("response", colored(response, "green"))
+        print("\n")
         print("^" * 100)
         print("\n\n")
 
