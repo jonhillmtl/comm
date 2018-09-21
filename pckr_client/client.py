@@ -1,5 +1,6 @@
 from .broadcaster import Broadcaster
 from .frame import Frame
+from .ipcache import IPCache
 from .user import User
 from .utilities import send_frame, post_json_request, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port
 
@@ -116,10 +117,21 @@ def broadcast_user():
     print(colored("broadcasting on {}:{}".format(bc.serversocket.getsockname()[0], bc.port), "green"))
     bc.join()
 
+def add_ipcache():
+    user = User(args.username)
+
+    ipcache = IPCache(user)
+    ipcache.set_ip_port(args.u2, args.ip, args.port)
+    print(ipcache)
+
 
 def ping_user():
+    user = User(args.username)
+    ipcache = IPCache(user)
+    (ip, port) = ipcache.get_ip_port(args.u2)
+
     frame = Frame(content=dict(), action="ping")
-    response = send_frame(frame, args.u2)
+    response = send_frame(frame, ip, port)
     pprint.pprint(response, indent=4)
 
 
@@ -252,7 +264,8 @@ COMMANDS = [
     'challenge_user',
     'request_public_key',
     'process_public_key_requests',
-    'process_public_key_responses'
+    'process_public_key_responses',
+    'add_ipcache'
 ]
 
 
@@ -265,7 +278,8 @@ COMMAND_ALIASES = dict(
     cu='challenge_user',
     rpk='request_public_key',
     ppk_req='process_public_key_requests',
-    ppk_resp='process_public_key_responses'
+    ppk_resp='process_public_key_responses',
+    aip='add_ipcache'
 )
 
 
@@ -313,6 +327,11 @@ def main():
 
     elif command == 'process_public_key_responses':
         pass
+
+    elif command == 'add_ipcache':
+        argparser.add_argument("--u2", required=True)
+        argparser.add_argument("--ip", required=True)
+        argparser.add_argument("--port", required=True)
 
     else:
         assert False

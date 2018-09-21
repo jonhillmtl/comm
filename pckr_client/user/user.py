@@ -86,7 +86,7 @@ class User(object):
 
     @property
     def ipcache_path(self):
-        return os.path.join(self,path, "ipcache")
+        return os.path.join(self.path, "ipcache")
 
     def get_contact_public_key(self, contact):
         try:
@@ -113,6 +113,10 @@ class User(object):
         
         assert os.path.exists(self.message_keys_path) is False
         os.makedirs(self.message_keys_path)
+
+        assert os.path.exists(self.ipcache_path) is False
+        os.makedirs(self.ipcache_path)
+
 
     def initiate_rsa(self):
         new_key = RSA.generate(2048, e=65537) 
