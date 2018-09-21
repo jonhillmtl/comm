@@ -14,6 +14,7 @@ import socket
 import threading
 import uuid
 import pprint
+import time
 
 class SocketThread(threading.Thread):
     clientsocket = None
@@ -70,7 +71,6 @@ class SocketThread(threading.Thread):
                 password.encode()
             ))
 
-            # TODO JHILL: before we do this, challenge the user...
             challenge_text = str(uuid.uuid4())
 
             challenge_frame = Frame(
@@ -225,7 +225,40 @@ class SocketThread(threading.Thread):
             success=True,
             message_id=request['message_id']
         )
-    
+
+    def _receive_surface_user(self, request):
+        password = self.user.private_rsakey.decrypt(hexstr2bytes(request['payload']['password']))
+        host_info_decrypted = decrypt_symmetric(
+            hexstr2bytes(request['payload']['host_info']),
+            password
+        )
+
+        print(host_info_decrypted)
+        host_info = json.loads(
+            host_info_decrypted
+        )
+
+        public_key_text = self.user.get_contact_public_key(host_info['from_username'])
+        if False: # public_key_text is None:
+            return dict(
+                success=False,
+                error="we don't have their public key, don't care about storing their IP"
+            )
+        else:
+            # TODO JHILL: challenge the user
+
+            # except there has to be two challenges
+            # 1) you have my public key
+            # 2) this is your public key
+            # right now only #1 is implemented, strangely enough
+            # clean that up at the same time. for now just store their ip
+            # TODO JHILL: SECURITY RISK
+            ipcache = IPCache(self.user)
+            ipcache.set_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
+            return dict(
+                success=True
+            )
+
     def _receive_seek_user_response(self, request):
         assert type(request) == dict
         password = self.user.private_rsakey.decrypt(hexstr2bytes(request['payload']['password']))
@@ -292,6 +325,8 @@ class SocketThread(threading.Thread):
                 return self._receive_seek_user(request_data)
             elif request_data['action'] == 'seek_user_response':
                 return self._receive_seek_user_response(request_data)
+            elif request_data['action'] == 'surface_user':
+                return self._receive_surface_user(request_data)
             else:
                 return dict(
                     success=False,
@@ -323,6 +358,58 @@ class SocketThread(threading.Thread):
         self.clientsocket.sendall(response.encode())
         self.clientsocket.close()
 
+class SurfaceUserThread(threading.Thread):
+    username = None
+    def __init__(self, username):
+        super(SurfaceUserThread, self).__init__()
+        self.username = username
+
+    def run(self):
+        while True:
+            self._surface_user()
+            time.sleep(10)
+
+    def _surface_user(self):
+        user = User(self.username)
+
+        path = os.path.join(user.path, "current_ip_port.json")
+        with open(path, "r") as f:
+            current_ip_port = json.loads(open(path).read())
+
+        ipcache = IPCache(user)
+        for k, v in ipcache.data.items():
+            public_key_text = user.get_contact_public_key(k)
+            if public_key_text is not None:
+                password = str(uuid.uuid4())
+                rsa_key = RSA.importKey(public_key_text)
+                rsa_key = PKCS1_OAEP.new(rsa_key)
+                password_encrypted = rsa_key.encrypt(password.encode())
+                password_encrypted = bytes2hexstr(password_encrypted)
+
+                host_info = dict(
+                    from_username=user.username,
+                    ip=current_ip_port['ip'],
+                    port=int(current_ip_port['port'])
+                )
+
+                host_info_encrypted = bytes2hexstr(encrypt_symmetric(
+                    json.dumps(host_info).encode(),
+                    password.encode()
+                ))
+
+                frame = Frame(
+                    content=dict(
+                        password=password_encrypted,
+                        host_info=host_info_encrypted
+                    ),
+                    action='surface_user'
+                )
+
+                response = send_frame(
+                    frame,
+                    v['ip'],
+                    int(v['port'])
+                )
 
 class Surface(threading.Thread):
     login_token = None

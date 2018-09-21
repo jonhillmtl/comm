@@ -1,4 +1,4 @@
-from .surface import Surface
+from .surface import Surface, SurfaceUserThread
 from .frame import Frame
 from .ipcache import IPCache
 from .user import User
@@ -111,6 +111,11 @@ def surface_user():
 
     # TODO JHILL: surface to all users in ipcache
     print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
+
+    surface_user_thread = SurfaceUserThread(args.username)
+    surface_user_thread.start()
+
+    surface_user_thread.join()
     surface.join()
 
 
