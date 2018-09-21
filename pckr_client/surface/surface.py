@@ -32,18 +32,34 @@ class SocketThread(threading.Thread):
 
     def _receive_seek_user(self, request):
         print(request)
+        responded = False
+
         # 1) try to decrypt the message using our own private key
         # if we can decrypt it we should answer the other host
+        try:
+            password_decrypted = self.user.private_rsakey.decrypt(hexstr2bytes(request['payload']['password']))
 
-        # 2) if we can't decrypt and respond we should pass the message along
-        ipcache = IPCache(self.user)
-        for k, v in ipcache.data.items():
-            frame = Frame(
-                action=request['action'],
-                message_id=request['message_id'],
-                content=request['payload']
-            )
-            send_frame(frame, v['ip'], v['port'])
+            # now we have to open up the message and challenge that user
+            decrypted_text = decrypt_symmetric(hexstr2bytes(request['payload']['host_info']), password_decrypted)
+            host_info = json.loads(decrypted_text)
+            print(host_info)
+            frame = Frame(action='ping', content=dict())
+            response = send_frame(frame, host_info['ip'], host_info['port'])
+            print(response)
+            responded = True
+        except ValueError:
+            pass
+
+        if responded == False:
+            # 2) if we can't decrypt and respond we should pass the message along
+            ipcache = IPCache(self.user)
+            for k, v in ipcache.data.items():
+                frame = Frame(
+                    action=request['action'],
+                    message_id=request['message_id'],
+                    content=request['payload']
+                )
+            
 
         return dict(success=True)
 

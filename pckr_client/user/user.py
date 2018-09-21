@@ -88,6 +88,10 @@ class User(object):
     def ipcache_path(self):
         return os.path.join(self.path, "ipcache")
 
+    @property
+    def seek_tokens_path(self):
+        return os.path.join(self.path, "seek_token")
+
     def get_contact_public_key(self, contact):
         try:
             path = os.path.join(self.public_keys_path, contact, "public.key")
