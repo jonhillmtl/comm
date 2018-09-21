@@ -4,7 +4,10 @@ import json
 import os
 import blowfish
 import binascii
+import hashlib
 
+
+    
 
 def split_contents(contents, split_size=4096*2):
     splits = []
@@ -23,6 +26,15 @@ def hexstr2bytes(hs):
 def bytes2hexstr(bs):
     assert type(bs) == bytes
     return binascii.hexlify(bs).decode()
+
+
+def str2hashed_hexstr(s):
+    if type(s) == str:
+        s = s.encode()
+
+    m = hashlib.sha256()
+    m.update(s)
+    return bytes2hexstr(m.digest())
 
 
 def pad_content(content):

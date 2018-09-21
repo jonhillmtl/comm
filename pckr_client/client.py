@@ -2,7 +2,7 @@ from .surface import Surface
 from .frame import Frame
 from .ipcache import IPCache
 from .user import User
-from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port
+from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port, str2hashed_hexstr
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -137,7 +137,7 @@ def seek_user():
     path = os.path.join(user.path, "current_ip_port.json")
     with open(path, "r") as f:
         current_ip_port = json.loads(open(path).read())
-    
+
     seek_token = str(uuid.uuid4())
     seek_token_path = os.path.join(user.seek_tokens_path, "{}.json".format(args.u2))
     with open(seek_token_path, "w+") as f:
@@ -156,6 +156,7 @@ def seek_user():
         from_username=args.username,
         seek_token=seek_token
     )
+    print(host_info)
 
     password = str(uuid.uuid4())
     rsa_key = RSA.importKey(public_key_text)
@@ -174,9 +175,9 @@ def seek_user():
         ip, port = v['ip'], v['port']
 
         frame = Frame(content=dict(
-            skip_count=0,
             host_info=encrypted_host_info,
-            password=password_encrypted
+            password=password_encrypted,
+            custody_chain=[str2hashed_hexstr(user.username)]
         ), action='seek_user')
 
         response = send_frame(frame, ip, port)

@@ -1,5 +1,5 @@
 from ..user import User
-from ..utilities import hexstr2bytes, encrypt_symmetric, decrypt_symmetric, bytes2hexstr, send_frame
+from ..utilities import hexstr2bytes, str2hashed_hexstr, encrypt_symmetric, decrypt_symmetric, bytes2hexstr, send_frame
 from ..frame import Frame
 from ..ipcache import IPCache
 
@@ -35,12 +35,6 @@ class SocketThread(threading.Thread):
     def _receive_seek_user(self, request):
         responded = False
 
-        if request['payload']['skip_count'] > 5:
-            return dict(
-                success=True,
-                message_id=request['message_id']
-            )
-
         # 1) try to decrypt the message using our own private key
         # if we can decrypt it we should answer the other host
         try:
@@ -62,7 +56,8 @@ class SocketThread(threading.Thread):
 
             our_ip_port = dict(
                 ip=data['ip'],
-                port=data['port']
+                port=data['port'],
+                username=self.user.username
             )
 
             host_info_encrypted = bytes2hexstr(encrypt_symmetric(
@@ -76,6 +71,29 @@ class SocketThread(threading.Thread):
             ))
 
             # TODO JHILL: before we do this, challenge the user...
+            challenge_text = str(uuid.uuid4())
+
+            challenge_frame = Frame(
+                content=dict(
+                    from_username=self.user.username,
+                    challenge_text=challenge_text
+                ),
+                action="challenge_user"
+            )
+
+            challenge_response = send_frame(challenge_frame, host_info['ip'], int(host_info['port']))
+            print(challenge_response)
+            encrypted_challenge = hexstr2bytes(challenge_response['encrypted_challenge'])
+            decrypted_challenge = self.user.private_rsakey.decrypt(encrypted_challenge).decode()
+
+            if challenge_text != decrypted_challenge:
+                return dict(
+                    success=False,
+                    error='that was us, but we challenged the asking user and they failed'
+                )
+
+            ipcache = IPCache(self.user)
+            ipcache.set_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
             response_dict = dict(
                 seek_token=seek_token_encrypted,
                 password=password_encrypted,
@@ -87,8 +105,9 @@ class SocketThread(threading.Thread):
                 action='seek_user_response',
                 content=response_dict
             )
+
             response = send_frame(frame, host_info['ip'], int(host_info['port']))
-            
+
             # TODO JHILL: we can also put that host_info into our own ipcache...
             responded = True
 
@@ -98,19 +117,29 @@ class SocketThread(threading.Thread):
         if responded == False:
             # 2) if we can't decrypt and respond we should pass the message along
             ipcache = IPCache(self.user)
-            request['payload']['skip_count'] = request['payload']['skip_count'] + 1
+            count = 0
+
+            request['payload']['custody_chain'].append(
+                str2hashed_hexstr(self.user.username)
+            )
+
             for k, v in ipcache.data.items():
-                frame = Frame(
-                    action=request['action'],
-                    message_id=request['message_id'],
-                    content=request['payload']
-                )
+                hashed_username = str2hashed_hexstr(k)
+                print(k, hashed_username, request['payload']['custody_chain'])
+                if hashed_username not in request['payload']['custody_chain']:
+                    frame = Frame(
+                        action=request['action'],
+                        message_id=request['message_id'],
+                        content=request['payload'],
+                    )
+                    response = send_frame(frame, v['ip'], int(v['port']))
+                    count = count + 1
+                else:
+                    print("skipping")
 
-                response = send_frame(frame, v['ip'], int(v['port']))
-                print(response)
-
-
-        return dict(success=True)
+            return dict(success=True, message="propagated to {} other clients".format(count))
+        else:
+            return dict(success=True, message="that was me, a seek_user_response is imminent")
 
     def _receive_request_public_key(self, request):
         self.user.store_public_key_request(request)
@@ -209,17 +238,39 @@ class SocketThread(threading.Thread):
 
         print(seek_token_decrypted)
         print(host_info_decrypted)
-
-        # TODO JHILL: check the token here....
-        return dict(
-            success=True,
-            message_id=request['message_id']
+        host_info = json.loads(
+            host_info_decrypted
         )
 
+        seek_token_path = os.path.join(
+            self.user.seek_tokens_path, 
+            "{}.json".format(host_info['username'])
+        )
+        
+        # TODO JHILL: error handling obviously
+        seek_token_data = json.loads(open(seek_token_path).read())
+        print(seek_token_data)
+        if seek_token_data['seek_token'] == seek_token_decrypted:
+            ipcache = IPCache(self.user)
+            ipcache.set_ip_port(host_info['username'], host_info['ip'], int(host_info['port']))
+
+            return dict(
+                success=True,
+                message_id=request['message_id']
+            )
+        else:
+            return dict(
+                success=False,
+                error='seek token not found'
+            )
+            
     def process_request(self, request_text):
         print("*"*100)
         try:
             request_data = json.loads(request_text)
+            print(request_data['action'])
+            print(request_data)
+            print("-" * 100)
 
             if request_data['action'] == 'ping':
                 return self._receive_ping(request_data)
@@ -258,6 +309,9 @@ class SocketThread(threading.Thread):
         else:
             print(colored("passing anything but dicts is deprecated", "red"))
             assert False
+        print("reponse", response)
+        print("^" * 100)
+        print("\n\n")
 
         self.clientsocket.sendall(response.encode())
         self.clientsocket.close()
@@ -289,7 +343,6 @@ class Surface(threading.Thread):
     def run(self):
         while True:
             try:
-                # print("*" * 100)
                 (clientsocket, address) = self.serversocket.accept()
                 st = SocketThread(clientsocket, self.username)
                 st.start()
