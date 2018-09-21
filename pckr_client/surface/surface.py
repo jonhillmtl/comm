@@ -33,8 +33,13 @@ class SocketThread(threading.Thread):
         )
 
     def _receive_seek_user(self, request):
-        print(request)
         responded = False
+
+        if request['payload']['skip_count'] > 5:
+            return dict(
+                success=True,
+                message_id=request['message_id']
+            )
 
         # 1) try to decrypt the message using our own private key
         # if we can decrypt it we should answer the other host
@@ -52,15 +57,21 @@ class SocketThread(threading.Thread):
             password_encrypted = rsa_key.encrypt(password.encode())
             password_encrypted = bytes2hexstr(password_encrypted)
 
-            seek_token_encrypted = rsa_key.encrypt(host_info['seek_token'].encode())
-            seek_token_encrypted = bytes2hexstr(seek_token_encrypted)
+            path = os.path.join(self.user.path, "current_ip_port.json")
+            data = json.loads(open(path).read())
 
             our_ip_port = dict(
-                ip='<something>',
-                port=0
+                ip=data['ip'],
+                port=data['port']
             )
+
             host_info_encrypted = bytes2hexstr(encrypt_symmetric(
                 json.dumps(our_ip_port).encode(),
+                password.encode()
+            ))
+
+            seek_token_encrypted = bytes2hexstr(encrypt_symmetric(
+                host_info['seek_token'],
                 password.encode()
             ))
 
@@ -70,28 +81,34 @@ class SocketThread(threading.Thread):
                 password=password_encrypted,
                 host_info=host_info_encrypted
             )
-            print(response_dict)
-            # now end back a response
+
+            # now send back a response
             frame = Frame(
                 action='seek_user_response',
                 content=response_dict
             )
             response = send_frame(frame, host_info['ip'], int(host_info['port']))
-            print(response)
+            
+            # TODO JHILL: we can also put that host_info into our own ipcache...
             responded = True
+
         except ValueError as e:
-            print(e)
+            pass
 
         if responded == False:
             # 2) if we can't decrypt and respond we should pass the message along
             ipcache = IPCache(self.user)
+            request['payload']['skip_count'] = request['payload']['skip_count'] + 1
             for k, v in ipcache.data.items():
                 frame = Frame(
                     action=request['action'],
                     message_id=request['message_id'],
                     content=request['payload']
                 )
-            
+
+                response = send_frame(frame, v['ip'], int(v['port']))
+                print(response)
+
 
         return dict(success=True)
 
@@ -178,8 +195,22 @@ class SocketThread(threading.Thread):
         )
     
     def _receive_seek_user_response(self, request):
-        print(request)
+        assert type(request) == dict
+        password = self.user.private_rsakey.decrypt(hexstr2bytes(request['payload']['password']))
 
+        seek_token_decrypted = decrypt_symmetric(
+            hexstr2bytes(request['payload']['seek_token']),
+            password
+        )
+        host_info_decrypted = decrypt_symmetric(
+            hexstr2bytes(request['payload']['host_info']),
+            password
+        )
+
+        print(seek_token_decrypted)
+        print(host_info_decrypted)
+
+        # TODO JHILL: check the token here....
         return dict(
             success=True,
             message_id=request['message_id']

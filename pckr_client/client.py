@@ -118,6 +118,14 @@ def add_ipcache():
     print(ipcache)
 
 
+def remove_ipcache():
+    user = User(args.username)
+
+    ipcache = IPCache(user)
+    ipcache.remove_ip_port(args.u2)
+    print(ipcache)
+
+
 def seek_user():
     user = User(args.username)
 
@@ -144,7 +152,7 @@ def seek_user():
     host_info = dict(
         ip=current_ip_port['ip'],
         port=current_ip_port['port'],
-        public_key=public_key_text,
+        public_key=user.public_key_text,
         from_username=args.username,
         seek_token=seek_token
     )
@@ -315,7 +323,8 @@ COMMANDS = [
     'request_public_key',
     'process_public_key_requests',
     'process_public_key_responses',
-    'add_ipcache'
+    'add_ipcache',
+    'remove_ipcache'
 ]
 
 
@@ -329,7 +338,8 @@ COMMAND_ALIASES = dict(
     rpk='request_public_key',
     ppk_req='process_public_key_requests',
     ppk_resp='process_public_key_responses',
-    aip='add_ipcache'
+    aip='add_ipcache',
+    rip='remove_ipcache'
 )
 
 
@@ -382,6 +392,9 @@ def main():
         argparser.add_argument("--u2", required=True)
         argparser.add_argument("--ip", required=True)
         argparser.add_argument("--port", required=True)
+
+    elif command == 'remove_ipcache':
+        argparser.add_argument("--u2", required=True)
 
     else:
         assert False

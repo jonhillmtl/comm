@@ -23,7 +23,7 @@ def main():
         '--ip={}'.format(data['345']['ip']),
         '--port={}'.format(data['345']['port'])
     ])
-    
+
     subprocess.check_call([
         'pckr_client',
         'aip',
@@ -31,6 +31,24 @@ def main():
         '--u2=123',
         '--ip={}'.format(data['123']['ip']),
         '--port={}'.format(data['123']['port'])
+    ])
+    
+    subprocess.check_call([
+        'pckr_client',
+        'aip',
+        '--username=345',
+        '--u2=123',
+        '--ip={}'.format(data['123']['ip']),
+        '--port={}'.format(data['123']['port'])
+    ])
+    
+    subprocess.check_call([
+        'pckr_client',
+        'aip',
+        '--username=123',
+        '--u2=345',
+        '--ip={}'.format(data['345']['ip']),
+        '--port={}'.format(data['345']['port'])
     ])
 
     subprocess.check_call([
@@ -79,6 +97,39 @@ def main():
         'pckr_client',
         'ppk_resp',
         '--username=234'
+    ])
+    
+    subprocess.check_call([
+        'pckr_client',
+        'rpk',
+        '--username=123',
+        '--u2=345'
+    ])
+    
+    subprocess.check_call([
+        'pckr_client',
+        'ppk_req',
+        '--username=345'
+    ])
+
+    subprocess.check_call([
+        'pckr_client',
+        'ppk_resp',
+        '--username=123'
+    ])
+
+    subprocess.check_call([
+        'pckr_client',
+        'rip',
+        '--username=123',
+        '--u2=345'
+    ])
+
+    subprocess.check_call([
+        'pckr_client',
+        'rip',
+        '--username=345',
+        '--u2=123'
     ])
 
 if __name__ == '__main__':

@@ -20,17 +20,26 @@ class IPCache(object):
     def __unicode__(self):
         return str(self)
 
-
     def __str__(self):
         return json.dumps(self.data)
 
     def set_ip_port(self, username, ip, port):
-        path = os.path.join(self.user.ipcache_path, "cache.json")
         self.data[username] = dict(
             ip=ip,
             port=port
         )
-        
+
+        path = os.path.join(self.user.ipcache_path, "cache.json")
+        with open(path, "w+") as f:
+            f.write(json.dumps(self.data))
+
+    def remove_ip_port(self, username):
+        try:
+            del self.data[username]
+        except IndexError:
+            pass
+
+        path = os.path.join(self.user.ipcache_path, "cache.json")        
         with open(path, "w+") as f:
             f.write(json.dumps(self.data))
 
