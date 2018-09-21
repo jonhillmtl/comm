@@ -28,6 +28,8 @@ class SocketThread(threading.Thread):
             message="pong"
         )
 
+    def _receive_seek_user(self, request):
+        return dict(success=True)
 
     def _receive_request_public_key(self, request):
         self.user.store_public_key_request(request)
@@ -128,6 +130,8 @@ class SocketThread(threading.Thread):
                 return self._receive_public_key_response(request_data)
             elif request_data['action'] == 'challenge_user':
                 return self._receive_challenge_user(request_data)
+            elif request_data['action'] == 'seek_user':
+                return self._receive_seek_user(request_data)
             else:
                 return dict(
                     success=False,

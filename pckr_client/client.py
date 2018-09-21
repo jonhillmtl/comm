@@ -78,8 +78,11 @@ def request_public_key():
         ), 
         action="request_public_key"
     )
-
-    response = send_frame(frame, args.u2)
+    
+    ipcache = IPCache(user)
+    (ip, port) = ipcache.get_ip_port(args.u2)
+    
+    response = send_frame(frame, ip, port)
     pprint.pprint(response, indent=4)
 
 
@@ -90,7 +93,6 @@ def surface_user():
     surface.start()
 
     # TODO JHILL: surface to all users in ipcache
-    # print(colored("registered with coordination server: {}".format(response), "yellow"))
     print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
     surface.join()
 
@@ -101,6 +103,27 @@ def add_ipcache():
     ipcache = IPCache(user)
     ipcache.set_ip_port(args.u2, args.ip, args.port)
     print(ipcache)
+
+
+def seek_user():
+    user = User(args.username)
+
+    public_key_text = user.get_contact_public_key(args.u2)
+    if public_key_text is None:
+        print(colored("public_key for {} not found, can't seek_user".format(args.u2), "red"))
+        sys.exit(1)
+
+    # TODO JHILL: attach our IP, port, and public_key
+    # TODO JHILL: encrypt a password using their public_key
+    # TODO JHILL: encrypt our credentials using that password
+
+    # send the message out to everyone we know
+    ipcache = IPCache(user)
+    for k, v in ipcache.data.items():
+        ip, port = v['ip'], v['port']
+        frame = Frame(content=dict(), action='seek_user')
+        response = send_frame(frame, ip, port)
+        print(response)
 
 
 def ping_user():
@@ -210,7 +233,10 @@ def process_public_key_requests():
                 mime_type='application/json'
             )
 
-            frame_response = send_frame(frame, request['from_username'])
+            ipcache = IPCache(user)
+            (ip, port) = ipcache.get_ip_port(request['from_username'])
+
+            frame_response = send_frame(frame, ip, port)
             pprint.pprint(frame_response)
 
             # TODO JHILL: delete the file if it's all good?
@@ -236,6 +262,7 @@ def massage_args():
 COMMANDS = [
     'init_user',
     'surface_user',
+    'seek_user',
     'ping_user',
     'send_message',
     'challenge_user',
@@ -248,7 +275,8 @@ COMMANDS = [
 
 COMMAND_ALIASES = dict(
     iu='init_user',
-    bu='surface_user',
+    surface='surface_user',
+    seek='seek_user',
     pu='ping_user',
     sm='send_message',
     cu='challenge_user',
@@ -277,7 +305,10 @@ def main():
     if command == 'init_user':
         check_user_exists = False
         pass
-
+    
+    elif command == 'seek_user':
+        argparser.add_argument("--u2", required=True)
+        
     elif command == 'surface_user':
         argparser.add_argument("--port", type=int, required=False, default=8050)
 

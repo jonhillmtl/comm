@@ -26,7 +26,7 @@ def bytes2hexstr(bs):
 
 
 def pad_content(content):
-    padded = ' '
+    padder = ' '
     if type(content) == bytes:
         padder = b' '
     content = content + (padder * (16 - (len(content) % 16)))
