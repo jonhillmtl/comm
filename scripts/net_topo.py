@@ -15,13 +15,14 @@ def main():
         if os.path.isdir(path):
             users.append(sd)
 
-    for u in users:
+    for u in sorted(users):
         user = User(u)
         print("-" * 100)
         print("user {}".format(user.username))
 
         ipcache = json.loads(open(os.path.join(user.ipcache_path, 'cache.json')).read())
-        for k, v in ipcache.items():
+        for k in sorted(ipcache.keys()):
+            v = ipcache[k]
             public_key_text = user.get_contact_public_key(k)
             has_pk = public_key_text != None
             print(
