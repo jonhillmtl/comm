@@ -10,17 +10,11 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 
 import argparse
-import binascii
-import json
-import keyring
 import os
 import pprint
-import requests
-import socket
 import uuid
 import sys
-
-
+import json
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('command')
@@ -88,9 +82,22 @@ def request_public_key():
 
 def surface_user():
     # TODO JHILL: verify the user exists, both here and on the server!
-    token = keyring.get_password("pckr", args.username)
     surface = Surface(args.username, args.port)
     surface.start()
+
+    path = os.path.expanduser("~/pckr/surfaced.json")
+    data = dict()
+    try:
+        data = json.loads(open(path).read())
+    except:
+        pass
+
+    data[args.username] = dict(
+        ip=surface.serversocket.getsockname()[0],
+        port=surface.port
+    )
+    with open(path, "w+") as f:
+        f.write(json.dumps(data))
 
     # TODO JHILL: surface to all users in ipcache
     print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
@@ -202,44 +209,41 @@ def process_public_key_requests():
     for request in user.public_key_requests:
         print(request)
         print("request_public_key message from: {}".format(request['from_username']))
-        choice = input("send it to them? [y/n]")
 
-        # TODO JHILL: none of this should be here
-        if choice == 'y':
-            # TODO JHILL: make this actually unique
-            password = b'abcdefghijkl'
+        # TODO JHILL: make this actually unique
+        password = b'abcdefghijkl'
 
-            # TODO JHILL: this is available on the user object now
-            public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public.key"))
-            public_key_text = open(public_key_path).read()
+        # TODO JHILL: this is available on the user object now
+        public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public.key"))
+        public_key_text = open(public_key_path).read()
 
-            public_key_encrypted = encrypt_symmetric(public_key_text, password)
-            public_key_encrypted = bytes2hexstr(public_key_encrypted)
+        public_key_encrypted = encrypt_symmetric(public_key_text, password)
+        public_key_encrypted = bytes2hexstr(public_key_encrypted)
 
-            # TODO JHILL: put in utilities file now
-            rsa_key = RSA.importKey(request['public_key'])
-            rsa_key = PKCS1_OAEP.new(rsa_key)
+        # TODO JHILL: put in utilities file now
+        rsa_key = RSA.importKey(request['public_key'])
+        rsa_key = PKCS1_OAEP.new(rsa_key)
 
-            password_rsaed = rsa_key.encrypt(password)
-            password_rsaed = bytes2hexstr(password_rsaed)
+        password_rsaed = rsa_key.encrypt(password)
+        password_rsaed = bytes2hexstr(password_rsaed)
 
-            frame = Frame(
-                action='public_key_response',
-                content=dict(
-                    public_key=public_key_encrypted,
-                    from_username=args.username,
-                    password=password_rsaed
-                ),
-                mime_type='application/json'
-            )
+        frame = Frame(
+            action='public_key_response',
+            content=dict(
+                public_key=public_key_encrypted,
+                from_username=args.username,
+                password=password_rsaed
+            ),
+            mime_type='application/json'
+        )
 
-            ipcache = IPCache(user)
-            (ip, port) = ipcache.get_ip_port(request['from_username'])
+        ipcache = IPCache(user)
+        (ip, port) = ipcache.get_ip_port(request['from_username'])
 
-            frame_response = send_frame(frame, ip, port)
-            pprint.pprint(frame_response)
+        frame_response = send_frame(frame, ip, port)
+        pprint.pprint(frame_response)
 
-            # TODO JHILL: delete the file if it's all good?
+        # TODO JHILL: delete the file if it's all good?
 
 
 def massage_args():
