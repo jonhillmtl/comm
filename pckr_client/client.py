@@ -2,7 +2,7 @@ from .surface import Surface
 from .frame import Frame
 from .ipcache import IPCache
 from .user import User
-from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port, str2hashed_hexstr
+from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, get_user_ip_port, str2hashed_hexstr, command_header
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -404,6 +404,7 @@ def main():
         error_exit("{} is unimplemented".format(command))
 
     massage_args()
+    print(command_header(command, args))
 
     if check_user_exists is True:
         user = User(args.username)
@@ -413,3 +414,7 @@ def main():
             globals()[command]()
     else:
         globals()[command]()
+
+    print("\n")
+    print(colored("*" * 100, "yellow"))
+    print("\n")

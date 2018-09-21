@@ -5,9 +5,16 @@ import os
 import blowfish
 import binascii
 import hashlib
+from termcolor import colored
 
+def command_header(action, args):
+    return colored("{}\n*\n* {}\n*\n{}\n*\n{}\n\n".format(
+        "*" * 100,
+        action,
+        "\n".join(["* {}: {}".format(k, v) for k, v in vars(args).items()]),
+        "*" * 100
+    ), "blue")
 
-    
 
 def split_contents(contents, split_size=4096*2):
     splits = []
