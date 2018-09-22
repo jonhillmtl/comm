@@ -32,6 +32,7 @@ def init_user(args):
 def challenge_user_pk(args):
     user = User(args.username)
     result = user.challenge_user_pk(args.u2)
+
     if result:
         print(colored("good", "green"))
     else:
@@ -109,7 +110,7 @@ def add_ipcache(args):
 
 def remove_ipcache(args):
     user = User(args.username)
-    user.remove_ip_contact_port(args.u2)
+    user.remove_contact_ip_port(args.u2)
     print(user.ipcache)
 
 

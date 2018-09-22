@@ -7,6 +7,7 @@ from ..frame import Frame
 from termcolor import colored
 
 import binascii
+import datetime
 import json
 import os
 import socket
@@ -146,16 +147,21 @@ class SocketThread(threading.Thread):
         return dict(success=True, message_id=request['message_id'])
 
     def _receive_challenge_user_pk(self, request):
-        decrypted = decrypt_rsa(
-            hexstr2bytes(request['payload']['challenge_text']),
-            self.user.private_key_text
-        )
+        try:
+            decrypted = decrypt_rsa(
+                hexstr2bytes(request['payload']['challenge_text']),
+                self.user.private_key_text
+            )
 
-        return dict(
-            success=True,
-            decrypted_challenge=decrypted.decode()
-        )
-
+            return dict(
+                success=True,
+                decrypted_challenge=decrypted.decode()
+            )
+        except ValueError:
+            return dict(
+                success=False,
+                error="that isn't my public key apparently"
+            )
     def _receive_challenge_user_has_pk(self, request):
         # TODO JHILL: obviously this could fail if we don't know their public_key
         # TODO JHILL: also be more careful about charging into dictionaries
@@ -287,7 +293,7 @@ class SocketThread(threading.Thread):
         print(seek_token_data)
         if seek_token_data['seek_token'] == seek_token_decrypted:
             self.user.set_contact_ip_port(host_info['username'], host_info['ip'], int(host_info['port']))
-
+            os.remove(seek_token_path)
             return dict(
                 success=True,
                 message_id=request['message_id']
@@ -369,21 +375,39 @@ class SeekUsersThread(threading.Thread):
         self.user = user
 
     def run(self):
+        time.sleep(10)
         while True:
-            self._seek_users()
-            time.sleep(random.randint(60, 120))
+            success, interval = self._seek_users()
+            time.sleep(random.randint(interval, interval * 2))
 
     def _seek_users(self):
-        path = os.path.join(self.user.path, "current_ip_port.json")
-        with open(path, "r") as f:
-            current_ip_port = json.loads(open(path).read())
+        for k in self.user.ipcache.keys():
+            challenge = self.user.challenge_user_pk(k)
 
-        for k, v in self.user.ipcache.items():
-            public_key_text = self.user.get_contact_public_key(k)
-            if public_key_text is not None:
+            if challenge is True:
+                print("she was there all along")
+                return True, 5
+            else:
+                print("can't find her so we'll remove and seek")
+                # self.user.remove_contact_ip_port(k)
                 self.user.seek_user(k)
 
-        return True
+        # TODO JHILL: take them out of the ip cache.... but they should be in here
+        # will also need to remove the seek token file if we do it this way
+        # after the token has been used
+        # TODO JHILL: attach file dates to all of the seek tokens,
+        # and reseek people if it's been more than 2 or 3 minutes since we started
+        for st in self.user.seek_tokens:
+            print("gonna seek?", st)
+            sleep_time = (datetime.datetime.now() - st['modified_at']).total_seconds()
+            print(sleep_time)
+            if  sleep_time > 5:
+                print("yes")
+                self.user.seek_user(st['username'])
+            else:
+                print("not yet")
+
+        return True, 5
 
 class SurfaceUserThread(threading.Thread):
     user = None

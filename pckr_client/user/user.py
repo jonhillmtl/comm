@@ -73,14 +73,6 @@ class User(object):
     def message_keys_path(self):
         return os.path.join(self.path, "message_keys")
 
-    @property
-    def ipcache_path(self):
-        return os.path.join(self.path, "ipcache")
-
-    @property
-    def seek_tokens_path(self):
-        return os.path.join(self.path, "seek_tokens")
-
     def pulse_network(self, custody_chain=[]):
         custody_chain.append(str2hashed_hexstr(self.username))
 
@@ -123,21 +115,37 @@ class User(object):
 
                 response = send_frame_users(
                     frame,
-                    self.user,
+                    self,
                     k
                 )
 
         return True
 
+    #----------------------------------------------------------------------------------------
+    #
+    # public_key_request 
+    # public_key_requests
+    #
+    #-----------------------------------------------------------------------------------------
+    @property
+    def seek_tokens_path(self):
+        return os.path.join(self.path, "seek_tokens")
+
+    @property
+    def seek_tokens(self):
+        sts = []
+        for sd in os.listdir(self.seek_tokens_path):
+            path = os.path.join(self.seek_tokens_path, sd)
+            sts.append(dict(
+                username=sd.split('.')[0],
+                modified_at=datetime.datetime.fromtimestamp(os.path.getmtime(path)))
+            )
+        return sts
+
     def seek_user(self, u2):
         public_key_text = self.get_contact_public_key(u2)
         if public_key_text is None:
-            print(colored("public_key for {} not found, can't seek_user".format(u2), "red"))
-            return
-
-        path = os.path.join(self.path, "current_ip_port.json")
-        with open(path, "r") as f:
-            current_ip_port = json.loads(open(path).read())
+            return False
 
         seek_token = str(uuid.uuid4())
         seek_token_path = os.path.join(self.seek_tokens_path, "{}.json".format(u2))
@@ -147,8 +155,8 @@ class User(object):
             ))
 
         host_info = dict(
-            ip=current_ip_port['ip'],
-            port=current_ip_port['port'],
+            ip=self.current_ip_port['ip'],
+            port=self.current_ip_port['port'],
             public_key=self.public_key_text,
             from_username=self.username,
             seek_token=seek_token
@@ -164,7 +172,6 @@ class User(object):
 
         # send the message out to everyone we know
         for k in self.ipcache.keys():
-
             frame = Frame(content=dict(
                 host_info=encrypted_host_info,
                 password=password_encrypted,
@@ -236,7 +243,7 @@ class User(object):
             )
 
             response = send_frame_users(frame, self, u2)
-            if response['decrypted_challenge'] == challenge_text:
+            if response['success'] is True and response['decrypted_challenge'] == challenge_text:
                 return True
 
         return False
@@ -338,8 +345,6 @@ class User(object):
     def remove_public_key_request(self, request):
         request_path = os.path.join(self.public_key_requests_path, request['from_username'], 'request.json')
         if os.path.exists(request_path):
-            print("!"*100)
-            print("removing", request_path)
             os.remove(request_path)
             return True
         else:
@@ -404,19 +409,34 @@ class User(object):
     def remove_public_key_response(self, response):
         response_path = os.path.join(self.public_key_responses_path, response['from_username'], 'response.json')
         if os.path.exists(response_path):
-            print("!"*100)
-            print("removing", response_path)
             os.remove(response_path)
-            return True
+
         else:
-            print("PATH NOT FOUND")
-            return False
-    
+            assert False
+
+        return True
+
+    #----------------------------------------------------------------------------------------
+    #
+    # public_key_response
+    # public_key_responses
+    #
+    #-----------------------------------------------------------------------------------------
+    @property
+    def ipcache_path(self):
+        return os.path.join(self.path, "ipcache")
+
     @property
     def ipcache(self):
-        return self.ipcache_data
+        try:
+            path = os.path.join(self.ipcache_path, "cache.json")
+            return json.loads(open(path).read())
+        except json.decoder.JSONDecodeError:
+            return dict()
+        except FileNotFoundError:
+            return dict()
 
-    def remove_ip_contact_port(self, username):
+    def remove_contact_ip_port(self, username):
         try:
             del self.ipcache_data[username]
         except KeyError:
@@ -424,11 +444,13 @@ class User(object):
 
         path = os.path.join(self.ipcache_path, "cache.json")
         with open(path, "w+") as f:
-            f.write(json.dumps(self.data))
+            f.write(json.dumps(self.ipcache_data))
+
+        return True
 
     def get_contact_ip_port(self, username):
         try:
-            return (self.ipcache_data[username]['ip'], self.ipcache_data[username]['port'])
+            return (self.ipcache[username]['ip'], self.ipcache[username]['port'])
         except KeyError:
             return None, None
 
@@ -441,3 +463,5 @@ class User(object):
         path = os.path.join(self.ipcache_path, "cache.json")
         with open(path, "w+") as f:
             f.write(json.dumps(self.ipcache_data))
+
+        return True
