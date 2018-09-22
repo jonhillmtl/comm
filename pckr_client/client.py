@@ -2,7 +2,9 @@ from .surface import Surface, SurfaceUserThread, SeekUsersThread
 from .frame import Frame
 from .ipcache import IPCache
 from .user import User
-from .utilities import send_frame, encrypt_symmetric, hexstr2bytes, bytes2hexstr, str2hashed_hexstr, command_header
+from .utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
+from .utilities import encrypt_rsa, encrypt_symmetric
+from .utilities import command_header, send_frame
 
 from Crypto.PublicKey import RSA 
 from termcolor import colored
@@ -15,6 +17,7 @@ import pprint
 import uuid
 import sys
 import json
+
 
 def init_user(args):
     user = User(args.username)
@@ -108,13 +111,13 @@ def surface_user(args):
     print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
 
     surface_user_thread = SurfaceUserThread(user)
-    # surface_user_thread.start()
+    surface_user_thread.start()
 
     seek_users_thread = SeekUsersThread(user)
-    # seek_users_thread.start()
+    seek_users_thread.start()
     
-    #seek_users_thread.join()
-    #surface_user_thread.join()
+    seek_users_thread.join()
+    surface_user_thread.join()
     surface.join()
 
 
@@ -170,20 +173,18 @@ def send_message(args):
         with open(args.filename, "r") as f:
             content = f.read()
 
-    encryption_key = str(uuid.uuid4())
+    password = str(uuid.uuid4())
     message_id = str(uuid.uuid4())
-
-    rsa_key = RSA.importKey(public_key_text)
-    rsa_key = PKCS1_OAEP.new(rsa_key)
-    payload_content = rsa_key.encrypt(encryption_key.encode())
-    payload_content = dict(password=bytes2hexstr(payload_content))
+    password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
 
     ipcache = IPCache(user)
     ip, port = ipcache.get_ip_port(args.u2)
 
     key_frame = Frame(
         action='send_message_key',
-        content=payload_content,
+        content=dict(
+            password=password_encrypted
+        ),
         message_id=message_id
     )
     send_frame(key_frame, ip=ip, port=port)
@@ -220,22 +221,10 @@ def process_public_key_requests(args):
         print(request)
         print("request_public_key message from: {}".format(request['from_username']))
 
-        # TODO JHILL: make this actually unique
-        password = b'abcdefghijkl'
+        password = str(uuid.uuid4())
+        password_rsaed = bytes2hexstr(encrypt_rsa(password, request['public_key']))
 
-        # TODO JHILL: this is available on the user object now
-        public_key_path = os.path.expanduser(os.path.join("~/pckr/", args.username, "public.key"))
-        public_key_text = open(public_key_path).read()
-
-        public_key_encrypted = encrypt_symmetric(public_key_text, password)
-        public_key_encrypted = bytes2hexstr(public_key_encrypted)
-
-        # TODO JHILL: put in utilities file now
-        rsa_key = RSA.importKey(request['public_key'])
-        rsa_key = PKCS1_OAEP.new(rsa_key)
-
-        password_rsaed = rsa_key.encrypt(password)
-        password_rsaed = bytes2hexstr(password_rsaed)
+        public_key_encrypted = bytes2hexstr(encrypt_symmetric(user.public_key_text, password))
 
         frame = Frame(
             action='public_key_response',

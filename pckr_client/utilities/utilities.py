@@ -7,6 +7,10 @@ import binascii
 import hashlib
 from termcolor import colored
 
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
+from Crypto.PublicKey import RSA 
+
 def command_header(action, args):
     return colored("{}\n*\n* {}\n*\n{}\n*\n{}\n\n".format(
         "*" * 100,
@@ -50,6 +54,13 @@ def pad_content(content):
         padder = b' '
     content = content + (padder * (16 - (len(content) % 16)))
     return content
+
+
+def encrypt_rsa(content, public_key_text):
+    if type(content) == str:
+        content = content.encode()
+
+    return PKCS1_OAEP.new(RSA.importKey(public_key_text)).encrypt(content)
 
 
 def encrypt_symmetric(content, password):

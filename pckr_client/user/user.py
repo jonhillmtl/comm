@@ -1,12 +1,17 @@
-import os
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
-from ..utilities import normalize_path, decrypt_symmetric, hexstr2bytes, bytes2hexstr, encrypt_symmetric, str2hashed_hexstr, send_frame
-import json
-import binascii
-import uuid
-from ..ipcache import IPCache
 from ..frame import Frame
+from ..ipcache import IPCache
+from ..utilities import command_header, send_frame, normalize_path
+from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric
+from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
+
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
+
+import binascii
+import json
+import os
+import uuid
+
 
 USER_ROOT = "~/pckr/"
 
@@ -141,10 +146,7 @@ class User(object):
         )
 
         password = str(uuid.uuid4())
-        rsa_key = RSA.importKey(public_key_text)
-        rsa_key = PKCS1_OAEP.new(rsa_key)
-        password_encrypted = rsa_key.encrypt(password.encode())
-        password_encrypted = bytes2hexstr(password_encrypted)
+        password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
 
         encrypted_host_info = bytes2hexstr(encrypt_symmetric(
             json.dumps(host_info).encode(),

@@ -1,5 +1,7 @@
 from ..user import User
-from ..utilities import hexstr2bytes, str2hashed_hexstr, encrypt_symmetric, decrypt_symmetric, bytes2hexstr, send_frame
+from ..utilities import command_header, send_frame, normalize_path
+from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric
+from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
 from ..ipcache import IPCache
 
@@ -48,11 +50,7 @@ class SocketThread(threading.Thread):
             host_info = json.loads(decrypted_text)
 
             password = str(uuid.uuid4())
-            rsa_key = RSA.importKey(host_info['public_key'])
-            rsa_key = PKCS1_OAEP.new(rsa_key)
-
-            password_encrypted = rsa_key.encrypt(password.encode())
-            password_encrypted = bytes2hexstr(password_encrypted)
+            password_encrypted = bytes2hexstr(encrypt_rsa(password, host_info['public_key']))
 
             path = os.path.join(self.user.path, "current_ip_port.json")
             data = json.loads(open(path).read())
@@ -158,20 +156,14 @@ class SocketThread(threading.Thread):
 
 
     def _receive_challenge_user(self, request):
-        # TODO JHILL: move this somewhere
         # TODO JHILL: obviously this could fail if we don't know their public_key
         # TODO JHILL: also be more careful about charging into dictionaries
-        public_key = self.user.get_contact_public_key(request["payload"]["from_username"])
+        public_key_text = self.user.get_contact_public_key(request["payload"]["from_username"])
 
-        if public_key is None:
+        if public_key_text is None:
             return dict(success=False, error="we don't have the asking users public_key so this won't work at all")
         else:
-            # TODO JHILL: check if the file exists, don't just charge through it
-            rsa_key = RSA.importKey(public_key)
-            rsa_key = PKCS1_OAEP.new(rsa_key)
-
-            challenge_rsaed = rsa_key.encrypt(request["payload"]["challenge_text"].encode())
-            challenge_rsaed = bytes2hexstr(challenge_rsaed)
+            challenge_rsaed = bytes2hexstr(encrypt_rsa(request["payload"]["challenge_text"], public_key_text))
 
             return dict(
                 success=True,
@@ -406,13 +398,8 @@ class SurfaceUserThread(threading.Thread):
         for k, v in ipcache.data.items():
             public_key_text = self.user.get_contact_public_key(k)
             if public_key_text is not None:
-                # TODO JHILL: put this somewhere else
-                # and really clean up the public key thing, please
                 password = str(uuid.uuid4())
-                rsa_key = RSA.importKey(public_key_text)
-                rsa_key = PKCS1_OAEP.new(rsa_key)
-                password_encrypted = rsa_key.encrypt(password.encode())
-                password_encrypted = bytes2hexstr(password_encrypted)
+                password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
 
                 host_info = dict(
                     from_username=self.user.username,
