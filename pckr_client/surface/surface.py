@@ -195,7 +195,7 @@ class SocketThread(threading.Thread):
             os.makedirs(path)
         path = os.path.join(path, meta['filename'])
 
-        with open(path, "w+") as f:
+        with open(path, "a+") as f:
             f.write(request['payload']['content'])
 
         return dict(
@@ -225,6 +225,7 @@ class SocketThread(threading.Thread):
 
         content = open(path).read()
 
+        path = path
         if is_binary(term['mime_type']):
             content_decrypted = decrypt_symmetric(
                 hexstr2bytes(content),
@@ -243,6 +244,7 @@ class SocketThread(threading.Thread):
             with open(path, "w+") as f:
                 f.write(content_decrypted)
 
+        print("wrote to", path)
         return dict(
             success=True
         )

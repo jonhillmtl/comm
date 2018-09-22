@@ -58,7 +58,8 @@ class Message(object):
             action='send_message_key',
             payload=payload
         )
-        send_frame_users(key_frame, self.user, self.u2)
+        response = send_frame_users(key_frame, self.user, self.u2)
+        print("send_message_key", response)
 
         return True
 
@@ -95,6 +96,8 @@ class Message(object):
         ))
 
         content_splits = split_contents(encrypted_content)
+        print(len(content_splits))
+
         for index, content_split in enumerate(content_splits):
             frame = Frame(
                 action='send_message',
@@ -105,7 +108,7 @@ class Message(object):
                 )
             )
             response = send_frame_users(frame, self.user, self.u2)
-            print(response)
+            print("send_message", index, response)
 
         return True
 
@@ -141,7 +144,11 @@ class Message(object):
             action='send_message_term',
             payload=payload
         )
-        send_frame_users(term_frame, self.user, self.u2)
+
+        response = send_frame_users(term_frame, self.user, self.u2)
+        print("send_frame_term", response)
+
+        return True
 
     def send(self):
         self._send_key()
