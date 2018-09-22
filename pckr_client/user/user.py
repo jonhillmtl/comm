@@ -45,6 +45,14 @@ class User(object):
         return os.path.join(self.path, "private.key")
 
     @property
+    def current_ip_port(self):
+        # TODO JHILL: memoize
+        try:
+            return json.loads(open(os.path.join(self.path, "current_ip_port.json")).read())
+        except FileNotFoundError:
+            return None
+
+    @property
     def private_key_text(self):
         return open(self.private_key_path).read()
 
@@ -78,6 +86,41 @@ class User(object):
                 ), action='pulse_network')
 
                 response = send_frame(frame, ip, port)
+
+        return True
+
+    def surface(self):
+        ipcache = IPCache(self)
+        for k, v in ipcache.data.items():
+            public_key_text = self.get_contact_public_key(k)
+            if public_key_text is not None:
+                password = str(uuid.uuid4())
+                password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
+
+                host_info = dict(
+                    from_username=self.username,
+                    ip=self.current_ip_port['ip'],
+                    port=int(self.current_ip_port['port'])
+                )
+
+                host_info_encrypted = bytes2hexstr(encrypt_symmetric(
+                    json.dumps(host_info).encode(),
+                    password.encode()
+                ))
+
+                frame = Frame(
+                    content=dict(
+                        password=password_encrypted,
+                        host_info=host_info_encrypted
+                    ),
+                    action='surface_user'
+                )
+
+                response = send_frame(
+                    frame,
+                    v['ip'],
+                    int(v['port'])
+                )
 
         return True
 

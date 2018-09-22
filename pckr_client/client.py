@@ -289,11 +289,10 @@ def main():
     check_user_exists = True
     if command == 'init_user':
         check_user_exists = False
-        pass
-    
+
     elif command == 'seek_user':
         argparser.add_argument("--u2", required=True)
-        
+
     elif command == 'surface_user':
         argparser.add_argument("--port", type=int, required=False, default=8050)
 
@@ -340,13 +339,14 @@ def main():
     args = massage_args(argparser)
     print(command_header(command, args))
 
+    run_command = True
     if check_user_exists is True:
         user = User(args.username)
         if user.exists is False:
             print(colored("user {} does not exist".format(args.username), "red"))
-        else:
-            globals()[command](args)
-    else:
+            run_command = False
+
+    if run_command:
         globals()[command](args)
 
     print("\n")

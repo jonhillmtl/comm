@@ -394,48 +394,7 @@ class SurfaceUserThread(threading.Thread):
         self.user = user
 
     def run(self):
-        return
-        while True:
-            self._surface_user()
-            time.sleep(random.randint(60, 120))
-
-    def _surface_user(self):
-        path = os.path.join(self.user.path, "current_ip_port.json")
-        with open(path, "r") as f:
-            current_ip_port = json.loads(open(path).read())
-
-        ipcache = IPCache(self.user)
-        for k, v in ipcache.data.items():
-            public_key_text = self.user.get_contact_public_key(k)
-            if public_key_text is not None:
-                password = str(uuid.uuid4())
-                password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
-
-                host_info = dict(
-                    from_username=self.user.username,
-                    ip=current_ip_port['ip'],
-                    port=int(current_ip_port['port'])
-                )
-
-                host_info_encrypted = bytes2hexstr(encrypt_symmetric(
-                    json.dumps(host_info).encode(),
-                    password.encode()
-                ))
-
-                frame = Frame(
-                    content=dict(
-                        password=password_encrypted,
-                        host_info=host_info_encrypted
-                    ),
-                    action='surface_user'
-                )
-
-                response = send_frame(
-                    frame,
-                    v['ip'],
-                    int(v['port'])
-                )
-
+        self.user.surface()
         return True
 
 
