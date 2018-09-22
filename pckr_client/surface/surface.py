@@ -1,5 +1,5 @@
 from ..user import User
-from ..utilities import command_header, send_frame, send_frame_users, normalize_path
+from ..utilities import command_header, send_frame_users, normalize_path
 from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
@@ -91,10 +91,14 @@ class SocketThread(threading.Thread):
                 action='seek_user_response',
                 content=response_dict
             )
+            
+            self.user.set_contact_ip_port(
+                host_info['from_username'],
+                host_info['ip'],
+                int(host_info['port'])
+            )
+            response = send_frame_users(frame, self.user, host_info['from_username'])
 
-            response = send_frame(frame, host_info['ip'], int(host_info['port']))
-
-            # TODO JHILL: we can also put that host_info into our own ipcache...
             responded = True
 
         except ValueError as e:

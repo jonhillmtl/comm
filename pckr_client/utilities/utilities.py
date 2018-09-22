@@ -105,25 +105,6 @@ def normalize_path(path):
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
 
-# TODO JHILL: modify it to take the username and gather it by itself.... also to throw a top-level error
-# if we can't connect... something that says they are offline and we should try again soon
-# also, we should cache this... and maybe ask for the cache of everyone in our "buddy list"
-# when we boot up.... if the cache goes stale we can just exit and tell the user to try again in a minute
-# after we refresh the cache
-def send_frame(frame, ip, port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    try:
-        sock.connect((ip.strip(), int(port)))
-        frame_str = str(frame).encode()
-        len_sent = sock.send(frame_str)
-        assert len_sent == len(frame_str)
-        response = json.loads(sock.recv(4096).decode())
-        sock.close()
-        return response
-    except ConnectionRefusedError:
-        return dict(success=False, error="connection refused")
-
 def send_frame_users(frame, u1, u2):
     ip, port = u1.get_contact_ip_port(u2)
     if ip and port:

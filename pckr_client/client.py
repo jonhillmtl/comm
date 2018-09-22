@@ -3,7 +3,7 @@ from .frame import Frame
 from .user import User
 from .utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from .utilities import encrypt_rsa, encrypt_symmetric, decrypt_rsa
-from .utilities import command_header, send_frame, send_frame_users
+from .utilities import command_header, send_frame_users
 
 from termcolor import colored
 
@@ -120,14 +120,10 @@ def seek_user(args):
 
 def ping_user(args):
     user = User(args.username)
-    (ip, port) = user.get_contact_ip_port(args.u2)
+    frame = Frame(content=dict(), action="ping")
+    response = send_frame_users(frame, user, args.u2)
+    pprint.pprint(response, indent=4)
 
-    if ip and port:
-        frame = Frame(content=dict(), action="ping")
-        response = send_frame(frame, ip, port)
-        pprint.pprint(response, indent=4)
-    else:
-        print(colored("we don't know the ip of {}".format(args.u2), "red"))
 
 def send_message(args):
     import time

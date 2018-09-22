@@ -1,5 +1,5 @@
 from ..frame import Frame
-from ..utilities import command_header, send_frame, send_frame_users, normalize_path
+from ..utilities import command_header, send_frame_users, normalize_path
 from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric, decrypt_rsa, generate_rsa_pub_priv
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 
@@ -84,21 +84,19 @@ class User(object):
     def pulse_network(self, custody_chain=[]):
         custody_chain.append(str2hashed_hexstr(self.username))
 
-        for k, v in self.ipcache.items():
+        for k in self.ipcache.keys():
             hashed_username = str2hashed_hexstr(k)
             if hashed_username not in custody_chain:
-                ip, port = v['ip'], v['port']
-
                 frame = Frame(content=dict(
                     custody_chain=custody_chain
                 ), action='pulse_network')
 
-                response = send_frame(frame, ip, port)
+                response = send_frame_users(frame, self, k)
 
         return True
 
     def surface(self):
-        for k, v in self.ipcache.items():
+        for k in self.ipcache.keys():
             public_key_text = self.get_contact_public_key(k)
             if public_key_text is not None:
                 password = str(uuid.uuid4())
@@ -123,10 +121,10 @@ class User(object):
                     action='surface_user'
                 )
 
-                response = send_frame(
+                response = send_frame_users(
                     frame,
-                    v['ip'],
-                    int(v['port'])
+                    self.user,
+                    k
                 )
 
         return True
@@ -165,8 +163,7 @@ class User(object):
         ))
 
         # send the message out to everyone we know
-        for k, v in self.ipcache.items():
-            ip, port = v['ip'], v['port']
+        for k in self.ipcache.keys():
 
             frame = Frame(content=dict(
                 host_info=encrypted_host_info,
@@ -174,7 +171,7 @@ class User(object):
                 custody_chain=[str2hashed_hexstr(self.username)]
             ), action='seek_user')
 
-            response = send_frame(frame, ip, port)
+            response = send_frame_users(frame, self, k)
 
         return True
 
