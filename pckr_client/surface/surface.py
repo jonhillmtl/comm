@@ -1,5 +1,5 @@
 from ..user import User
-from ..utilities import command_header, send_frame_users, normalize_path
+from ..utilities import command_header, send_frame_users, normalize_path, is_binary
 from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
@@ -90,7 +90,7 @@ class SocketThread(threading.Thread):
             # now send back a response
             frame = Frame(
                 action='seek_user_response',
-                content=response_dict
+                payload=response_dict
             )
             
             self.user.set_contact_ip_port(
@@ -121,8 +121,7 @@ class SocketThread(threading.Thread):
                 if hashed_username not in request['payload']['custody_chain']:
                     frame = Frame(
                         action=request['action'],
-                        message_id=request['message_id'],
-                        content=request['payload'],
+                        payload=request['payload'],
                     )
                     response = send_frame_users(frame, self.user, k)
                     count = count + 1
@@ -138,13 +137,13 @@ class SocketThread(threading.Thread):
         # TODO JHILL: make this nicer
         return dict(
             success=True,
-            message_id=request['message_id']
+            frame_id=request['frame_id']
         )
 
 
     def _receive_public_key_response(self, request):
         self.user.store_public_key_response(request) 
-        return dict(success=True, message_id=request['message_id'])
+        return dict(success=True, frame_id=request['frame_id'])
 
     def _receive_challenge_user_pk(self, request):
         try:
@@ -162,6 +161,7 @@ class SocketThread(threading.Thread):
                 success=False,
                 error="that isn't my public key apparently"
             )
+
     def _receive_challenge_user_has_pk(self, request):
         # TODO JHILL: obviously this could fail if we don't know their public_key
         # TODO JHILL: also be more careful about charging into dictionaries
@@ -179,53 +179,99 @@ class SocketThread(threading.Thread):
 
 
     def _receive_send_message(self, request):
-        # TODO JHILL: definitely put this all away behind a message object
-        print(request)
-
-        # TODO JHILL: get the key from the user object?
-        # TODO JHILL: a function to just get a message key?
-        if request['payload']['mime_type'] == 'image/png':
-            filename = "out.png"
-        else:
-            filename = "out.txt"
-
-        # TODO JHILL: make this better.... maybe have a transfer facade?
-        path = os.path.join(self.user.messages_path, request['message_id'])
-        if not os.path.exists(path):
-            os.makedirs(path)
-        path = os.path.join(path, filename)
-
-        # TODO JHILL: obviously split the handling on binary or not, mime_types!
-        # and yeah this would be as good a time as any to introduce a transfer object
-        if payload['mime_type'] == 'image/png':
-            with open(path, "ab+") as f:
-                f.write(hexstr2bytes(request['payload']['content']))
-        else:
-            with open(path, "a+") as f:
-                f.write(payload['content'])
-
-        return dict(
-            success=True,
-            filename=path
+        password_decrypted = decrypt_rsa(
+            hexstr2bytes(request['payload']['password']),
+            self.user.private_key_text
+        )
+        
+        meta_decrypted = decrypt_symmetric(
+            hexstr2bytes(request['payload']['meta']),
+            password_decrypted
         )
 
-    def _receive_send_message_key(self, request):
-        # TODO JHILL: hide this all in the user object or a message object?
-        payload_data = decrypt_rsa(
+        meta = json.loads(meta_decrypted)
+        path = os.path.join(self.user.messages_path, meta['message_id'])
+        if not os.path.exists(path):
+            os.makedirs(path)
+        path = os.path.join(path, meta['filename'])
+
+        with open(path, "w+") as f:
+            f.write(request['payload']['content'])
+
+        return dict(
+            success=True
+        )
+
+    def _receive_send_message_term(self, request):
+        password_decrypted = decrypt_rsa(
             hexstr2bytes(request['payload']['password']),
             self.user.private_key_text
         )
 
-        key_path = os.path.join(self.user.message_keys_path, request['message_id'])
+        term_decrypted = decrypt_symmetric(
+            hexstr2bytes(request['payload']['term']),
+            password_decrypted
+        )
+
+        term = json.loads(term_decrypted)
+
+        key = None
+        key_path = os.path.join(self.user.message_keys_path, term['message_id'])
+        with open(os.path.join(key_path, "key.json"), "r") as f:
+            key = json.loads(f.read())
+
+        path = os.path.join(self.user.messages_path, term['message_id'])
+        path = os.path.join(path, term['filename'])
+
+        content = open(path).read()
+
+        if is_binary(term['mime_type']):
+            content_decrypted = decrypt_symmetric(
+                hexstr2bytes(content),
+                key['password'],
+                decode=False
+            )
+
+            with open(path, "wb+") as f:
+                f.write(content_decrypted)
+        else:
+            content_decrypted = decrypt_symmetric(
+                hexstr2bytes(content),
+                key['password']
+            )
+
+            with open(path, "w+") as f:
+                f.write(content_decrypted)
+
+        return dict(
+            success=True
+        )
+
+    def _receive_send_message_key(self, request):
+        print(request)
+
+        password_decrypted = decrypt_rsa(
+            hexstr2bytes(request['payload']['password']),
+            self.user.private_key_text
+        )
+
+        key_decrypted = decrypt_symmetric(
+            hexstr2bytes(request['payload']['key']),
+            password_decrypted
+        )
+
+        key = json.loads(key_decrypted)
+
+        key_path = os.path.join(self.user.message_keys_path, key['message_id'])
         if not os.path.exists(key_path):
             os.makedirs(key_path)
 
         with open(os.path.join(key_path, "key.json"), "w+") as f:
-            f.write(json.dumps(payload_data['content']))
+            f.write(json.dumps(key))
 
         return dict(
             success=True,
-            message_id=request['message_id']
+            frame_id=request['frame_id']
         )
 
     def _receive_surface_user(self, request):
@@ -296,7 +342,7 @@ class SocketThread(threading.Thread):
             os.remove(seek_token_path)
             return dict(
                 success=True,
-                message_id=request['message_id']
+                frame_id=request['frame_id']
             )
         else:
             return dict(
@@ -325,6 +371,8 @@ class SocketThread(threading.Thread):
             return self._receive_send_message(request_data)
         elif request_data['action'] == 'send_message_key':
             return self._receive_send_message_key(request_data)
+        elif request_data['action'] == 'send_message_term':
+            return self._receive_send_message_term(request_data)
         elif request_data['action'] == 'request_public_key':
             return self._receive_request_public_key(request_data)
         elif request_data['action'] == 'public_key_response':
@@ -386,7 +434,7 @@ class SeekUsersThread(threading.Thread):
 
             if challenge is True:
                 print("she was there all along")
-                return True, 5
+                return True, 60
             else:
                 print("can't find her so we'll remove and seek")
                 # self.user.remove_contact_ip_port(k)
@@ -408,6 +456,7 @@ class SeekUsersThread(threading.Thread):
                 print("not yet")
 
         return True, 5
+
 
 class SurfaceUserThread(threading.Thread):
     user = None

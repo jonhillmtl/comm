@@ -88,7 +88,7 @@ def encrypt_symmetric(content, password):
     return data_encrypted
 
 
-def decrypt_symmetric(content, password):
+def decrypt_symmetric(content, password, decode=True):
     if type(password) is not bytes:
         password = password.encode()
 
@@ -98,12 +98,18 @@ def decrypt_symmetric(content, password):
     cipher = blowfish.Cipher(password)
     data_decrypted = b"".join(cipher.decrypt_ecb(content))
 
-    return data_decrypted.decode().strip()
+    if decode:
+        return data_decrypted.decode()
+    else:
+        return data_decrypted
 
 
 def normalize_path(path):
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
+
+def is_binary(mt):
+    return mt in ['image/png']
 
 def send_frame_users(frame, u1, u2):
     ip, port = u1.get_contact_ip_port(u2)

@@ -4,6 +4,7 @@ from .user import User
 from .utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from .utilities import encrypt_rsa, encrypt_symmetric, decrypt_rsa
 from .utilities import command_header, send_frame_users
+from .message import Message
 
 from termcolor import colored
 
@@ -52,7 +53,7 @@ def request_public_key(args):
     user = User(args.username)
 
     frame = Frame(
-        content=dict(
+        payload=dict(
             from_username=args.username,
             public_key=user.public_key_text
         ), 
@@ -121,67 +122,22 @@ def seek_user(args):
 
 def ping_user(args):
     user = User(args.username)
-    frame = Frame(content=dict(), action="ping")
+    frame = Frame(payload=dict(), action="ping")
     response = send_frame_users(frame, user, args.u2)
     pprint.pprint(response, indent=4)
 
 
 def send_message(args):
-    import time
-    t = time.time()
-    
-    # TODO JHILL: challenge the user first
-    # TODO JHILL: ping the user first...
-    # and if it doesn't work take them out of the IP cache
     user = User(args.username)
-    public_key_text = user.get_contact_public_key(args.u2)
-    if public_key_text is None:
-        print(colored("public_key for {} not found, can't send message".format(args.u2), "red"))
-        sys.exit(1)
+    message = Message(
+        user,
+        args.filename,
+        args.mime_type,
+        args.u2
+    )
 
-    # TODO JHILL: Put this into a transfer object
-    if args.mime_type == "image/png":
-        with open(args.filename, "rb") as f:
-            content = f.read()
-    else:
-        with open(args.filename, "r") as f:
-            content = f.read()
-
-    password = str(uuid.uuid4())
-    message_id = str(uuid.uuid4())
-    password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
-
-    ip, port = user.get_contact_ip_port(args.u2)
-    if ip and port:
-        key_frame = Frame(
-            action='send_message_key',
-            content=dict(
-                password=password_encrypted
-            ),
-            message_id=message_id
-        )
-        send_frame(key_frame, ip=ip, port=port)
-
-        ft = time.time()
-        encrypted_content = encrypt_symmetric(
-            content,
-            encryption_key.encode()
-        )
-
-        frames = Frame.make_frames(
-            bytes2hexstr(encrypted_content),
-            "send_message",
-            mime_type=args.mime_type,
-            message_id=message_id
-        )
-        print(time.time() -ft)
-
-        for frame in frames:
-            send_frame(frame, ip=ip, port=port)
-
-        print("sent {} megabytes in {} seconds".format(len(content) / 1024 * 1024, time.time() - t))
-    else:
-        print(colored("we don't know the ip of {}".format(args.u2)))
+    print(message)
+    message.send()
 
 def process_public_key_responses(args):
     user = User(args.username)

@@ -28,6 +28,9 @@ class User(object):
             except json.decoder.JSONDecodeError:
                 pass
         self.ipcache_data = ipcache_data
+    
+    def __str__(self):
+        return self.username
 
     @property
     def exists(self):
@@ -79,7 +82,7 @@ class User(object):
         for k in self.ipcache.keys():
             hashed_username = str2hashed_hexstr(k)
             if hashed_username not in custody_chain:
-                frame = Frame(content=dict(
+                frame = Frame(payload=dict(
                     custody_chain=custody_chain
                 ), action='pulse_network')
 
@@ -106,7 +109,7 @@ class User(object):
                 ))
 
                 frame = Frame(
-                    content=dict(
+                    payload=dict(
                         password=password_encrypted,
                         host_info=host_info_encrypted
                     ),
@@ -172,7 +175,7 @@ class User(object):
 
         # send the message out to everyone we know
         for k in self.ipcache.keys():
-            frame = Frame(content=dict(
+            frame = Frame(payload=dict(
                 host_info=encrypted_host_info,
                 password=password_encrypted,
                 custody_chain=[str2hashed_hexstr(self.username)]
@@ -235,7 +238,7 @@ class User(object):
             ))
 
             frame = Frame(
-                content=dict(
+                payload=dict(
                     from_username=self.username,
                     challenge_text=challenge_text_encrypted
                 ),
@@ -252,7 +255,7 @@ class User(object):
         challenge_text = str(uuid.uuid4())
 
         frame = Frame(
-            content=dict(
+            payload=dict(
                 from_username=self.username,
                 challenge_text=challenge_text
             ),
@@ -330,12 +333,11 @@ class User(object):
 
         frame = Frame(
             action='public_key_response',
-            content=dict(
+            payload=dict(
                 public_key=public_key_encrypted,
                 from_username=self.username,
                 password=password_rsaed
-            ),
-            mime_type='application/json'
+            )
         )
 
         frame_response = send_frame_users(frame, self, request['from_username'])
