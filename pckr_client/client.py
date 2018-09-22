@@ -16,12 +16,7 @@ import uuid
 import sys
 import json
 
-argparser = argparse.ArgumentParser()
-argparser.add_argument('command')
-args, _ = argparser.parse_known_args()
-
-
-def init_user():
+def init_user(args):
     user = User(args.username)
 
     if user.exists:
@@ -35,7 +30,7 @@ def init_user():
     return True
 
 
-def challenge_user():
+def challenge_user(args):
     user = User(args.username)
     challenge_text = str(uuid.uuid4())
 
@@ -66,7 +61,7 @@ def challenge_user():
         print(colored(response['error'], "red"))
 
 
-def request_public_key():
+def request_public_key(args):
     user = User(args.username)
 
     frame = Frame(
@@ -84,7 +79,7 @@ def request_public_key():
     pprint.pprint(response, indent=4)
 
 
-def surface_user():
+def surface_user(args):
     # TODO JHILL: verify the user exists, both here and on the server!
     surface = Surface(args.username, args.port)
     surface.start()
@@ -123,7 +118,7 @@ def surface_user():
     surface.join()
 
 
-def add_ipcache():
+def add_ipcache(args):
     user = User(args.username)
 
     ipcache = IPCache(user)
@@ -131,7 +126,7 @@ def add_ipcache():
     print(ipcache)
 
 
-def remove_ipcache():
+def remove_ipcache(args):
     user = User(args.username)
 
     ipcache = IPCache(user)
@@ -139,12 +134,12 @@ def remove_ipcache():
     print(ipcache)
 
 
-def seek_user():
+def seek_user(args):
     user = User(args.username)
     user.seek_user(args.u2)
 
 
-def ping_user():
+def ping_user(args):
     user = User(args.username)
     ipcache = IPCache(user)
     (ip, port) = ipcache.get_ip_port(args.u2)
@@ -154,7 +149,7 @@ def ping_user():
     pprint.pprint(response, indent=4)
 
 
-def send_message():
+def send_message(args):
     import time
     t = time.time()
     # TODO JHILL: ping the user first...
@@ -211,13 +206,13 @@ def send_message():
     print("sent {} megabytes in {} seconds".format(len(content) / 1024 * 1024, time.time() - t))
 
 
-def process_public_key_responses():
+def process_public_key_responses(args):
     user = User(args.username)
     for response in user.public_key_responses:
         user.process_public_key_response(response)
 
 
-def process_public_key_requests():
+def process_public_key_requests(args):
     user = User(args.username)
     for request in user.public_key_requests:
         print(request)
@@ -259,9 +254,7 @@ def process_public_key_requests():
         # TODO JHILL: delete the file if it's all good?
 
 
-def massage_args():
-    global args
-
+def massage_args(argparser):
     args = argparser.parse_args()
     if args.username is None:
         username = os.getenv('PCKR_USERNAME', None)
@@ -273,7 +266,7 @@ def massage_args():
             sys.exit(1)
 
     # then reparse them to grab any --username that might have been added
-    args = argparser.parse_args()
+    return argparser.parse_args()
 
 
 COMMANDS = [
@@ -307,7 +300,10 @@ COMMAND_ALIASES = dict(
 
 
 def main():
-    global args
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('command')
+    args, _ = argparser.parse_known_args()
+    
     command = args.command
     if command not in COMMANDS:
         alias_command = COMMAND_ALIASES.get(command, None)
@@ -365,7 +361,7 @@ def main():
     if command not in globals():
         error_exit("{} is unimplemented".format(command))
 
-    massage_args()
+    args = massage_args(argparser)
     print(command_header(command, args))
 
     if check_user_exists is True:
@@ -373,9 +369,9 @@ def main():
         if user.exists is False:
             print(colored("user {} does not exist".format(args.username), "red"))
         else:
-            globals()[command]()
+            globals()[command](args)
     else:
-        globals()[command]()
+        globals()[command](args)
 
     print("\n")
     print(colored("*" * 100, "yellow"))
