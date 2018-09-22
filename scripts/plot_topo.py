@@ -22,12 +22,14 @@ def main():
         print("-" * 100)
         print("user {}".format(user.username))
 
-        ipcache = json.loads(open(os.path.join(user.ipcache_path, 'cache.json')).read())
-        for k in sorted(ipcache.keys()):
-            v = ipcache[k]
-            G.add_edge(user.username, k)
-            public_key_text = user.get_contact_public_key(k)
-            has_pk = public_key_text != None
+        path = os.path.join(user.ipcache_path, 'cache.json')
+        if os.path.exists(path):
+            ipcache = json.loads(open(path).read())
+            for k in sorted(ipcache.keys()):
+                v = ipcache[k]
+                G.add_edge(user.username, k)
+                public_key_text = user.get_contact_public_key(k)
+                has_pk = public_key_text != None
 
     # write in UTF-8 encoding
     fh = open('edgelist.utf-8', 'wb')

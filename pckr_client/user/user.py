@@ -227,10 +227,12 @@ class User(object):
         ipcache = IPCache(self)
         (ip, port) = ipcache.get_ip_port(request['from_username'])
 
-        frame_response = send_frame(frame, ip, port)
-        pprint.pprint(frame_response)
-
-        return True
+        if ip and port:
+            frame_response = send_frame(frame, ip, port)
+            pprint.pprint(frame_response)
+            return True
+        else:
+            return False
 
     def remove_public_key_request(self, request):
         request_path = os.path.join(self.public_key_requests_path, request['from_username'], 'request.json')

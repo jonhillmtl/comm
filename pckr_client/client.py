@@ -44,25 +44,27 @@ def challenge_user(args):
 
     ipcache = IPCache(user)
     (ip, port) = ipcache.get_ip_port(args.u2)
-    response = send_frame(frame, ip, port)
-    print(response)
 
-    if response['success'] is True:
-        # TODO JHILL: check return for success or not...
-        # don't just charge through it
+    if ip and port:
+        response = send_frame(frame, ip, port)
 
-        decrypted_challenge = decrypt_rsa(
-            hexstr2bytes(response['encrypted_challenge']),
-            user.private_key_text
-        )
+        if response['success'] is True:
+            # TODO JHILL: check return for success or not...
+            # don't just charge through it
 
-        print(colored(challenge_text, "blue"))
-        print(colored(decrypted_challenge, "blue"))
+            decrypted_challenge = decrypt_rsa(
+                hexstr2bytes(response['encrypted_challenge']),
+                user.private_key_text
+            )
 
-        if challenge_text == decrypted_challenge:
-            print(colored("good", "green"))
-    else:
-        print(colored(response['error'], "red"))
+            print(colored(challenge_text, "blue"))
+            print(colored(decrypted_challenge, "blue"))
+
+            if challenge_text == decrypted_challenge:
+                print(colored("good", "green"))
+                return
+
+    print(colored(response['error'], "red"))
 
 
 def request_public_key(args):
@@ -79,9 +81,11 @@ def request_public_key(args):
     ipcache = IPCache(user)
     (ip, port) = ipcache.get_ip_port(args.u2)
 
-    response = send_frame(frame, ip, port)
-    pprint.pprint(response, indent=4)
-
+    if ip and port:
+        response = send_frame(frame, ip, port)
+        pprint.pprint(response, indent=4)
+    else:
+        print(colored("we don't know the IP of {}".format(args.u2)))
 
 def surface_user(args):
     # TODO JHILL: verify the user exists, both here and on the server!
@@ -148,10 +152,12 @@ def ping_user(args):
     ipcache = IPCache(user)
     (ip, port) = ipcache.get_ip_port(args.u2)
 
-    frame = Frame(content=dict(), action="ping")
-    response = send_frame(frame, ip, port)
-    pprint.pprint(response, indent=4)
-
+    if ip and port:
+        frame = Frame(content=dict(), action="ping")
+        response = send_frame(frame, ip, port)
+        pprint.pprint(response, indent=4)
+    else:
+        print(colored("we don't know the ip of {}".format(args.u2), "red"))
 
 def send_message(args):
     import time
@@ -180,35 +186,36 @@ def send_message(args):
 
     ipcache = IPCache(user)
     ip, port = ipcache.get_ip_port(args.u2)
+    if ip and port:
+        key_frame = Frame(
+            action='send_message_key',
+            content=dict(
+                password=password_encrypted
+            ),
+            message_id=message_id
+        )
+        send_frame(key_frame, ip=ip, port=port)
 
-    key_frame = Frame(
-        action='send_message_key',
-        content=dict(
-            password=password_encrypted
-        ),
-        message_id=message_id
-    )
-    send_frame(key_frame, ip=ip, port=port)
+        ft = time.time()
+        encrypted_content = encrypt_symmetric(
+            content,
+            encryption_key.encode()
+        )
 
-    ft = time.time()
-    encrypted_content = encrypt_symmetric(
-        content,
-        encryption_key.encode()
-    )
+        frames = Frame.make_frames(
+            bytes2hexstr(encrypted_content),
+            "send_message",
+            mime_type=args.mime_type,
+            message_id=message_id
+        )
+        print(time.time() -ft)
 
-    frames = Frame.make_frames(
-        bytes2hexstr(encrypted_content),
-        "send_message",
-        mime_type=args.mime_type,
-        message_id=message_id
-    )
-    print(time.time() -ft)
+        for frame in frames:
+            send_frame(frame, ip=ip, port=port)
 
-    for frame in frames:
-        send_frame(frame, ip=ip, port=port)
-
-    print("sent {} megabytes in {} seconds".format(len(content) / 1024 * 1024, time.time() - t))
-
+        print("sent {} megabytes in {} seconds".format(len(content) / 1024 * 1024, time.time() - t))
+    else:
+        print(colored("we don't know the ip of {}".format(args.u2)))
 
 def process_public_key_responses(args):
     user = User(args.username)

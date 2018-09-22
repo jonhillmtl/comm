@@ -135,8 +135,6 @@ class SocketThread(threading.Thread):
                     )
                     response = send_frame(frame, v['ip'], int(v['port']))
                     count = count + 1
-                else:
-                    print("skipping")
 
             return dict(success=True, message="propagated to {} other clients".format(count))
         else:

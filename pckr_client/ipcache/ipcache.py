@@ -43,4 +43,7 @@ class IPCache(object):
             f.write(json.dumps(self.data))
 
     def get_ip_port(self, username):
-        return (self.data[username]['ip'], self.data[username]['port'])
+        try:
+            return (self.data[username]['ip'], self.data[username]['port'])
+        except KeyError:
+            return None, None

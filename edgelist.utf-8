@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 #./scripts/plot_topo.py a
-# GMT Sat Sep 22 11:09:35 2018
+# GMT Sat Sep 22 13:37:00 2018
 # 
-123	2
-234	{}
-345	{}
-234	1
-345	{}
-345	0
+brenda	4
+dolory	{}
+jasmin	{}
+murbid	{}
+trapst	{}
+dolory	3
+jasmin	{}
+murbid	{}
+trapst	{}
+jasmin	2
+murbid	{}
+trapst	{}
+murbid	1
+trapst	{}
+trapst	0
