@@ -171,6 +171,34 @@ class User(object):
 
         return True
 
+    def challenge_user_pk(self, u2):
+        challenge_text = str(uuid.uuid4())
+
+        public_key_text = self.get_contact_public_key(u2)
+        if public_key_text is not None:
+            challenge_text_encrypted = bytes2hexstr(encrypt_rsa(
+                challenge_text,
+                public_key_text
+            ))
+
+            frame = Frame(
+                content=dict(
+                    from_username=self.username,
+                    challenge_text=challenge_text_encrypted
+                ),
+                action="challenge_user_pk"
+            )
+
+            ipcache = IPCache(self)
+            (ip, port) = ipcache.get_ip_port(u2)
+
+            if ip and port:
+                response = send_frame(frame, ip, port)
+                if response['decrypted_challenge'] == challenge_text:
+                    return True
+
+        return False
+
     def challenge_user_has_pk(self, u2):
         challenge_text = str(uuid.uuid4())
 

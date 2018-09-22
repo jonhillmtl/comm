@@ -30,6 +30,15 @@ def init_user(args):
     return True
 
 
+def challenge_user_pk(args):
+    user = User(args.username)
+    result = user.challenge_user_pk(args.u2)
+    if result:
+        print(colored("good", "green"))
+    else:
+        print(colored("bad", "red"))
+
+
 def challenge_user_has_pk(args):
     user = User(args.username)
     result = user.challenge_user_has_pk(args.u2)
@@ -232,6 +241,7 @@ COMMANDS = [
     'seek_user',
     'ping_user',
     'send_message',
+    'challenge_user_pk',
     'challenge_user_has_pk',
     'request_public_key',
     'process_public_key_requests',
@@ -248,6 +258,7 @@ COMMAND_ALIASES = dict(
     seek='seek_user',
     pu='ping_user',
     sm='send_message',
+    cupk='challenge_user_pk',
     cuhpk='challenge_user_has_pk',
     rpk='request_public_key',
     ppk_req='process_public_key_requests',
@@ -293,6 +304,9 @@ def main():
         argparser.add_argument("--u2", required=True)
         argparser.add_argument("--filename", required=True)
         argparser.add_argument("--mime_type", required=False, default='image/png')
+
+    elif command == 'challenge_user_pk':
+        argparser.add_argument("--u2", required=True)
 
     elif command == 'challenge_user_has_pk':
         argparser.add_argument("--u2", required=True)

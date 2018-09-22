@@ -144,6 +144,16 @@ class SocketThread(threading.Thread):
         self.user.store_public_key_response(request) 
         return dict(success=True, message_id=request['message_id'])
 
+    def _receive_challenge_user_pk(self, request):
+        decrypted = decrypt_rsa(
+            hexstr2bytes(request['payload']['challenge_text']),
+            self.user.private_key_text
+        )
+
+        return dict(
+            success=True,
+            decrypted_challenge=decrypted.decode()
+        )
 
     def _receive_challenge_user_has_pk(self, request):
         # TODO JHILL: obviously this could fail if we don't know their public_key
@@ -316,6 +326,8 @@ class SocketThread(threading.Thread):
             return self._receive_public_key_response(request_data)
         elif request_data['action'] == 'challenge_user_has_pk':
             return self._receive_challenge_user_has_pk(request_data)
+        elif request_data['action'] == 'challenge_user_pk':
+            return self._receive_challenge_user_pk(request_data)
         elif request_data['action'] == 'seek_user':
             return self._receive_seek_user(request_data)
         elif request_data['action'] == 'seek_user_response':
@@ -360,7 +372,7 @@ class SeekUsersThread(threading.Thread):
     def run(self):
         while True:
             self._seek_users()
-            time.sleep(random.randint(10, 20))
+            time.sleep(random.randint(60, 120))
 
     def _seek_users(self):
         path = os.path.join(self.user.path, "current_ip_port.json")
@@ -385,7 +397,7 @@ class SurfaceUserThread(threading.Thread):
         return
         while True:
             self._surface_user()
-            time.sleep(random.randint(5, 10))
+            time.sleep(random.randint(60, 120))
 
     def _surface_user(self):
         path = os.path.join(self.user.path, "current_ip_port.json")

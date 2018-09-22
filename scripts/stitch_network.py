@@ -19,12 +19,12 @@ def main():
     for i, _ in enumerate(users):
         for j, _ in enumerate(users):
             if i != j:
-                aip(data, users[i], users[j], robustness=10)
+                aip(data, users[i], users[j], robustness=11)
 
     for i, _ in enumerate(users):
         for j, _ in enumerate(users):
             if i != j:
-                rpk(users[i], users[j], robustness=10)
+                rpk(users[i], users[j], robustness=11)
 
 if __name__ == '__main__':
     main()
