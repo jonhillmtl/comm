@@ -13,7 +13,9 @@ setup(name='pckr_client',
         'boto',
         'flask',
         'pycryptodome',
-        'blowfish'
+        'blowfish',
+        'requests',
+        'termcolor'
     ],
 
     entry_points={
