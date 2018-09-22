@@ -1,5 +1,7 @@
 import json
 import uuid
+import time
+
 from ..utilities import command_header, send_frame_users, normalize_path, split_contents, is_binary
 from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
@@ -90,15 +92,17 @@ class Message(object):
         else:
             content = open(self.filename, "r").read()
 
+        tt = time.time()
+        et = time.time()
         encrypted_content = bytes2hexstr(encrypt_symmetric(
             content,
             self.password
         ))
+        print("encryption time", time.time() - et)
 
         content_splits = split_contents(encrypted_content)
-        print(len(content_splits))
-
         for index, content_split in enumerate(content_splits):
+            ft = time.time()
             frame = Frame(
                 action='send_message',
                 payload=dict(
@@ -107,9 +111,11 @@ class Message(object):
                     meta=meta_encrypted
                 )
             )
-            response = send_frame_users(frame, self.user, self.u2)
-            print("send_message", index, response)
 
+            response = send_frame_users(frame, self.user, self.u2)
+            print("send_message", index, response, time.time() - ft)
+
+        print("total time", time.time() - tt)
         return True
 
     def _send_message_term(self):
