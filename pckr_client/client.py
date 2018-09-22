@@ -6,10 +6,7 @@ from .utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from .utilities import encrypt_rsa, encrypt_symmetric
 from .utilities import command_header, send_frame
 
-from Crypto.PublicKey import RSA 
 from termcolor import colored
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 
 import argparse
 import os

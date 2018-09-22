@@ -5,8 +5,6 @@ from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
 from ..ipcache import IPCache
 
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
 from termcolor import colored
 
 import binascii

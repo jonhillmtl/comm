@@ -1,9 +1,9 @@
-import uuid
-import json
-import binascii
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA 
 from ..utilities import encrypt_symmetric, bytes2hexstr, split_contents
+
+import binascii
+import json
+import uuid
+
 
 class MalformedFrameError(Exception):
     pass

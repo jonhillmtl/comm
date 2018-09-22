@@ -1,11 +1,8 @@
 from ..frame import Frame
 from ..ipcache import IPCache
 from ..utilities import command_header, send_frame, normalize_path
-from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric
+from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric, read_rsa, generate_rsa_pub_priv
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
-
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
 
 import binascii
 import json
@@ -78,12 +75,8 @@ class User(object):
 
     @property
     def private_rsakey(self):
-        # TODO JHILL: error handling! bad one...
-        with open(self.private_key_path) as f:
-            return PKCS1_OAEP.new(RSA.importKey(f.read()))
+        return read_rsa(self.private_key_path)
 
-        return None
-    
     @property
     def messages_path(self):
         return os.path.join(self.path, "messages")
@@ -199,7 +192,7 @@ class User(object):
         os.makedirs(self.seek_tokens_path)
 
     def initiate_rsa(self):
-        new_key = RSA.generate(2048, e=65537) 
+        new_key = generate_rsa_pub_priv()
         with open(self.public_key_path, "wb") as f:
             f.write(new_key.publickey().exportKey("PEM") )
 
@@ -207,6 +200,7 @@ class User(object):
             f.write(new_key.exportKey("PEM"))
 
         return True
+
 
     def store_public_key_request(self, request):
         request_path = os.path.join(
