@@ -17,21 +17,34 @@ def main():
 
     for u in sorted(users):
         user = User(u)
-        print("-" * 100)
+        print(colored("*" * 100, "blue"))
         print("user {}".format(user.username))
 
         ipcache = json.loads(open(os.path.join(user.ipcache_path, 'cache.json')).read())
-        for k in sorted(ipcache.keys()):
-            v = ipcache[k]
-            public_key_text = user.get_contact_public_key(k)
-            has_pk = public_key_text != None
-            print(
-                k, 
-                colored(v['ip'], "green"), 
-                colored(v['port'], "green"),
-                colored("pk", "green") if has_pk else colored("no pk", "red")
-            )
+        if len(ipcache.keys()):
+            print("\nipcache")
+            for k in sorted(ipcache.keys()):
+                v = ipcache[k]
+                public_key_text = user.get_contact_public_key(k)
+                has_pk = public_key_text != None
+                print(
+                    k, 
+                    colored(v['ip'], "green"), 
+                    colored(v['port'], "green"),
+                    colored("pk", "green") if has_pk else colored("no pk", "red")
+                )
 
+            if len(user.public_key_requests):
+                print("\npublic_key_requests")
+                for ppk_req in user.public_key_requests:
+                    print(ppk_req['from_username'], ppk_req['modified_at'])
+
+        if len(user.public_key_responses):
+            print("\npublic_key_responses")
+            for ppk_req in user.public_key_responses:
+                print(ppk_req['from_username'], ppk_req['modified_at'])
+
+        print(colored("*" * 100, "blue"))
         print("\n")
 
 if __name__ == '__main__':

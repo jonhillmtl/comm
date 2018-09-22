@@ -213,37 +213,15 @@ def send_message(args):
 def process_public_key_responses(args):
     user = User(args.username)
     for response in user.public_key_responses:
-        user.process_public_key_response(response)
+        if user.process_public_key_response(response):
+            user.remove_public_key_response(response)
 
 
 def process_public_key_requests(args):
     user = User(args.username)
     for request in user.public_key_requests:
-        print(request)
-        print("request_public_key message from: {}".format(request['from_username']))
-
-        password = str(uuid.uuid4())
-        password_rsaed = bytes2hexstr(encrypt_rsa(password, request['public_key']))
-
-        public_key_encrypted = bytes2hexstr(encrypt_symmetric(user.public_key_text, password))
-
-        frame = Frame(
-            action='public_key_response',
-            content=dict(
-                public_key=public_key_encrypted,
-                from_username=args.username,
-                password=password_rsaed
-            ),
-            mime_type='application/json'
-        )
-
-        ipcache = IPCache(user)
-        (ip, port) = ipcache.get_ip_port(request['from_username'])
-
-        frame_response = send_frame(frame, ip, port)
-        pprint.pprint(frame_response)
-
-        # TODO JHILL: delete the file if it's all good?
+        if user.process_public_key_request(request):
+            user.remove_public_key_request(request)
 
 
 def pulse_network(args):

@@ -88,7 +88,7 @@ class SocketThread(threading.Thread):
                 self.user.private_key_text
             )
 
-            if challenge_text != decrypted_challenge:
+            if challenge_text != decrypted_challenge.decode():
                 return dict(
                     success=False,
                     error='that was us, but we challenged the asking user and they failed'
@@ -224,7 +224,7 @@ class SocketThread(threading.Thread):
         )
 
     def _receive_surface_user(self, request):
-        payload_data = decrypt_rsa(
+        password = decrypt_rsa(
             hexstr2bytes(request['payload']['password']),
             self.user.private_key_text
         )
@@ -234,7 +234,6 @@ class SocketThread(threading.Thread):
             password
         )
 
-        print(host_info_decrypted)
         host_info = json.loads(
             host_info_decrypted
         )

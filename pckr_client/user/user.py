@@ -8,6 +8,8 @@ import binascii
 import json
 import os
 import uuid
+import pprint
+import datetime
 
 
 USER_ROOT = "~/pckr/"
@@ -41,37 +43,6 @@ class User(object):
     @property
     def private_key_path(self):
         return os.path.join(self.path, "private.key")
-        
-    @property
-    def public_key_requests_path(self):
-        return os.path.join(self.path, "public_key_requests")
-
-    @property
-    def public_key_responses_path(self):
-        return os.path.join(self.path, "public_key_responses")
-
-    @property
-    def public_key_responses(self):
-        responses = []
-        for d, sds, files in os.walk(self.public_key_responses_path):
-            for f in files:
-                if f[-5:] == '.json':
-                    response_path = os.path.join(d, f)
-                    with open(response_path) as f:
-                        responses.append(json.loads(f.read()))
-        return responses
-
-    @property
-    def public_key_requests(self):
-        requests = []
-        print(self.public_key_requests_path)
-        for d, sds, files in os.walk(self.public_key_requests_path):
-            for f in files:
-                if f[-5:] == '.json':
-                    request_path = os.path.join(d, f)
-                    with open(request_path) as f:
-                        requests.append(json.loads(f.read()))
-        return requests
 
     @property
     def private_key_text(self):
@@ -127,9 +98,6 @@ class User(object):
                 dict(seek_token=seek_token)
             ))
 
-        # TODO JHILL: attach our IP, port, and public_key
-        # TODO JHILL: encrypt a password using their public_key
-        # TODO JHILL: encrypt our credentials using that password
         host_info = dict(
             ip=current_ip_port['ip'],
             port=current_ip_port['port'],
@@ -201,6 +169,28 @@ class User(object):
 
         return True
 
+    #----------------------------------------------------------------------------------------
+    #
+    # public_key_request 
+    # public_key_requests
+    #
+    #-----------------------------------------------------------------------------------------
+    @property
+    def public_key_requests_path(self):
+        return os.path.join(self.path, "public_key_requests")
+
+    @property
+    def public_key_requests(self):
+        requests = []
+        for d, sds, files in os.walk(self.public_key_requests_path):
+            for f in files:
+                if f[-5:] == '.json':
+                    request_path = os.path.join(d, f)
+                    with open(request_path) as f:
+                        request = json.loads(f.read())
+                        request.update(modified_at=datetime.datetime.fromtimestamp(os.path.getmtime(request_path)))
+                        requests.append(request)
+        return requests
 
     def store_public_key_request(self, request):
         request_path = os.path.join(
@@ -214,6 +204,68 @@ class User(object):
             f.write(json.dumps(request['payload']))
 
         return True
+
+    def process_public_key_request(self, request):
+        print(request)
+        print("request_public_key message from: {}".format(request['from_username']))
+
+        password = str(uuid.uuid4())
+        password_rsaed = bytes2hexstr(encrypt_rsa(password, request['public_key']))
+
+        public_key_encrypted = bytes2hexstr(encrypt_symmetric(self.public_key_text, password))
+
+        frame = Frame(
+            action='public_key_response',
+            content=dict(
+                public_key=public_key_encrypted,
+                from_username=self.username,
+                password=password_rsaed
+            ),
+            mime_type='application/json'
+        )
+
+        ipcache = IPCache(self)
+        (ip, port) = ipcache.get_ip_port(request['from_username'])
+
+        frame_response = send_frame(frame, ip, port)
+        pprint.pprint(frame_response)
+
+        return True
+
+    def remove_public_key_request(self, request):
+        request_path = os.path.join(self.public_key_requests_path, request['from_username'], 'request.json')
+        if os.path.exists(request_path):
+            print("!"*100)
+            print("removing", request_path)
+            os.remove(request_path)
+            return True
+        else:
+            print("PATH NOT FOUND")
+            return False
+
+    #----------------------------------------------------------------------------------------
+    #
+    # public_key_response
+    # public_key_responses
+    #
+    #-----------------------------------------------------------------------------------------
+    @property
+    def public_key_responses_path(self):
+        return os.path.join(self.path, "public_key_responses")
+
+    @property
+    def public_key_responses(self):
+        responses = []
+        for d, sds, files in os.walk(self.public_key_responses_path):
+            for f in files:
+                if f[-5:] == '.json':
+                    response_path = os.path.join(d, f)
+                    with open(response_path) as f:
+                        response = json.loads(f.read())
+                        response.update(modified_at=datetime.datetime.fromtimestamp(os.path.getmtime(response_path)))
+                        responses.append(response)
+
+        return responses
 
     def store_public_key_response(self, request):
         response_path = os.path.join(
@@ -229,6 +281,7 @@ class User(object):
 
         return True
 
+
     def process_public_key_response(self, response):
         print(response)
         public_keys_path = os.path.join(self.public_keys_path, response['from_username'])
@@ -243,3 +296,17 @@ class User(object):
             )
             decrypted_text = decrypt_symmetric(hexstr2bytes(response['public_key']), password)
             pkf.write(decrypted_text)
+
+        return True
+
+    def remove_public_key_response(self, response):
+        response_path = os.path.join(self.public_key_responses_path, response['from_username'], 'response.json')
+        if os.path.exists(response_path):
+            print("!"*100)
+            print("removing", response_path)
+            os.remove(response_path)
+            return True
+        else:
+            print("PATH NOT FOUND")
+            return False
+    
