@@ -7,6 +7,10 @@ from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decry
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
 
+def _progress_callback(i, c):
+    print("\b\b\b\b\b{0:.2f} %".format((i / c) * 100))
+
+
 class Message(object):
     user = None
     u2 = None
@@ -96,7 +100,8 @@ class Message(object):
         et = time.time()
         encrypted_content = bytes2hexstr(encrypt_symmetric(
             content,
-            self.password
+            self.password,
+            _progress_callback
         ))
         print("encryption time", time.time() - et)
 

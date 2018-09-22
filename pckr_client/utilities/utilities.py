@@ -72,16 +72,28 @@ def decrypt_rsa(content, private_key_text):
 
     return PKCS1_OAEP.new(RSA.importKey(private_key_text)).decrypt(content)
 
-def encrypt_symmetric(content, password):
+def encrypt_symmetric(content, password, callback=None):
     if type(password) is not bytes:
         password = password.encode()
 
     content = pad_content(content)
     if type(content) is not bytes:
         content = content.encode()
+    total_ecbs = len(content) / 6.5
 
     cipher = blowfish.Cipher(password)
-    data_encrypted = b"".join(cipher.encrypt_ecb(content))
+    if False:
+        ecbs = cipher.encrypt_ecb(content)
+        data_encrypted = b""
+        for index, ecb in enumerate(ecbs):
+            data_encrypted = data_encrypted + ecb
+
+            if index % 10000:
+                callback(index, total_ecbs)
+    else:
+        data_encrypted = b"".join(cipher.encrypt_ecb(content))
+
+    print(len(data_encrypted))
     data_decrypted = b"".join(cipher.decrypt_ecb(data_encrypted))
     assert content == data_decrypted
 
@@ -109,7 +121,7 @@ def normalize_path(path):
 
 
 def is_binary(mt):
-    return mt in ['image/png']
+    return mt in ['image/png', 'image/jpg']
 
 def send_frame_users(frame, u1, u2):
     ip, port = u1.get_contact_ip_port(u2)
