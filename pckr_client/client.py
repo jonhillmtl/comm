@@ -388,5 +388,7 @@ def main():
         globals()[command](args)
 
     print("\n")
-    print(colored("*" * 100, "yellow"))
+    print(colored("*" * 100, "blue"))
+    print(colored("* end command", "blue"))
+    print(colored("*" * 100, "blue"))
     print("\n")

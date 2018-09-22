@@ -127,7 +127,6 @@ class SocketThread(threading.Thread):
 
             for k, v in ipcache.data.items():
                 hashed_username = str2hashed_hexstr(k)
-                print(k, hashed_username, request['payload']['custody_chain'])
                 if hashed_username not in request['payload']['custody_chain']:
                     frame = Frame(
                         action=request['action'],
@@ -314,8 +313,8 @@ class SocketThread(threading.Thread):
         request_data = json.loads(request_text)
         print("action: ", colored(request_data['action'], "green"))
         print("request:")
-        pprint.pprint(request_data)
-        print("-" * 100)
+        print(colored(pprint.pformat(request_data), "green"))
+        print(colored("*"*100, "blue"))
 
         if request_data['action'] == 'ping':
             return self._receive_ping(request_data)
@@ -337,7 +336,6 @@ class SocketThread(threading.Thread):
             return self._receive_surface_user(request_data)
         elif request_data['action'] == 'pulse_network':
             return self._receive_pulse_network(request_data)
-        
         else:
             return dict(
                 success=False,
@@ -353,12 +351,14 @@ class SocketThread(threading.Thread):
         else:
             print(colored("passing anything but dicts is deprecated", "red"))
             assert False
-        
+
         print("\n")
-        print("response", colored(response, "green"))
+        print("response", colored(pprint.pformat(response), "green"))
         print("\n")
-        print("^" * 100)
-        print("\n\n")
+        print(colored("*" * 100, "blue"))
+        print(colored("* end request", "blue"))
+        print(colored("*" * 100, "blue"))
+        print("\n")
 
         self.clientsocket.sendall(response.encode())
         self.clientsocket.close()
