@@ -127,6 +127,8 @@ class User(object):
 
             response = send_frame(frame, ip, port)
 
+        return True
+
     def get_contact_public_key(self, contact):
         try:
             path = os.path.join(self.public_keys_path, contact, "public.key")
@@ -169,6 +171,35 @@ class User(object):
 
         return True
 
+    def challenge_user_has_pk(self, u2):
+        challenge_text = str(uuid.uuid4())
+
+        frame = Frame(
+            content=dict(
+                from_username=self.username,
+                challenge_text=challenge_text
+            ),
+            action="challenge_user_has_pk"
+        )
+
+        ipcache = IPCache(self)
+        (ip, port) = ipcache.get_ip_port(u2)
+
+        if ip and port:
+            response = send_frame(frame, ip, port)
+            print(response)
+
+            if response['success'] is True:
+                decrypted_challenge = decrypt_rsa(
+                    hexstr2bytes(response['encrypted_challenge']),
+                    self.private_key_text
+                )
+
+                if challenge_text == decrypted_challenge:
+                    return True
+
+        return False
+
     #----------------------------------------------------------------------------------------
     #
     # public_key_request 
@@ -191,6 +222,17 @@ class User(object):
                         request.update(modified_at=datetime.datetime.fromtimestamp(os.path.getmtime(request_path)))
                         requests.append(request)
         return requests
+
+    def store_voluntary_public_key(self, request):
+        public_keys_path = os.path.join(self.public_keys_path, request['payload']['from_username'])
+        if not os.path.exists(public_keys_path):
+            os.makedirs(public_keys_path)
+
+        public_key_path = os.path.join(public_keys_path, 'public.key')
+        with open(public_key_path, "w+") as pkf:
+            pkf.write(request['payload']['public_key'])
+
+        return True
 
     def store_public_key_request(self, request):
         request_path = os.path.join(
@@ -283,7 +325,6 @@ class User(object):
 
         return True
 
-
     def process_public_key_response(self, response):
         print(response)
         public_keys_path = os.path.join(self.public_keys_path, response['from_username'])
@@ -311,4 +352,3 @@ class User(object):
         else:
             print("PATH NOT FOUND")
             return False
-    

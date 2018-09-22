@@ -30,41 +30,13 @@ def init_user(args):
     return True
 
 
-def challenge_user(args):
+def challenge_user_has_pk(args):
     user = User(args.username)
-    challenge_text = str(uuid.uuid4())
-
-    frame = Frame(
-        content=dict(
-            from_username=args.username,
-            challenge_text=challenge_text
-        ),
-        action="challenge_user"
-    )
-
-    ipcache = IPCache(user)
-    (ip, port) = ipcache.get_ip_port(args.u2)
-
-    if ip and port:
-        response = send_frame(frame, ip, port)
-
-        if response['success'] is True:
-            # TODO JHILL: check return for success or not...
-            # don't just charge through it
-
-            decrypted_challenge = decrypt_rsa(
-                hexstr2bytes(response['encrypted_challenge']),
-                user.private_key_text
-            )
-
-            print(colored(challenge_text, "blue"))
-            print(colored(decrypted_challenge, "blue"))
-
-            if challenge_text == decrypted_challenge:
-                print(colored("good", "green"))
-                return
-
-    print(colored(response['error'], "red"))
+    result = user.challenge_user_has_pk(args.u2)
+    if result:
+        print(colored("good", "green"))
+    else:
+        print(colored("bad", "red"))
 
 
 def request_public_key(args):
@@ -86,6 +58,7 @@ def request_public_key(args):
         pprint.pprint(response, indent=4)
     else:
         print(colored("we don't know the IP of {}".format(args.u2)))
+
 
 def surface_user(args):
     # TODO JHILL: verify the user exists, both here and on the server!
@@ -259,7 +232,7 @@ COMMANDS = [
     'seek_user',
     'ping_user',
     'send_message',
-    'challenge_user',
+    'challenge_user_has_pk',
     'request_public_key',
     'process_public_key_requests',
     'process_public_key_responses',
@@ -275,7 +248,7 @@ COMMAND_ALIASES = dict(
     seek='seek_user',
     pu='ping_user',
     sm='send_message',
-    cu='challenge_user',
+    cuhpk='challenge_user_has_pk',
     rpk='request_public_key',
     ppk_req='process_public_key_requests',
     ppk_resp='process_public_key_responses',
@@ -321,7 +294,7 @@ def main():
         argparser.add_argument("--filename", required=True)
         argparser.add_argument("--mime_type", required=False, default='image/png')
 
-    elif command == 'challenge_user':
+    elif command == 'challenge_user_has_pk':
         argparser.add_argument("--u2", required=True)
 
     elif command == 'request_public_key':

@@ -18,6 +18,7 @@ import random
 import time
 import sys
 
+
 class SocketThread(threading.Thread):
     clientsocket = None
     user = None
@@ -72,23 +73,8 @@ class SocketThread(threading.Thread):
                 password.encode()
             ))
 
-            challenge_text = str(uuid.uuid4())
-
-            challenge_frame = Frame(
-                content=dict(
-                    from_username=self.user.username,
-                    challenge_text=challenge_text
-                ),
-                action="challenge_user"
-            )
-
-            challenge_response = send_frame(challenge_frame, host_info['ip'], int(host_info['port']))
-            decrypted_challenge = decrypt_rsa(
-                hexstr2bytes(challenge_response['encrypted_challenge']),
-                self.user.private_key_text
-            )
-
-            if challenge_text != decrypted_challenge.decode():
+            challenge = self.user.challenge_user_has_pk(host_info['from_username'])
+            if challenge is False:
                 return dict(
                     success=False,
                     error='that was us, but we challenged the asking user and they failed'
@@ -117,6 +103,9 @@ class SocketThread(threading.Thread):
             pass
 
         if responded == False:
+            if len(request['payload']['custody_chain']) > 3:
+                return dict(success=True, message='custody_chain len exceeded')
+
             # 2) if we can't decrypt and respond we should pass the message along
             ipcache = IPCache(self.user)
             count = 0
@@ -142,6 +131,7 @@ class SocketThread(threading.Thread):
 
     def _receive_request_public_key(self, request):
         self.user.store_public_key_request(request)
+        self.user.store_voluntary_public_key(request)
 
         # TODO JHILL: make this nicer
         return dict(
@@ -155,7 +145,7 @@ class SocketThread(threading.Thread):
         return dict(success=True, message_id=request['message_id'])
 
 
-    def _receive_challenge_user(self, request):
+    def _receive_challenge_user_has_pk(self, request):
         # TODO JHILL: obviously this could fail if we don't know their public_key
         # TODO JHILL: also be more careful about charging into dictionaries
         public_key_text = self.user.get_contact_public_key(request["payload"]["from_username"])
@@ -324,8 +314,8 @@ class SocketThread(threading.Thread):
             return self._receive_request_public_key(request_data)
         elif request_data['action'] == 'public_key_response':
             return self._receive_public_key_response(request_data)
-        elif request_data['action'] == 'challenge_user':
-            return self._receive_challenge_user(request_data)
+        elif request_data['action'] == 'challenge_user_has_pk':
+            return self._receive_challenge_user_has_pk(request_data)
         elif request_data['action'] == 'seek_user':
             return self._receive_seek_user(request_data)
         elif request_data['action'] == 'seek_user_response':
@@ -370,7 +360,7 @@ class SeekUsersThread(threading.Thread):
     def run(self):
         while True:
             self._seek_users()
-            time.sleep(random.randint(20, 40))
+            time.sleep(random.randint(10, 20))
 
     def _seek_users(self):
         path = os.path.join(self.user.path, "current_ip_port.json")
@@ -383,6 +373,7 @@ class SeekUsersThread(threading.Thread):
             if public_key_text is not None:
                 self.user.seek_user(k)
 
+        return True
 
 class SurfaceUserThread(threading.Thread):
     user = None
@@ -391,9 +382,10 @@ class SurfaceUserThread(threading.Thread):
         self.user = user
 
     def run(self):
+        return
         while True:
             self._surface_user()
-            time.sleep(random.randint(20, 40))
+            time.sleep(random.randint(5, 10))
 
     def _surface_user(self):
         path = os.path.join(self.user.path, "current_ip_port.json")
@@ -431,6 +423,8 @@ class SurfaceUserThread(threading.Thread):
                     v['ip'],
                     int(v['port'])
                 )
+
+        return True
 
 
 class Surface(threading.Thread):
