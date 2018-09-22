@@ -301,7 +301,14 @@ class SocketThread(threading.Thread):
                 success=False,
                 error='seek token not found'
             )
-            
+
+    def _receive_pulse_network(self, request):
+        self.user.pulse_network(request['payload']['custody_chain'])
+
+        return dict(
+            success=True
+        )
+
     def process_request(self, request_text):
         print(colored("*"*100, "blue"))
         request_data = json.loads(request_text)
@@ -328,6 +335,9 @@ class SocketThread(threading.Thread):
             return self._receive_seek_user_response(request_data)
         elif request_data['action'] == 'surface_user':
             return self._receive_surface_user(request_data)
+        elif request_data['action'] == 'pulse_network':
+            return self._receive_pulse_network(request_data)
+        
         else:
             return dict(
                 success=False,

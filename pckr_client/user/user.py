@@ -95,6 +95,23 @@ class User(object):
     def seek_tokens_path(self):
         return os.path.join(self.path, "seek_tokens")
 
+    def pulse_network(self, custody_chain=[]):
+        ipcache = IPCache(self)
+        custody_chain.append(str2hashed_hexstr(self.username))
+
+        for k, v in ipcache.data.items():
+            hashed_username = str2hashed_hexstr(k)
+            if hashed_username not in custody_chain:
+                ip, port = v['ip'], v['port']
+
+                frame = Frame(content=dict(
+                    custody_chain=custody_chain
+                ), action='pulse_network')
+
+                response = send_frame(frame, ip, port)
+
+        return True
+
     def seek_user(self, u2):
         public_key_text = self.get_contact_public_key(u2)
         if public_key_text is None:

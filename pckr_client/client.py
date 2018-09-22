@@ -108,13 +108,13 @@ def surface_user(args):
     print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
 
     surface_user_thread = SurfaceUserThread(user)
-    surface_user_thread.start()
+    # surface_user_thread.start()
 
     seek_users_thread = SeekUsersThread(user)
-    seek_users_thread.start()
+    # seek_users_thread.start()
     
-    seek_users_thread.join()
-    surface_user_thread.join()
+    #seek_users_thread.join()
+    #surface_user_thread.join()
     surface.join()
 
 
@@ -152,6 +152,8 @@ def ping_user(args):
 def send_message(args):
     import time
     t = time.time()
+    
+    # TODO JHILL: challenge the user first
     # TODO JHILL: ping the user first...
     # and if it doesn't work take them out of the IP cache
     user = User(args.username)
@@ -254,6 +256,13 @@ def process_public_key_requests(args):
         # TODO JHILL: delete the file if it's all good?
 
 
+def pulse_network(args):
+    user = User(args.username)
+    assert user.exists
+
+    user.pulse_network()
+
+
 def massage_args(argparser):
     args = argparser.parse_args()
     if args.username is None:
@@ -280,7 +289,8 @@ COMMANDS = [
     'process_public_key_requests',
     'process_public_key_responses',
     'add_ipcache',
-    'remove_ipcache'
+    'remove_ipcache',
+    'pulse_network'
 ]
 
 
@@ -295,7 +305,8 @@ COMMAND_ALIASES = dict(
     ppk_req='process_public_key_requests',
     ppk_resp='process_public_key_responses',
     aip='add_ipcache',
-    rip='remove_ipcache'
+    rip='remove_ipcache',
+    pn='pulse_network'
 )
 
 
@@ -354,6 +365,9 @@ def main():
 
     elif command == 'remove_ipcache':
         argparser.add_argument("--u2", required=True)
+    
+    elif command == 'pulse_network':
+        pass
 
     else:
         assert False
