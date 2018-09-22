@@ -1,6 +1,6 @@
 from ..user import User
 from ..utilities import command_header, send_frame, normalize_path
-from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric
+from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
 from ..ipcache import IPCache
@@ -41,7 +41,10 @@ class SocketThread(threading.Thread):
         # 1) try to decrypt the message using our own private key
         # if we can decrypt it we should answer the other host
         try:
-            password_decrypted = self.user.private_rsakey.decrypt(hexstr2bytes(request['payload']['password']))
+            password_decrypted = decrypt_rsa(
+                hexstr2bytes(request['payload']['password']),
+                self.user.private_key_text
+            )
 
             # now we have to open up the message and challenge that user
             decrypted_text = decrypt_symmetric(hexstr2bytes(request['payload']['host_info']), password_decrypted)
@@ -80,9 +83,10 @@ class SocketThread(threading.Thread):
             )
 
             challenge_response = send_frame(challenge_frame, host_info['ip'], int(host_info['port']))
-            print(challenge_response)
-            encrypted_challenge = hexstr2bytes(challenge_response['encrypted_challenge'])
-            decrypted_challenge = self.user.private_rsakey.decrypt(encrypted_challenge).decode()
+            decrypted_challenge = decrypt_rsa(
+                hexstr2bytes(challenge_response['encrypted_challenge']),
+                self.user.private_key_text
+            )
 
             if challenge_text != decrypted_challenge:
                 return dict(
@@ -202,8 +206,10 @@ class SocketThread(threading.Thread):
 
     def _receive_send_message_key(self, request):
         # TODO JHILL: hide this all in the user object or a message object?
-        payload = hexstr2bytes(request['payload']['password'])
-        payload_data = json.loads(self.user.private_rsakey.decrypt(payload).decode())
+        payload_data = decrypt_rsa(
+            hexstr2bytes(request['payload']['password']),
+            self.user.private_key_text
+        )
 
         key_path = os.path.join(self.user.message_keys_path, request['message_id'])
         if not os.path.exists(key_path):
@@ -218,7 +224,11 @@ class SocketThread(threading.Thread):
         )
 
     def _receive_surface_user(self, request):
-        password = self.user.private_rsakey.decrypt(hexstr2bytes(request['payload']['password']))
+        payload_data = decrypt_rsa(
+            hexstr2bytes(request['payload']['password']),
+            self.user.private_key_text
+        )
+
         host_info_decrypted = decrypt_symmetric(
             hexstr2bytes(request['payload']['host_info']),
             password
@@ -252,7 +262,10 @@ class SocketThread(threading.Thread):
 
     def _receive_seek_user_response(self, request):
         assert type(request) == dict
-        password = self.user.private_rsakey.decrypt(hexstr2bytes(request['payload']['password']))
+        password = decrypt_rsa(
+            hexstr2bytes(request['payload']['password']),
+            self.user.private_key_text
+        )
 
         seek_token_decrypted = decrypt_symmetric(
             hexstr2bytes(request['payload']['seek_token']),
@@ -263,8 +276,6 @@ class SocketThread(threading.Thread):
             password
         )
 
-        print(seek_token_decrypted)
-        print(host_info_decrypted)
         host_info = json.loads(
             host_info_decrypted
         )

@@ -3,7 +3,7 @@ from .frame import Frame
 from .ipcache import IPCache
 from .user import User
 from .utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
-from .utilities import encrypt_rsa, encrypt_symmetric
+from .utilities import encrypt_rsa, encrypt_symmetric, decrypt_rsa
 from .utilities import command_header, send_frame
 
 from termcolor import colored
@@ -50,8 +50,12 @@ def challenge_user(args):
     if response['success'] is True:
         # TODO JHILL: check return for success or not...
         # don't just charge through it
-        encrypted_challenge = hexstr2bytes(response['encrypted_challenge'])
-        decrypted_challenge = user.private_rsakey.decrypt(encrypted_challenge).decode()
+
+        decrypted_challenge = decrypt_rsa(
+            hexstr2bytes(response['encrypted_challenge']),
+            user.private_key_text
+        )
+
         print(colored(challenge_text, "blue"))
         print(colored(decrypted_challenge, "blue"))
 

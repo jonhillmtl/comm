@@ -60,20 +60,17 @@ def generate_rsa_pub_priv():
     return RSA.generate(2048, e=65537) 
 
 
-def read_rsa(path):
-    if not os.path.exists(path):
-        return None
-    else:
-        with open(path) as f:
-            return PKCS1_OAEP.new(RSA.importKey(f.read()))
-
-
 def encrypt_rsa(content, public_key_text):
     if type(content) == str:
         content = content.encode()
 
     return PKCS1_OAEP.new(RSA.importKey(public_key_text)).encrypt(content)
 
+def decrypt_rsa(content, private_key_text):
+    if type(content) == str:
+        content = content.encode()
+
+    return PKCS1_OAEP.new(RSA.importKey(private_key_text)).decrypt(content)
 
 def encrypt_symmetric(content, password):
     if type(password) is not bytes:

@@ -1,7 +1,7 @@
 from ..frame import Frame
 from ..ipcache import IPCache
 from ..utilities import command_header, send_frame, normalize_path
-from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric, read_rsa, generate_rsa_pub_priv
+from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric, decrypt_rsa, generate_rsa_pub_priv
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 
 import binascii
@@ -74,8 +74,8 @@ class User(object):
         return requests
 
     @property
-    def private_rsakey(self):
-        return read_rsa(self.private_key_path)
+    def private_key_text(self):
+        return open(self.private_key_path).read()
 
     @property
     def messages_path(self):
@@ -237,7 +237,9 @@ class User(object):
 
         public_key_path = os.path.join(public_keys_path, 'public.key')
         with open(public_key_path, "w+") as pkf:
-            private_rsakey = self.private_rsakey
-            password = private_rsakey.decrypt(hexstr2bytes(response['password']))
+            password = decrypt_rsa(
+                hexstr2bytes(response['password']),
+                self.private_key_text
+            )
             decrypted_text = decrypt_symmetric(hexstr2bytes(response['public_key']), password)
             pkf.write(decrypted_text)
