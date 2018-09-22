@@ -123,3 +123,23 @@ def send_frame(frame, ip, port):
         return response
     except ConnectionRefusedError:
         return dict(success=False, error="connection refused")
+
+def send_frame_users(frame, u1, u2):
+    ip, port = u1.get_contact_ip_port(u2)
+    if ip and port:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        try:
+            sock.connect((ip.strip(), int(port)))
+            frame_str = str(frame).encode()
+            len_sent = sock.send(frame_str)
+            assert len_sent == len(frame_str)
+            response = json.loads(sock.recv(4096).decode())
+            sock.close()
+            return response
+        except ConnectionRefusedError:
+            return dict(success=False, error="connection refused")
+    else:
+        # TODO JHILL: remove them from the cache
+        # and then send out a seek user for them
+        return dict(success=False, error='ip:port unknown')

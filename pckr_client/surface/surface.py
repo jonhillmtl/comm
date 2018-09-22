@@ -1,9 +1,8 @@
 from ..user import User
-from ..utilities import command_header, send_frame, normalize_path
+from ..utilities import command_header, send_frame, send_frame_users, normalize_path
 from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
-from ..ipcache import IPCache
 
 from termcolor import colored
 
@@ -80,8 +79,7 @@ class SocketThread(threading.Thread):
                     error='that was us, but we challenged the asking user and they failed'
                 )
 
-            ipcache = IPCache(self.user)
-            ipcache.set_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
+            user.set_contact_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
             response_dict = dict(
                 seek_token=seek_token_encrypted,
                 password=password_encrypted,
@@ -107,14 +105,13 @@ class SocketThread(threading.Thread):
                 return dict(success=True, message='custody_chain len exceeded')
 
             # 2) if we can't decrypt and respond we should pass the message along
-            ipcache = IPCache(self.user)
             count = 0
 
             request['payload']['custody_chain'].append(
                 str2hashed_hexstr(self.user.username)
             )
 
-            for k, v in ipcache.data.items():
+            for k, _ in self.user.ipcache.items():
                 hashed_username = str2hashed_hexstr(k)
                 if hashed_username not in request['payload']['custody_chain']:
                     frame = Frame(
@@ -122,7 +119,7 @@ class SocketThread(threading.Thread):
                         message_id=request['message_id'],
                         content=request['payload'],
                     )
-                    response = send_frame(frame, v['ip'], int(v['port']))
+                    response = send_frame_users(frame, self.user, k)
                     count = count + 1
 
             return dict(success=True, message="propagated to {} other clients".format(count))
@@ -251,8 +248,7 @@ class SocketThread(threading.Thread):
             # right now only #1 is implemented, strangely enough
             # clean that up at the same time. for now just store their ip
             # TODO JHILL: SECURITY RISK
-            ipcache = IPCache(self.user)
-            ipcache.set_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
+            self.user.set_contact_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
             return dict(
                 success=True
             )
@@ -286,8 +282,7 @@ class SocketThread(threading.Thread):
         seek_token_data = json.loads(open(seek_token_path).read())
         print(seek_token_data)
         if seek_token_data['seek_token'] == seek_token_decrypted:
-            ipcache = IPCache(self.user)
-            ipcache.set_ip_port(host_info['username'], host_info['ip'], int(host_info['port']))
+            self.user.set_contact_ip_port(host_info['username'], host_info['ip'], int(host_info['port']))
 
             return dict(
                 success=True,
@@ -379,8 +374,7 @@ class SeekUsersThread(threading.Thread):
         with open(path, "r") as f:
             current_ip_port = json.loads(open(path).read())
 
-        ipcache = IPCache(self.user)
-        for k, v in ipcache.data.items():
+        for k, v in self.user.ipcache.items():
             public_key_text = self.user.get_contact_public_key(k)
             if public_key_text is not None:
                 self.user.seek_user(k)

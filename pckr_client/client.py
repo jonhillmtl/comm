@@ -1,10 +1,9 @@
 from .surface import Surface, SurfaceUserThread, SeekUsersThread
 from .frame import Frame
-from .ipcache import IPCache
 from .user import User
 from .utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from .utilities import encrypt_rsa, encrypt_symmetric, decrypt_rsa
-from .utilities import command_header, send_frame
+from .utilities import command_header, send_frame, send_frame_users
 
 from termcolor import colored
 
@@ -59,14 +58,8 @@ def request_public_key(args):
         action="request_public_key"
     )
 
-    ipcache = IPCache(user)
-    (ip, port) = ipcache.get_ip_port(args.u2)
-
-    if ip and port:
-        response = send_frame(frame, ip, port)
-        pprint.pprint(response, indent=4)
-    else:
-        print(colored("we don't know the IP of {}".format(args.u2)))
+    response = send_frame_users(frame, user, args.u2)
+    pprint.pprint(response, indent=4)
 
 
 def surface_user(args):
@@ -110,18 +103,14 @@ def surface_user(args):
 
 def add_ipcache(args):
     user = User(args.username)
-
-    ipcache = IPCache(user)
-    ipcache.set_ip_port(args.u2, args.ip, args.port)
-    print(ipcache)
+    user.set_contact_ip_port(args.u2, args.ip, args.port)
+    print(user.ipcache)
 
 
 def remove_ipcache(args):
     user = User(args.username)
-
-    ipcache = IPCache(user)
-    ipcache.remove_ip_port(args.u2)
-    print(ipcache)
+    user.remove_ip_contact_port(args.u2)
+    print(user.ipcache)
 
 
 def seek_user(args):
@@ -131,8 +120,7 @@ def seek_user(args):
 
 def ping_user(args):
     user = User(args.username)
-    ipcache = IPCache(user)
-    (ip, port) = ipcache.get_ip_port(args.u2)
+    (ip, port) = user.get_contact_ip_port(args.u2)
 
     if ip and port:
         frame = Frame(content=dict(), action="ping")
@@ -166,8 +154,7 @@ def send_message(args):
     message_id = str(uuid.uuid4())
     password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
 
-    ipcache = IPCache(user)
-    ip, port = ipcache.get_ip_port(args.u2)
+    ip, port = user.get_contact_ip_port(args.u2)
     if ip and port:
         key_frame = Frame(
             action='send_message_key',

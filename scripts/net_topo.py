@@ -15,6 +15,7 @@ def _users():
             users.append(sd)
     return sorted(users)
 
+
 def analyze_topo():
     cached_ips = dict()
     for u in _users():
@@ -51,7 +52,7 @@ def analyze_topo():
     
     if consistent:
         print(colored("network topology is consistent", "green"))
-        
+
 
 def dump_topo():
     for u in _users():
@@ -87,6 +88,7 @@ def dump_topo():
 
         print(colored("*" * 100, "blue"))
         print("\n")
+
 
 def main():
     dump_topo()

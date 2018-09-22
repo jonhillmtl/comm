@@ -1,6 +1,5 @@
 from ..frame import Frame
-from ..ipcache import IPCache
-from ..utilities import command_header, send_frame, normalize_path
+from ..utilities import command_header, send_frame, send_frame_users, normalize_path
 from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric, decrypt_rsa, generate_rsa_pub_priv
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 
@@ -16,9 +15,19 @@ USER_ROOT = "~/pckr/"
 
 class User(object):
     username = None
+    ipcache_data = None
 
     def __init__(self, username):
         self.username = username
+
+        ipcache_path = os.path.join(self.ipcache_path, "cache.json")
+        ipcache_data = dict()
+        if os.path.exists(ipcache_path):
+            try:
+                ipcache_data = json.loads(open(ipcache_path).read())
+            except json.decoder.JSONDecodeError:
+                pass
+        self.ipcache_data = ipcache_data
 
     @property
     def exists(self):
@@ -73,10 +82,9 @@ class User(object):
         return os.path.join(self.path, "seek_tokens")
 
     def pulse_network(self, custody_chain=[]):
-        ipcache = IPCache(self)
         custody_chain.append(str2hashed_hexstr(self.username))
 
-        for k, v in ipcache.data.items():
+        for k, v in self.ipcache.items():
             hashed_username = str2hashed_hexstr(k)
             if hashed_username not in custody_chain:
                 ip, port = v['ip'], v['port']
@@ -90,8 +98,7 @@ class User(object):
         return True
 
     def surface(self):
-        ipcache = IPCache(self)
-        for k, v in ipcache.data.items():
+        for k, v in self.ipcache.items():
             public_key_text = self.get_contact_public_key(k)
             if public_key_text is not None:
                 password = str(uuid.uuid4())
@@ -158,8 +165,7 @@ class User(object):
         ))
 
         # send the message out to everyone we know
-        ipcache = IPCache(self)
-        for k, v in ipcache.data.items():
+        for k, v in self.ipcache.items():
             ip, port = v['ip'], v['port']
 
             frame = Frame(content=dict(
@@ -232,13 +238,9 @@ class User(object):
                 action="challenge_user_pk"
             )
 
-            ipcache = IPCache(self)
-            (ip, port) = ipcache.get_ip_port(u2)
-
-            if ip and port:
-                response = send_frame(frame, ip, port)
-                if response['decrypted_challenge'] == challenge_text:
-                    return True
+            response = send_frame_users(frame, self, u2)
+            if response['decrypted_challenge'] == challenge_text:
+                return True
 
         return False
 
@@ -253,21 +255,16 @@ class User(object):
             action="challenge_user_has_pk"
         )
 
-        ipcache = IPCache(self)
-        (ip, port) = ipcache.get_ip_port(u2)
+        response = send_frame_users(frame, self, u2)
 
-        if ip and port:
-            response = send_frame(frame, ip, port)
-            print(response)
+        if response['success'] is True:
+            decrypted_challenge = decrypt_rsa(
+                hexstr2bytes(response['encrypted_challenge']),
+                self.private_key_text
+            )
 
-            if response['success'] is True:
-                decrypted_challenge = decrypt_rsa(
-                    hexstr2bytes(response['encrypted_challenge']),
-                    self.private_key_text
-                )
-
-                if challenge_text == decrypted_challenge:
-                    return True
+            if challenge_text == decrypted_challenge:
+                return True
 
         return False
 
@@ -319,8 +316,8 @@ class User(object):
         return True
 
     def process_public_key_request(self, request):
-        print(request)
         print("request_public_key message from: {}".format(request['from_username']))
+        print(request)
 
         password = str(uuid.uuid4())
         password_rsaed = bytes2hexstr(encrypt_rsa(password, request['public_key']))
@@ -337,15 +334,9 @@ class User(object):
             mime_type='application/json'
         )
 
-        ipcache = IPCache(self)
-        (ip, port) = ipcache.get_ip_port(request['from_username'])
-
-        if ip and port:
-            frame_response = send_frame(frame, ip, port)
-            pprint.pprint(frame_response)
-            return True
-        else:
-            return False
+        frame_response = send_frame_users(frame, self, request['from_username'])
+        pprint.pprint(frame_response)
+        return True
 
     def remove_public_key_request(self, request):
         request_path = os.path.join(self.public_key_requests_path, request['from_username'], 'request.json')
@@ -423,3 +414,33 @@ class User(object):
         else:
             print("PATH NOT FOUND")
             return False
+    
+    @property
+    def ipcache(self):
+        return self.ipcache_data
+
+    def remove_ip_contact_port(self, username):
+        try:
+            del self.ipcache_data[username]
+        except KeyError:
+            pass
+
+        path = os.path.join(self.ipcache_path, "cache.json")
+        with open(path, "w+") as f:
+            f.write(json.dumps(self.data))
+
+    def get_contact_ip_port(self, username):
+        try:
+            return (self.ipcache_data[username]['ip'], self.ipcache_data[username]['port'])
+        except KeyError:
+            return None, None
+
+    def set_contact_ip_port(self, username, ip, port):
+        self.ipcache_data[username] = dict(
+            ip=ip,
+            port=port
+        )
+
+        path = os.path.join(self.ipcache_path, "cache.json")
+        with open(path, "w+") as f:
+            f.write(json.dumps(self.ipcache_data))
