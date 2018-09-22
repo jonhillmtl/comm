@@ -353,11 +353,34 @@ class SocketThread(threading.Thread):
         self.clientsocket.sendall(response.encode())
         self.clientsocket.close()
 
+class SeekUsersThread(threading.Thread):
+    user = None
+    def __init__(self, user):
+        super(SeekUsersThread, self).__init__()
+        self.user = user
+
+    def run(self):
+        while True:
+            self._seek_users()
+            time.sleep(random.randint(20, 40))
+
+    def _seek_users(self):
+        path = os.path.join(self.user.path, "current_ip_port.json")
+        with open(path, "r") as f:
+            current_ip_port = json.loads(open(path).read())
+
+        ipcache = IPCache(self.user)
+        for k, v in ipcache.data.items():
+            public_key_text = self.user.get_contact_public_key(k)
+            if public_key_text is not None:
+                self.user.seek_user(k)
+
+
 class SurfaceUserThread(threading.Thread):
-    username = None
-    def __init__(self, username):
+    user = None
+    def __init__(self, user):
         super(SurfaceUserThread, self).__init__()
-        self.username = username
+        self.user = user
 
     def run(self):
         while True:
@@ -365,15 +388,13 @@ class SurfaceUserThread(threading.Thread):
             time.sleep(random.randint(20, 40))
 
     def _surface_user(self):
-        user = User(self.username)
-
-        path = os.path.join(user.path, "current_ip_port.json")
+        path = os.path.join(self.user.path, "current_ip_port.json")
         with open(path, "r") as f:
             current_ip_port = json.loads(open(path).read())
 
-        ipcache = IPCache(user)
+        ipcache = IPCache(self.user)
         for k, v in ipcache.data.items():
-            public_key_text = user.get_contact_public_key(k)
+            public_key_text = self.user.get_contact_public_key(k)
             if public_key_text is not None:
                 # TODO JHILL: put this somewhere else
                 # and really clean up the public key thing, please
@@ -384,7 +405,7 @@ class SurfaceUserThread(threading.Thread):
                 password_encrypted = bytes2hexstr(password_encrypted)
 
                 host_info = dict(
-                    from_username=user.username,
+                    from_username=self.user.username,
                     ip=current_ip_port['ip'],
                     port=int(current_ip_port['port'])
                 )
@@ -408,7 +429,6 @@ class SurfaceUserThread(threading.Thread):
                     int(v['port'])
                 )
 
-                user.seek_user(k)
 
 class Surface(threading.Thread):
     login_token = None
