@@ -16,6 +16,7 @@ import uuid
 import pprint
 import random
 import time
+import subprocess
 import sys
 
 
@@ -245,6 +246,10 @@ class SocketThread(threading.Thread):
                 f.write(content_decrypted)
 
         print("wrote to", path)
+        subprocess.check_call([
+            "open",
+            path
+        ])
         return dict(
             success=True
         )
@@ -335,7 +340,7 @@ class SocketThread(threading.Thread):
             self.user.seek_tokens_path, 
             "{}.json".format(host_info['username'])
         )
-        
+
         # TODO JHILL: error handling obviously
         seek_token_data = json.loads(open(seek_token_path).read())
         print(seek_token_data)
@@ -425,37 +430,24 @@ class SeekUsersThread(threading.Thread):
         self.user = user
 
     def run(self):
-        time.sleep(10)
         while True:
             success, interval = self._seek_users()
             time.sleep(random.randint(interval, interval * 2))
 
     def _seek_users(self):
         for k in self.user.ipcache.keys():
+            print(colored("*" * 100, "cyan"))
+            print(colored("* {} challenging {}".format(self.user.username, k), "cyan"))
             challenge = self.user.challenge_user_pk(k)
 
             if challenge is True:
-                print("she was there all along")
-                return True, 60
-            else:
-                print("can't find her so we'll remove and seek")
-                # self.user.remove_contact_ip_port(k)
-                self.user.seek_user(k)
+                print(colored("* challenge passed", "cyan"))
+                print(colored("*" * 100, "cyan"))
 
-        # TODO JHILL: take them out of the ip cache.... but they should be in here
-        # will also need to remove the seek token file if we do it this way
-        # after the token has been used
-        # TODO JHILL: attach file dates to all of the seek tokens,
-        # and reseek people if it's been more than 2 or 3 minutes since we started
-        for st in self.user.seek_tokens:
-            print("gonna seek?", st)
-            sleep_time = (datetime.datetime.now() - st['modified_at']).total_seconds()
-            print(sleep_time)
-            if  sleep_time > 5:
-                print("yes")
-                self.user.seek_user(st['username'])
             else:
-                print("not yet")
+                print(colored("* seeking them because they failed the challenge", "cyan"))
+                self.user.seek_user(k)
+            print(colored("*" * 100, "cyan"))
 
         return True, 5
 

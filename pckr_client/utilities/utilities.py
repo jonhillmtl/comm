@@ -93,7 +93,6 @@ def encrypt_symmetric(content, password, callback=None):
     else:
         data_encrypted = b"".join(cipher.encrypt_ecb(content))
 
-    print(len(data_encrypted))
     data_decrypted = b"".join(cipher.decrypt_ecb(data_encrypted))
     assert content == data_decrypted
 

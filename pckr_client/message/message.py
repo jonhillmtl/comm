@@ -118,7 +118,7 @@ class Message(object):
             )
 
             response = send_frame_users(frame, self.user, self.u2)
-            print("send_message", index, response, time.time() - ft)
+            print("send_message", index, response, time.time() - ft, (index / len(content_splits) * 100))
 
         print("total time", time.time() - tt)
         return True
