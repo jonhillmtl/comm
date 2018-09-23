@@ -50,7 +50,7 @@ Instructions are provided elsewhere.
 - no passwords exist. anyone that has access to your computer has access to your pckr "account"
 - users are not guaranteed unique across a network of any size greater than 1
     - `public_key` challenges are used when needed to establish the identity of your contacts
-    - it's entirely possible that your ipcache will become overrun with duplicate usernames of people purporting to be who they say they are. woe to you and them! `public_key` challenges to the rescue.
+    - it's entirely possible that your `ipcache` will become overrun with duplicate usernames of people purporting to be who they say they are. woe to you and them! `public_key` challenges to the rescue.
     - seriously though this could be a problem
     - remember to contact your contacts out of band as appropriate to verify their identities
 
@@ -64,13 +64,25 @@ Instructions are provided elsewhere.
     - they do this by encrypting their `ip:port` using their contacts' `public_key`s, and transmitting that information to each contact
 - clients are also encouraged to `ping` and `challenge` all users they have knowledge of
     - clients can `ping` or `challenge` any conact in their `ipcache`
-    - they can also `seek` contacts that they have a `public_key` for
-- the health of the network is improved through the voluntary participation in both mechanisms use of both mechanisms is 
+- they can also `seek` contacts that they have a `public_key` for
+
+### Surfacing
+
+### Seeking
 
 ## Challenges
 
-- `u1` can challenge ``u2`` in 2 ways:
-    - does ``u2`` have the private key that matches the `public_key` that ``u1` ` has stored for them
-    - does ``u2`` have `u1`'s `public_key`
+- `u1` can challenge `u2` in 2 ways:
+    - does `u2` have the private key that matches the `public_key` that `u1` has stored for them
+        - `u1` encrypts an aritrary piece of data and sends it to `u2`
+        - `u2` responds by using their `private_key` to decrypt the data and send it back
+        - `u1` can verify the data
+    - does `u2` have `u1`'s `public_key`
+        - `u1` sends a piece of data
+        - `u2` encrypts it using the `public_key` of `u1`
+        - `u1` decrypts is using their `private_key`
+- by using both methods, `u1` and `u2` can verify a solid cryptographical link
+- either user can also ensure that the user presenting at a certain `ip:port` is who they report to be
+- this makes the exchange of `public_keys`s as early as possible quite important for the health of the network
 
 
