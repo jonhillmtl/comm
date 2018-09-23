@@ -240,8 +240,8 @@ class SocketThread(threading.Thread):
     def _receive_challenge_user_has_pk(self, request):
         assert type(request) == dict
         assert 'payload' in request, 'payload not in request'
-        assert 'from_username' in request['payload']
-        assert 'challenge_text' in request['payload']
+        assert 'from_username' in request['payload'], "from_username not in request['payload']"
+        assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
 
         public_key_text = self.user.get_contact_public_key(request["payload"]["from_username"])
 
@@ -403,9 +403,9 @@ class SocketThread(threading.Thread):
             host_info_decrypted
         )
 
-        assert 'username' in host_info
-        assert 'ip' in host_info
-        assert 'port' in host_info
+        assert 'from_username' in host_info, "from_username not in host_info"
+        assert 'ip' in host_info, "ip not in host_info"
+        assert 'port' in host_info, "port not in host_info"
 
         public_key_text = self.user.get_contact_public_key(host_info['from_username'])
         if public_key_text is None:
@@ -456,6 +456,7 @@ class SocketThread(threading.Thread):
             host_info_decrypted
         )
 
+        # TODO JHILL: should be from_username
         assert 'username' in host_info
         assert 'ip' in host_info
         assert 'port' in host_info

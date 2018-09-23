@@ -89,6 +89,7 @@ class User(object):
                 password = str(uuid.uuid4())
                 password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
 
+                # TODO JHILL: from_username should be u2 everywhere...
                 host_info = dict(
                     from_username=self.username,
                     ip=self.current_ip_port['ip'],
