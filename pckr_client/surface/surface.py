@@ -261,10 +261,12 @@ class SocketThread(threading.Thread):
                 f.write(content_decrypted)
 
         print("wrote to", path)
+
         subprocess.check_call([
             "open",
             path
         ])
+
         return dict(
             success=True
         )
@@ -332,6 +334,8 @@ class SocketThread(threading.Thread):
 
     def _receive_seek_user_response(self, request):
         assert type(request) == dict
+        assert 'payload' in request, 'payload not in request'
+
         password = decrypt_rsa(
             hexstr2bytes(request['payload']['password']),
             self.user.private_key_text
@@ -356,11 +360,20 @@ class SocketThread(threading.Thread):
         )
 
         # TODO JHILL: error handling obviously
-        seek_token_data = json.loads(open(seek_token_path).read())
-        print(seek_token_data)
+        try:
+            seek_token_data = json.loads(open(seek_token_path).read())
+        except FileNotFoundError as e:
+            pass
+            
         if seek_token_data['seek_token'] == seek_token_decrypted:
-            self.user.set_contact_ip_port(host_info['username'], host_info['ip'], int(host_info['port']))
+            self.user.set_contact_ip_port(
+                host_info['username'],
+                host_info['ip'],int(host_info['port'])
+            )
+            
+            # if we sought them out and found them, we don't need this anymore
             os.remove(seek_token_path)
+
             return dict(
                 success=True
             )
@@ -483,6 +496,15 @@ class SeekUsersThread(threading.Thread):
             time.sleep(random.randint(interval, interval * 2))
 
     def _seek_users(self):
+        """
+        seek out all of the other users that self.user knows about
+        ping them first.... if they fail that, seek them
+        if they pass the ping, challenge them
+        if they fail the challenge, then remove them from the ipcache and seek them
+        failing the challenge is bad so we should get rid of them and try to find the
+        real user again
+        """
+
         for k in self.user.ipcache.keys():
             print(colored("*" * 100, "cyan"))
             print(colored("* {} pinging {}".format(self.user.username, k), "cyan"))

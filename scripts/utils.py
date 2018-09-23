@@ -24,15 +24,13 @@ def rpk(u1, u2, robustness=5):
 
 
 def aip(data, u1, u2, robustness=5):
-    try:
-        if random.randint(0, 10) < robustness:
-            subprocess.check_call([
-                'pckr_client',
-                'aip',
-                '--username={}'.format(u1),
-                '--u2={}'.format(u2),
-                '--ip={}'.format(data[u2]['ip']),
-                '--port={}'.format(data[u2]['port'])
-            ])
-    except KeyError as e:
-        print(e)
+    assert u2 in data
+    if random.randint(0, 10) < robustness:
+        subprocess.check_call([
+            'pckr_client',
+            'aip',
+            '--username={}'.format(u1),
+            '--u2={}'.format(u2),
+            '--ip={}'.format(data[u2]['ip']),
+            '--port={}'.format(data[u2]['port'])
+        ])

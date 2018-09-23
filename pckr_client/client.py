@@ -328,4 +328,4 @@ def main():
     print(colored("*" * 100, "blue"))
     print("\n")
 
-    return True
+    sys.exit(0)
