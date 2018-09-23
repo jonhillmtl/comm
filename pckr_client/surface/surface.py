@@ -3,7 +3,7 @@ from ..utilities import command_header, send_frame_users, normalize_path, is_bin
 from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
-
+from ..utilities.logging import assert_logger
 from termcolor import colored
 
 import binascii
@@ -29,16 +29,27 @@ class SocketThread(threading.Thread):
         self.clientsocket = clientsocket
         self.user = User(username)
 
-        # TODO JHILL: assert the user exists?
-
     def _receive_ping(self, request):
+        """
+        receive the ping request and respond with a pong message
+        """
+
         assert type(request) == dict
+
         return dict(
             success=True,
             message="pong"
         )
 
     def _receive_seek_user(self, request):
+        """
+        receive the seek_user request. try to decrypt the message contained in it
+        and respond to the user that was seeking you if you can
+        """
+
+        assert type(request) == dict
+        assert 'payload' in request, 'payload not in request'
+
         responded = False
 
         # 1) try to decrypt the message using our own private key
@@ -75,13 +86,7 @@ class SocketThread(threading.Thread):
                 password.encode()
             ))
 
-            # TODO JHILL: BAD BUG HERE!
-            # we need to be able to ping them without looking up their ip
-            # and port, the point is to challenge this new ip and port they sent ud
-            # right now we don't do that at all
-            # TODO JHILL: bad bug here
             u2 = host_info['from_username']
-
             ip, port = self.user.get_contact_ip_port(u2)
             self.user.set_contact_ip_port(u2, host_info['ip'], host_info['port'])
 
@@ -155,10 +160,11 @@ class SocketThread(threading.Thread):
             return dict(success=True, message="that was me, a seek_user_response is imminent")
 
     def _receive_request_public_key(self, request):
+        assert type(request) == dict, 'request is not dict'
+
         self.user.store_public_key_request(request)
         self.user.store_voluntary_public_key(request)
 
-        # TODO JHILL: make this nicer
         return dict(
             success=True
         )
@@ -177,7 +183,7 @@ class SocketThread(threading.Thread):
         assert type(request) == dict, "request is not dict"
         assert 'payload' in request, "payload not in request"
         assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
-        
+
         try:
             decrypted = decrypt_rsa(
                 hexstr2bytes(request['payload']['challenge_text']),
@@ -263,6 +269,11 @@ class SocketThread(threading.Thread):
         )
 
     def _receive_send_message_term(self, request):
+        assert type(request) == dict, 'request must be a dict'
+        assert 'payload' in request, 'payload not in request'
+        assert 'password' in request['payload'], "password not in request['payload']"
+        assert 'term' in request['payload'], "term not in request['payload']"
+
         password_decrypted = decrypt_rsa(
             hexstr2bytes(request['payload']['password']),
             self.user.private_key_text
@@ -336,6 +347,11 @@ class SocketThread(threading.Thread):
         )
 
     def _receive_surface_user(self, request):
+        assert type(request) == dict, 'request must be a dict'
+        assert 'payload' in request, 'payload not in request'
+        assert 'password' in request['payload'], "password not in request['payload']"
+        assert 'host_info' in request['payload'], "host_info not in request['payload']"
+
         password = decrypt_rsa(
             hexstr2bytes(request['payload']['password']),
             self.user.private_key_text
@@ -349,6 +365,10 @@ class SocketThread(threading.Thread):
         host_info = json.loads(
             host_info_decrypted
         )
+
+        assert 'username' in host_info
+        assert 'ip' in host_info
+        assert 'port' in host_info
 
         public_key_text = self.user.get_contact_public_key(host_info['from_username'])
         if public_key_text is None:
@@ -375,8 +395,11 @@ class SocketThread(threading.Thread):
             )
 
     def _receive_seek_user_response(self, request):
-        assert type(request) == dict
+        assert type(request) == dict, 'request must be a dict'
         assert 'payload' in request, 'payload not in request'
+        assert 'password' in request['payload'], "password not in request['payload']"
+        assert 'seek_token' in request['payload'], "seek_token not in request['payload']"
+        assert 'host_info' in request['payload'], "host_info not in request['payload']"
 
         password = decrypt_rsa(
             hexstr2bytes(request['payload']['password']),
@@ -396,17 +419,23 @@ class SocketThread(threading.Thread):
             host_info_decrypted
         )
 
+        assert 'username' in host_info
+        assert 'ip' in host_info
+        assert 'port' in host_info
+
         seek_token_path = os.path.join(
             self.user.seek_tokens_path,
             "{}.json".format(host_info['username'])
         )
 
-        # TODO JHILL: error handling obviously
         seek_tokens = []
         try:
             seek_tokens = json.loads(open(seek_token_path).read())
         except FileNotFoundError as e:
-            pass
+            return dict(
+                success=False,
+                error='seek_tokens not found'
+            )
 
         # TODO JHILL: this could be a one-liner using 'in' but you need to test it again
         found = False
@@ -417,7 +446,8 @@ class SocketThread(threading.Thread):
         if found:
             self.user.set_contact_ip_port(
                 host_info['username'],
-                host_info['ip'],int(host_info['port'])
+                host_info['ip'],
+                int(host_info['port'])
             )
 
             return dict(
@@ -426,7 +456,7 @@ class SocketThread(threading.Thread):
         else:
             return dict(
                 success=False,
-                error='seek token not found'
+                error='seek_token not found'
             )
 
 
@@ -513,7 +543,9 @@ class SocketThread(threading.Thread):
                     success=False,
                     error="unknown action '{}'".format(request['action'])
                 )
-        except IOError as e:
+        except AssertionError as e:
+            assert_logger.error(e)
+
             return dict(
                 success=False,
                 error=str(e)
