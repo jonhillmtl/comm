@@ -9,6 +9,7 @@ ttab ./scripts/surface_user.sh jasmin
 
 ttab tail -f logs/assert.log
 ttab tail -f logs/surface.log
+ttab tail -f logs/debug.log
 
 sleep 10;
 python ./scripts/stitch_network.py
