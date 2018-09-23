@@ -221,20 +221,42 @@ class SocketThread(threading.Thread):
             hexstr2bytes(request['payload']['password']),
             self.user.private_key_text
         )
-        
+
         meta_decrypted = decrypt_symmetric(
             hexstr2bytes(request['payload']['meta']),
             password_decrypted
         )
 
         meta = json.loads(meta_decrypted)
+        key = None
+        key_path = os.path.join(self.user.message_keys_path, meta['message_id'])
+        with open(os.path.join(key_path, "key.json"), "r") as f:
+            key = json.loads(f.read())
+
         path = os.path.join(self.user.messages_path, meta['message_id'])
         if not os.path.exists(path):
             os.makedirs(path)
-        path = os.path.join(path, meta['filename'])
+        filename = os.path.basename(os.path.normpath(meta['filename']))
+        path = os.path.join(path, filename)
 
-        with open(path, "a+") as f:
-            f.write(request['payload']['content'])
+        if is_binary(meta['mime_type']):
+            content_decrypted = decrypt_symmetric(
+                hexstr2bytes(request['payload']['content']),
+                key['password'],
+                decode=False
+            )
+            print(content_decrypted)
+
+            with open(path, "ab+") as f:
+                f.write(content_decrypted)
+        else:
+            content_decrypted = decrypt_symmetric(
+                hexstr2bytes(content),
+                key['password']
+            )
+
+            with open(path, "a+") as f:
+                f.write(content_decrypted)
 
         return dict(
             success=True
@@ -252,17 +274,11 @@ class SocketThread(threading.Thread):
         )
 
         term = json.loads(term_decrypted)
-
-        key = None
-        key_path = os.path.join(self.user.message_keys_path, term['message_id'])
-        with open(os.path.join(key_path, "key.json"), "r") as f:
-            key = json.loads(f.read())
-
         path = os.path.join(self.user.messages_path, term['message_id'])
-        path = os.path.join(path, term['filename'])
+        filename = os.path.basename(os.path.normpath(term['filename']))
+        path = os.path.join(path, filename)
 
-        content = open(path).read()
-
+        """
         path = path
         if is_binary(term['mime_type']):
             content_decrypted = decrypt_symmetric(
@@ -281,7 +297,7 @@ class SocketThread(threading.Thread):
 
             with open(path, "w+") as f:
                 f.write(content_decrypted)
-
+        """
         print("wrote to", path)
 
         subprocess.check_call([
@@ -392,19 +408,12 @@ class SocketThread(threading.Thread):
         except FileNotFoundError as e:
             pass
 
+        # TODO JHILL: this could be a one-liner using 'in' but you need to test it again
         found = False
         for x in seek_tokens:
-            assert type(x) == type(seek_token_decrypted)
-            print(x)
-            print(seek_token_decrypted)
             if x.strip() == seek_token_decrypted.strip():
                 found = True
-                print(found)
-            else:
-                print("not equal")
 
-        print(seek_tokens)
-        print(seek_token_decrypted)
         if found:
             self.user.set_contact_ip_port(
                 host_info['username'],
@@ -504,16 +513,30 @@ class SocketThread(threading.Thread):
                     success=False,
                     error="unknown action '{}'".format(request['action'])
                 )
-        except AssertionError as e:
-                return dict(
-                    success=False,
-                    error=str(e)
-                )
+        except IOError as e:
+            return dict(
+                success=False,
+                error=str(e)
+            )
+        except json.decoder.JSONDecodeError as e:
+            print(e)
+            return dict(
+                success=False,
+                error=str(e)
+            )
 
     def run(self):
         request_text = self.clientsocket.recv(int(65536 / 2)).decode()
-        request = json.loads(request_text)
-        response = self.process_request(request)
+        try:
+            request = json.loads(request_text)
+            response = self.process_request(request)
+        except json.decoder.JSONDecodeError as e:
+            print(request_text)
+            print(e)
+            return dict(
+                success=False,
+                error=str(e)
+            )
 
         assert 'frame_id' in request
         response.update(response_to_frame=request['frame_id'])
@@ -591,7 +614,7 @@ class SeekUsersThread(threading.Thread):
                     print(colored("* we don't have their public_key", "cyan"))
             print(colored("*" * 100, "cyan"))
 
-        return True, 5
+        return True, 60
 
 
 class SurfaceUserThread(threading.Thread):

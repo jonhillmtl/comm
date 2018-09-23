@@ -20,7 +20,7 @@ def command_header(action, args):
     ), "blue")
 
 
-def split_contents(contents, split_size=4096 * 4):
+def split_contents(contents, split_size=4096):
     splits = []
     index = 0
     while index < len(contents):

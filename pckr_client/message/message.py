@@ -77,7 +77,8 @@ class Message(object):
  
         meta = dict(
             message_id=self.message_id,
-            filename=self.filename
+            filename=self.filename,
+            mime_type=self.mime_type
         )
 
         password = str(uuid.uuid4())
@@ -98,21 +99,20 @@ class Message(object):
 
         tt = time.time()
         et = time.time()
-        encrypted_content = bytes2hexstr(encrypt_symmetric(
-            content,
-            self.password,
-            _progress_callback
-        ))
         print("encryption time", time.time() - et)
 
-        content_splits = split_contents(encrypted_content)
+        content_splits = split_contents(content)
         for index, content_split in enumerate(content_splits):
+            encrypted_content = bytes2hexstr(encrypt_symmetric(
+                content_split,
+                self.password
+            ))
             ft = time.time()
             frame = Frame(
                 action='send_message',
                 payload=dict(
                     password=password_encrypted,
-                    content=content_split,
+                    content=encrypted_content,
                     meta=meta_encrypted
                 )
             )
