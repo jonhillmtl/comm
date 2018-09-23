@@ -29,5 +29,27 @@ Instructions are provided elsewhere.
 - u1 can decrypt the password using their private key, and then decrypt u2's public key using the password
 - at this point u1 and u2 are sharing public keys, and are aware of each other's ip:ports
 - both u1 and u2 will periodically seek each other out, to ping the other and challenge their stored public keys
-- u1 and u2 are also expected to transmit message from users that are surfacing into the network, and users that are seeking other users
+- u1 and u2 are also expected to transmit frames from users that are surfacing into the network, and users that are seeking other users
     - more details on both follow
+- u1 and u2 are also expected to transmit frames pertainging to the health of the network
+    - specifically, frames are sent out to gather information about the health of the network topology
+    - u1 and u2 would do well to heed the advice of these frames, and challenge or expel inconsistently recognized users in their reachable networks
+
+## File Transfer
+
+- since everyone is so well connected and cryptographic protocols are established and verifiable between users, we might as well also send files to each other
+
+## Philosophically Though
+
+- it might seem a pain to bootstrap over the phone or WhatsApp or Telegram or what have you but you can create small networks isolated from the outside world
+
+## Users and Authentication
+
+- user information is thrown into a directory tree
+- the client was written to allow unfettered access to users on the same account or physical machine as you
+- no passwords exist. anyone that has access to your computer has access to your pckr "account"
+- users are not guaranteed unique across a network of any size greater than 1
+    - public key challenges are used when needed to establish the identity of your contacts
+    - it's entirely possible that your ipcache will become overrun with duplicate usernames of people purporting to be who they say they are. woe to you and them! public key challenges to the rescue.
+    - seriously though this could be a problem
+    - remember to contact your contacts out of band as appropriate to verify their identities
