@@ -99,9 +99,9 @@ Instructions are provided elsewhere.
 
 ## IPCache
 
-## Security
+## Security Concerns
 
-[all](docs/security_concerns.md)
+[keep fighting](docs/security_concerns.md)
 
 ## File Transfer
 
