@@ -75,16 +75,36 @@ class SocketThread(threading.Thread):
                 password.encode()
             ))
 
+            # TODO JHILL: BAD BUG HERE!
+            # we need to be able to ping them without looking up their ip
+            # and port, the point is to challenge this new ip and port they sent ud
+            # right now we don't do that at all
+            # TODO JHILL: bad bug here
+            u2 = host_info['from_username']
+
+            ip, port = self.user.get_contact_ip_port(u2)
+            self.user.set_contact_ip_port(u2, host_info['ip'], host_info['port'])
+
+            ping = self.user.ping_user(u2)
+            if ping is False:
+                self.user.set_contact_ip_port(u2, ip, port)
+
+                return dict(
+                    success=False,
+                    error='that was us, but the asking user is unreachable'
+                )
+
             # ask them if they have our public key
             # maybe we should ask them to prove their public key, as well
-            challenge = self.user.challenge_user_has_pk(host_info['from_username'])
+            challenge = self.user.challenge_user_has_pk(u2)
             if challenge is False:
+                self.user.set_contact_ip_port(u2, ip, port)
+
                 return dict(
                     success=False,
                     error='that was us, but we challenged the asking user and they failed'
                 )
 
-            user.set_contact_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
             response_dict = dict(
                 seek_token=seek_token_encrypted,
                 password=password_encrypted,
@@ -96,13 +116,13 @@ class SocketThread(threading.Thread):
                 action='seek_user_response',
                 payload=response_dict
             )
-            
+
             self.user.set_contact_ip_port(
-                host_info['from_username'],
+                u2,
                 host_info['ip'],
                 int(host_info['port'])
             )
-            response = send_frame_users(frame, self.user, host_info['from_username'])
+            response = send_frame_users(frame, self.user, u2)
 
             responded = True
 
@@ -361,17 +381,18 @@ class SocketThread(threading.Thread):
         )
 
         seek_token_path = os.path.join(
-            self.user.seek_tokens_path, 
+            self.user.seek_tokens_path,
             "{}.json".format(host_info['username'])
         )
 
         # TODO JHILL: error handling obviously
+        seek_tokens = []
         try:
-            seek_token_data = json.loads(open(seek_token_path).read())
+            seek_tokens = json.loads(open(seek_token_path).read())
         except FileNotFoundError as e:
             pass
-            
-        if seek_token_data['seek_token'] == seek_token_decrypted:
+
+        if seek_token_decrypted in seek_tokens:
             self.user.set_contact_ip_port(
                 host_info['username'],
                 host_info['ip'],int(host_info['port'])
@@ -391,7 +412,7 @@ class SocketThread(threading.Thread):
 
 
     def _receive_pulse_network(self, request):
-        assert type(request) == dict
+        assert type(request) == dict, "request must be a dict"
         assert 'payload' in request, "payload not in request"
         assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
 
@@ -403,7 +424,7 @@ class SocketThread(threading.Thread):
 
 
     def _receive_check_net_topo(self, request):
-        assert type(request) == dict
+        assert type(request) == dict, "request must be a dict"
         assert 'payload' in request, "payload not in request"
         assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
         assert 'hashed_ipcaches' in request['payload'], "hashed_ipcaches not in request['payload']"
@@ -416,6 +437,17 @@ class SocketThread(threading.Thread):
 
         return dict(
             success=True,
+        )
+    
+    def _receive_net_topo_damaged(self, request):
+        assert type(request) == dict, "request must be a dict"
+        assert 'payload' in request, "payload not in request"
+        assert 'inconsistent_user' in request['payload'], "custody_chain not in request['payload']"
+
+        self.user.flush_inconsistent_user(request['payload']['inconsistent_user'])
+
+        return dict(
+            success=True
         )
 
     def process_request(self, request):
@@ -454,6 +486,9 @@ class SocketThread(threading.Thread):
                 return self._receive_pulse_network(request)
             elif request['action'] == 'check_net_topo':
                 return self._receive_check_net_topo(request)
+            elif request['action'] == 'net_topo_damaged':
+                return self._receive_net_topo_damaged(request)
+
             else:
                 return dict(
                     success=False,
@@ -546,7 +581,7 @@ class SeekUsersThread(threading.Thread):
                     print(colored("* we don't have their public_key", "cyan"))
             print(colored("*" * 100, "cyan"))
 
-        return True, 60
+        return True, 5
 
 
 class SurfaceUserThread(threading.Thread):

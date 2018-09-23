@@ -152,10 +152,18 @@ class User(object):
 
         seek_token = str(uuid.uuid4())
         seek_token_path = os.path.join(self.seek_tokens_path, "{}.json".format(u2))
+
+        current_seek_tokens = []
+        if os.path.exists(seek_token_path):
+            txt = open(seek_token_path).read()
+            if txt != '':
+                current_seek_tokens = json.loads(txt)
+                if type(current_seek_tokens) == dict:
+                    current_seek_tokens = []
+
         with open(seek_token_path, "w+") as f:
-            f.write(json.dumps(
-                dict(seek_token=seek_token)
-            ))
+            current_seek_tokens.append(seek_token)
+            f.write(json.dumps(current_seek_tokens))
 
         host_info = dict(
             ip=self.current_ip_port['ip'],
@@ -261,6 +269,7 @@ class User(object):
             )
 
             response = send_frame_users(frame, self, u2)
+            assert type(challenge_text) == type(response['decrypted_challenge'])
             if response['success'] is True and response['decrypted_challenge'] == challenge_text:
                 return True
 
@@ -278,12 +287,13 @@ class User(object):
         )
 
         response = send_frame_users(frame, self, u2)
+        print(response)
 
         if response['success'] is True:
             decrypted_challenge = decrypt_rsa(
                 hexstr2bytes(response['encrypted_challenge']),
                 self.private_key_text
-            )
+            ).decode()
 
             if challenge_text == decrypted_challenge:
                 return True
@@ -496,21 +506,40 @@ class User(object):
         
         this will be used in the nt call
         """
+
         hips = dict()
 
-        for k in self.ipcache.keys():
-            v = self.ipcache[k]
+        for k, v in self.ipcache.items():
             hips[str2hashed_hexstr(k)] = str2hashed_hexstr(json.dumps(v))
 
         return hips
+    
+    def flush_inconsistent_user(self, u2):
+        for k in self.ipcache.keys():
+            # TODO JHILL: maybe challenge that user first? and if they fail the challenge
+            # then flush them?
+            hashed_username = str2hashed_hexstr(k)
+
+            if hashed_username == u2:
+                self.remove_contact_ip_port(u2)
+                self.seek_user(u2)
+
+        return True
 
     def check_net_topo(self, custody_chain=[], hashed_ipcaches=dict()):
         custody_chain.append(str2hashed_hexstr(self.username))
 
         for k, v in self.hashed_ipcache().items():
             if k in hashed_ipcaches and hashed_ipcaches[k] != v:
-                # TODO JHILL: poisoned
-                hashed_ipcaches[k] = v
+                for notification_user in self.ipcache.keys():
+                    frame = Frame(
+                        action='net_topo_damaged',
+                        payload=dict(
+                            inconsistent_user=k
+                        )
+                    )
+
+                    response = send_frame_users(frame, self, notification_user)
                 assert False
             else:
                 hashed_ipcaches[k] = v

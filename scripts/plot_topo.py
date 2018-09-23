@@ -15,8 +15,8 @@ def main():
         if os.path.isdir(path):
             users.append(sd)
 
-    G = nx.Graph()
-    
+    G = nx.DiGraph()
+
     for u in sorted(users):
         user = User(u)
         print("-" * 100)
@@ -32,12 +32,12 @@ def main():
                 has_pk = public_key_text != None
 
     # write in UTF-8 encoding
-    fh = open('edgelist.utf-8', 'wb')
+    fh = open('./test/edgelist.utf-8', 'wb')
     fh.write('# -*- coding: utf-8 -*-\n'.encode('utf-8'))  # encoding hint for emacs
     nx.write_multiline_adjlist(G, fh, delimiter='\t', encoding='utf-8')
 
     # read and store in UTF-8
-    fh = open('edgelist.utf-8', 'rb')
+    fh = open('./test/edgelist.utf-8', 'rb')
     H = nx.read_multiline_adjlist(fh, delimiter='\t', encoding='utf-8')
 
     for n in G.nodes():
