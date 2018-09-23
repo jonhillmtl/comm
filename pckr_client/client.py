@@ -51,17 +51,19 @@ def challenge_user_has_pk(args):
 
 def request_public_key(args):
     user = User(args.username)
+    public_key_text = user.get_contact_public_key(args.u2)
 
-    frame = Frame(
-        payload=dict(
-            from_username=args.username,
-            public_key=user.public_key_text
-        ), 
-        action="request_public_key"
-    )
+    if public_key_text is None:
+        frame = Frame(
+            payload=dict(
+                from_username=args.username,
+                public_key=user.public_key_text
+            ), 
+            action="request_public_key"
+        )
 
-    response = send_frame_users(frame, user, args.u2)
-    pprint.pprint(response, indent=4)
+        response = send_frame_users(frame, user, args.u2)
+        pprint.pprint(response, indent=4)
 
 
 def surface_user(args):
@@ -160,6 +162,10 @@ def pulse_network(args):
     user.pulse_network()
 
 
+def nt(args):
+    user = User(args.username)
+    user.nt()
+
 def massage_args(argparser):
     args = argparser.parse_args()
     if args.username is None:
@@ -188,7 +194,8 @@ COMMANDS = [
     'process_public_key_responses',
     'add_ipcache',
     'remove_ipcache',
-    'pulse_network'
+    'pulse_network',
+    'nt'
 ]
 
 
@@ -205,7 +212,8 @@ COMMAND_ALIASES = dict(
     ppk_resp='process_public_key_responses',
     aip='add_ipcache',
     rip='remove_ipcache',
-    pn='pulse_network'
+    pn='pulse_network',
+    nt='nt'
 )
 
 
@@ -268,6 +276,9 @@ def main():
         argparser.add_argument("--u2", required=True)
     
     elif command == 'pulse_network':
+        pass
+    
+    elif command == 'nt':
         pass
 
     else:

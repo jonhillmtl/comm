@@ -467,3 +467,33 @@ class User(object):
             f.write(json.dumps(self.ipcache_data))
 
         return True
+
+    def hashed_ipcache(self):
+        hip = dict()
+
+        for k in self.ipcache.keys():
+            v = self.ipcache[k]
+            hashed_username = str2hashed_hexstr(k)
+            hip[hashed_username] = str2hashed_hexstr(json.dumps(v))
+
+        return dict(
+            username=str2hashed_hexstr(self.username),
+            hip=hip
+        )
+
+    def nt(self, custody_chain=[], hashed_ipcaches=[]):
+        custody_chain.append(str2hashed_hexstr(self.username))
+        hashed_ipcaches.append(self.hashed_ipcache())
+
+        for k in self.ipcache.keys():
+            hashed_username = str2hashed_hexstr(k)
+            if hashed_username not in custody_chain:
+                frame = Frame(payload=dict(
+                    custody_chain=custody_chain,
+                    hashed_ipcaches=hashed_ipcaches
+                ), action='nt')
+
+                response = send_frame_users(frame, self, k)
+
+        return True
+    

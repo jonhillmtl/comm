@@ -364,6 +364,17 @@ class SocketThread(threading.Thread):
             success=True
         )
 
+
+    def _receive_nt(self, request):
+        self.user.nt(
+            request['payload']['custody_chain'],
+            request['payload']['hashed_ipcaches']
+        )
+
+        return dict(
+            success=True,
+        )
+
     def process_request(self, request_text):
         print(colored("*"*100, "blue"))
         request_data = json.loads(request_text)
@@ -396,6 +407,8 @@ class SocketThread(threading.Thread):
             return self._receive_surface_user(request_data)
         elif request_data['action'] == 'pulse_network':
             return self._receive_pulse_network(request_data)
+        elif request_data['action'] == 'nt':
+            return self._receive_nt(request_data)
         else:
             return dict(
                 success=False,
@@ -411,9 +424,9 @@ class SocketThread(threading.Thread):
         else:
             print(colored("passing anything but dicts is deprecated", "red"))
             assert False
-
+        
         print("\n")
-        print("response", colored(pprint.pformat(response), "green"))
+        print("response", colored(response, "green"))
         print("\n")
         print(colored("*" * 100, "blue"))
         print(colored("* end request", "blue"))
@@ -449,7 +462,7 @@ class SeekUsersThread(threading.Thread):
                 self.user.seek_user(k)
             print(colored("*" * 100, "cyan"))
 
-        return True, 5
+        return True, 120
 
 
 class SurfaceUserThread(threading.Thread):
