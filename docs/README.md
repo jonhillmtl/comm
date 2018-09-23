@@ -42,8 +42,10 @@ Instructions are provided elsewhere.
 - since no coördinating server was desirable, every client has to ensure that they remain a part of the network
 - for this reason, the network is hereby referred to as a `murmuration`
 - no such thing is true
-- each client is responisble for tagging-along by informating the network of their whereabouts ("surfacing") or verifying the `ip:port` and cryptographical links of their contacts ("seeking")
+- each client is responsible for tagging-along by informing the network of their whereabouts ("surfacing") or verifying the `ip:port` and cryptographical links of their contacts ("seeking")
 - clients also have a role to play in ensuring the health of their network topology, by propagating `frames` which aim to collect information about the consistency of the network
+    - such network topology checks might also then inform clients about inconsistently recognized users, which the client could then choose to expel from their `ipcache`, or challenge, as they wish
+    - every client is also free to do nothing
 - it might seem a pain to bootstrap over the phone or WhatsApp or Telegram or what have you but you can create small networks isolated from the outside world
 
 ## Users and Authentication
