@@ -513,14 +513,17 @@ class User(object):
             hips[str2hashed_hexstr(k)] = str2hashed_hexstr(json.dumps(v))
 
         return hips
-    
+
     def flush_inconsistent_user(self, u2):
         for k in self.ipcache.keys():
             # TODO JHILL: maybe challenge that user first? and if they fail the challenge
             # then flush them?
             hashed_username = str2hashed_hexstr(k)
 
-            if hashed_username == u2:
+            print(hashed_username)
+            print(u2)
+            if hashed_username.strip() == u2.strip():
+                print("YES")
                 self.remove_contact_ip_port(u2)
                 self.seek_user(u2)
 

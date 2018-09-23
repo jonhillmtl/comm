@@ -130,7 +130,7 @@ class SocketThread(threading.Thread):
             pass
 
         if responded == False:
-            if len(request['payload']['custody_chain']) > 3:
+            if len(request['payload']['custody_chain']) > 4:
                 return dict(success=True, message='custody_chain len exceeded')
 
             # 2) if we can't decrypt and respond we should pass the message along
@@ -392,14 +392,24 @@ class SocketThread(threading.Thread):
         except FileNotFoundError as e:
             pass
 
-        if seek_token_decrypted in seek_tokens:
+        found = False
+        for x in seek_tokens:
+            assert type(x) == type(seek_token_decrypted)
+            print(x)
+            print(seek_token_decrypted)
+            if x.strip() == seek_token_decrypted.strip():
+                found = True
+                print(found)
+            else:
+                print("not equal")
+
+        print(seek_tokens)
+        print(seek_token_decrypted)
+        if found:
             self.user.set_contact_ip_port(
                 host_info['username'],
                 host_info['ip'],int(host_info['port'])
             )
-            
-            # if we sought them out and found them, we don't need this anymore
-            os.remove(seek_token_path)
 
             return dict(
                 success=True

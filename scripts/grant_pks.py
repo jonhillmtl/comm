@@ -18,12 +18,8 @@ def main():
 
     for i, _ in enumerate(users):
         for j, _ in enumerate(users):
-            if random.randint(0, 10) > 5:
-                if i != j:
-                    aip(data, users[i], users[j], robustness=11)
-                    aip(data, users[j], users[i], robustness=11)
-                    rpk(users[i], users[j], robustness=11)
-                    rpk(users[j], users[i], robustness=11)
+            if i != j:
+                rpk(users[i], users[j], robustness=11)
 
 if __name__ == '__main__':
     main()
