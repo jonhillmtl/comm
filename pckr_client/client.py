@@ -14,7 +14,7 @@ import pprint
 import uuid
 import sys
 import json
-
+import random
 
 def init_user(args):
     user = User(args.username)
@@ -71,6 +71,8 @@ def surface_user(args):
     surface = Surface(args.username, args.port)
     surface.start()
 
+    # TODO JHILL: remove this, the stitcher can read the current_ip.json file
+    # instead
     path = os.path.expanduser("~/pckr/surfaced.json")
     data = dict()
     try:
@@ -86,12 +88,12 @@ def surface_user(args):
     with open(path, "w+") as f:
         f.write(json.dumps(data))
 
+    # TODO JHILL: don't remove this...
     user = User(args.username)
     path = os.path.join(user.path, "current_ip_port.json")
     with open(path, "w+") as f:
         f.write(json.dumps(dict(ip=surface.serversocket.getsockname()[0], port=surface.port)))
 
-    # TODO JHILL: surface to all users in ipcache
     print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
 
     surface_user_thread = SurfaceUserThread(user)
@@ -99,7 +101,7 @@ def surface_user(args):
 
     seek_users_thread = SeekUsersThread(user)
     seek_users_thread.start()
-    
+
     seek_users_thread.join()
     surface_user_thread.join()
     surface.join()
@@ -242,7 +244,7 @@ def main():
         argparser.add_argument("--u2", required=True)
 
     elif command == 'surface_user':
-        argparser.add_argument("--port", type=int, required=False, default=8050)
+        argparser.add_argument("--port", type=int, required=False, default=random.randint(8000, 9000))
 
     elif command == 'ping_user':
         argparser.add_argument("--u2", required=True)
