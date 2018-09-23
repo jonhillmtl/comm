@@ -39,6 +39,8 @@ def challenge_user_pk(args):
     else:
         print(colored("bad", "red"))
 
+    return True
+
 
 def challenge_user_has_pk(args):
     user = User(args.username)
@@ -47,6 +49,8 @@ def challenge_user_has_pk(args):
         print(colored("good", "green"))
     else:
         print(colored("bad", "red"))
+
+    return True
 
 
 def request_public_key(args):
@@ -64,6 +68,8 @@ def request_public_key(args):
 
         response = send_frame_users(frame, user, args.u2)
         pprint.pprint(response, indent=4)
+
+    return True
 
 
 def surface_user(args):
@@ -106,11 +112,15 @@ def surface_user(args):
     surface_user_thread.join()
     surface.join()
 
+    return True
+
 
 def add_ipcache(args):
     user = User(args.username)
     user.set_contact_ip_port(args.u2, args.ip, args.port)
     print(user.ipcache)
+
+    return True
 
 
 def remove_ipcache(args):
@@ -118,36 +128,41 @@ def remove_ipcache(args):
     user.remove_contact_ip_port(args.u2)
     print(user.ipcache)
 
+    return True
+
 
 def seek_user(args):
     user = User(args.username)
     user.seek_user(args.u2)
 
+    return True
+
 
 def ping_user(args):
     user = User(args.username)
-    frame = Frame(payload=dict(), action="ping")
+    frame = Frame(action="ping", payload=dict())
     response = send_frame_users(frame, user, args.u2)
     pprint.pprint(response, indent=4)
 
+    return True
+
 
 def send_message(args):
-    user = User(args.username)
-    message = Message(
-        user,
+    return Message(
+        User(args.username),
         args.filename,
         args.mime_type,
         args.u2
-    )
+    ).send()
 
-    print(message)
-    message.send()
 
 def process_public_key_responses(args):
     user = User(args.username)
     for response in user.public_key_responses:
         if user.process_public_key_response(response):
             user.remove_public_key_response(response)
+
+    return True
 
 
 def process_public_key_requests(args):
@@ -156,6 +171,8 @@ def process_public_key_requests(args):
         if user.process_public_key_request(request):
             user.remove_public_key_request(request)
 
+    return True
+
 
 def pulse_network(args):
     user = User(args.username)
@@ -163,10 +180,15 @@ def pulse_network(args):
 
     user.pulse_network()
 
+    return True
+
 
 def nt(args):
     user = User(args.username)
     user.nt()
+
+    return True
+
 
 def massage_args(argparser):
     args = argparser.parse_args()
@@ -223,7 +245,7 @@ def main():
     argparser = argparse.ArgumentParser()
     argparser.add_argument('command')
     args, _ = argparser.parse_known_args()
-    
+
     command = args.command
     if command not in COMMANDS:
         alias_command = COMMAND_ALIASES.get(command, None)
@@ -307,3 +329,5 @@ def main():
     print(colored("* end command", "blue"))
     print(colored("*" * 100, "blue"))
     print("\n")
+
+    return True

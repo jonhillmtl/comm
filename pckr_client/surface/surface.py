@@ -483,6 +483,10 @@ class SeekUsersThread(threading.Thread):
             time.sleep(random.randint(interval, interval * 2))
 
     def _seek_users(self):
+        # TODO JHILL: ping them
+        # if they don't respond, seek_them but don't remove from ipcache
+        # if they do respond, challenge them
+        # if they fail the challenge, remove them from ipcache and seek them
         for k in self.user.ipcache.keys():
             print(colored("*" * 100, "cyan"))
             print(colored("* {} challenging {}".format(self.user.username, k), "cyan"))

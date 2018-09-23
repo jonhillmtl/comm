@@ -1,12 +1,5 @@
-from ..utilities import encrypt_symmetric, bytes2hexstr
-
-import binascii
 import json
 import uuid
-
-
-class MalformedFrameError(Exception):
-    pass
 
 
 class Frame(object):
@@ -14,16 +7,12 @@ class Frame(object):
     payload = None
     action = None
 
-    # TODO JHILL
     def __init__(
         self,
         payload,
-        action,
-        frame_id=None
+        action
     ) -> None:
-        if frame_id is None:
-            frame_id = str(uuid.uuid4())
-        self.frame_id = frame_id
+        self.frame_id = str(uuid.uuid4())
         self.action = action
         self.payload = payload
 
@@ -33,8 +22,4 @@ class Frame(object):
         return str(self)
 
     def __str__(self):
-        return json.dumps(dict(
-            action=self.action,
-            payload=self.payload,
-            frame_id=self.frame_id,
-        ))        
+        return json.dumps(self.__dict__)
