@@ -485,10 +485,18 @@ class User(object):
     #-----------------------------------------------------------------------------------------
     @property
     def ipcache_path(self):
+        """
+        the path for the directory holding the ipcache
+        """
+
         return os.path.join(self.path, "ipcache")
 
     @property
     def ipcache(self):
+        """
+        load the ipcache from disk and return it as a dict
+        """
+
         try:
             path = os.path.join(self.ipcache_path, "cache.json")
             return json.loads(open(path).read())
@@ -498,6 +506,10 @@ class User(object):
             return dict()
 
     def remove_contact_ip_port(self, username):
+        """
+        remove the cached ip:port for a user identified by their username
+        """
+
         try:
             del self.ipcache_data[username]
         except KeyError:
@@ -510,12 +522,20 @@ class User(object):
         return True
 
     def get_contact_ip_port(self, username):
+        """
+        get the cached ip:port for a user identified by their username
+        """
+
         try:
             return (self.ipcache[username]['ip'], self.ipcache[username]['port'])
         except KeyError:
             return None, None
 
     def set_contact_ip_port(self, username, ip, port):
+        """
+        cache the ip:port for username, and write it to disk for later user
+        """
+
         self.ipcache_data[username] = dict(
             ip=ip,
             port=port
@@ -539,7 +559,7 @@ class User(object):
         are hashed... then we can pass them around without revealing much
         about the users we have contact with.
         
-        this will be used in the nt call
+        this will be used in the check_net_topo call
         """
 
         hips = dict()
@@ -554,21 +574,36 @@ class User(object):
             # TODO JHILL: maybe challenge that user first? and if they fail the challenge
             # then flush them?
             hashed_username = str2hashed_hexstr(k)
-
-            print(hashed_username)
-            print(u2)
             if hashed_username.strip() == u2.strip():
-                print("YES")
                 self.remove_contact_ip_port(u2)
                 self.seek_user(u2)
 
         return True
 
     def check_net_topo(self, custody_chain=[], hashed_ipcaches=dict()):
+        """
+        see what everyone says about the state of the network togography
+        anyone receiving this can hash their users and their ip:ports and put it in the dictionary
+        if someone tries to insert a different value for a particular key, they should alert
+        the network that there is an inconsistent user 'net_topo_damaged'
+        
+        clients receiving 'net_topo_damaged' can choose to flush that user from their cache
+        and seek them out again if they care too, or have their public key
+        """
+        
+        # use the custody chain to ensure you don't forward this to anyone
+        # who has already seen it
         custody_chain.append(str2hashed_hexstr(self.username))
 
+        # iterate through your hashed_ipcache and try to insert
+        # the items into the dictionary that is getting handed around
+        # if it is already there, send out net_topo_damaged
         for k, v in self.hashed_ipcache().items():
+
+            # did someone put something else in it already?
             if k in hashed_ipcaches and hashed_ipcaches[k] != v:
+
+                # if so then notify everyone about the inconsistent_user
                 for notification_user in self.ipcache.keys():
                     frame = Frame(
                         action='net_topo_damaged',
@@ -578,10 +613,13 @@ class User(object):
                     )
 
                     response = send_frame_users(frame, self, notification_user)
-                assert False
             else:
                 hashed_ipcaches[k] = v
 
+        # now send the original check_net_topo message to everyone in your
+        # ipcache so they can do the above with it
+        # hopefully this will shake out all inconsistent users from the
+        # network
         for k in self.ipcache.keys():
             hashed_username = str2hashed_hexstr(k)
             if hashed_username not in custody_chain:
