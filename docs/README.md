@@ -14,26 +14,26 @@ This is a high-level view of how the network is created and how users are bootst
 
 Instructions are provided elsewhere.
 
-- users are created with a public/private key pair
-- they then expose an interface to the world (we which we call their surface) at an ip:port combo
-    - this interface will listen for incoming frames and react to them
-- the user will be very lonely indeed until bootstrapped into a network
-- the user (u1) is encouraged to contact a friend (u2) out-of-band to exchange ip:port info
-- u1 can then stitch u2 into their `ipcache`
-- at this point either u1 or u2 can request the other's public key
-- if u1 initiates the public key exchange, they volunteer their key freely
-    - no cryptographic protocol is established beween the users at this point, so their public key is transmitted in the clear
-- u2 can accept this request for their public key
-- u2 can also store u1's public key which was just transmitted
-- u2 will encrypt their public key with a password, and encrypt that password with u1's public key, and send it back
-- u1 can decrypt the password using their private key, and then decrypt u2's public key using the password
-- at this point u1 and u2 are sharing public keys, and are aware of each other's ip:ports
-- both u1 and u2 will periodically seek each other out, to ping the other and challenge their stored public keys
-- u1 and u2 are also expected to transmit frames from users that are surfacing into the network, and users that are seeking other users
+- `u1` is created with a public/private key pair
+- `u1` can then expose an interface to the world (we which we call their `surface`) at an `ip:port` combination
+    - the `surface` will listen for incoming `frames` and react to them
+- `u1` will be very lonely indeed until bootstrapped into a network
+- `u1` is encouraged to contact a friend (`u2`) out-of-band to exchange ip:port info
+- `u1` can then stitch `u2` into their `ipcache`
+- at this point either `u1` or `u2` can request the other's `public_key`
+- if `u1` initiates the `public_key` exchange, `u1` volunteers their `public_key` freely
+    - no cryptographic protocol is established beween the users at this point, so `u1`'s `public_key` is transmitted in the clear
+- `u2` can accept this request for their public key
+- `u2` can also store `u1`'s public key which was just transmitted
+- `u2` will encrypt their public key with a password, and encrypt that password with `u1`'s public key, and send it back
+- `u1` can decrypt the password using their private key, and then decrypt `u2`'s public key using the password
+- at this point `u1` and `u2` are sharing public keys, and are aware of each other's ip:ports
+- both `u1` and `u2` will periodically seek each other out, to ping the other and challenge their stored public keys
+- `u1` and `u2` are also expected to transmit frames from users that are surfacing into the network, and users that are seeking other users
     - more details on both follow
-- u1 and u2 are also expected to transmit frames pertainging to the health of the network
+- `u1` and `u2` are also expected to transmit frames pertainging to the health of the network
     - specifically, frames are sent out to gather information about the health of the network topology
-    - u1 and u2 would do well to heed the advice of these frames, and challenge or expel inconsistently recognized users in their reachable networks
+    - `u1` and `u2` would do well to heed the advice of these frames, and challenge or expel inconsistently recognized users in their reachable networks
 
 ## File Transfer
 
@@ -66,5 +66,11 @@ Instructions are provided elsewhere.
     - clients can `ping` or `challenge` any conact in their `ipcache`
     - they can also `seek` contacts that they have a `public_key` for
 - the health of the network is improved through the voluntary participation in both mechanisms use of both mechanisms is 
+
+## Challenges
+
+- `u1` can challenge ``u2`` in 2 ways:
+    - does ``u2`` have the private key that matches the `public_key` that ``u1` ` has stored for them
+    - does ``u2`` have `u1`'s `public_key`
 
 
