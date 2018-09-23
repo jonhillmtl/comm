@@ -37,6 +37,13 @@ Instructions are provided elsewhere.
 
 ## Philosophically Though
 
+- my first drafts of the client include a server, which coördinated `ip:port` combinations for certain users. very early drafts also included the `public_key` of each user, in plain text, as a column, sitting on a Postgres database behind a REST API
+- the challenge was to make it a true P2P network, with no coördinating server
+- since no coördinating server was desirable, every client has to ensure that they remain a part of the network
+- for this reason, the network is hereby referred to as a `murmuration`
+- no such thing is true
+- each client is responisble for tagging-along by informating the network of their whereabouts ("surfacing") or verifying the `ip:port` and cryptographical links of their contacts ("seeking")
+- clients also have a role to play in ensuring the health of their network topology, by propagating `frames` which aim to collect information about the consistency of the network
 - it might seem a pain to bootstrap over the phone or WhatsApp or Telegram or what have you but you can create small networks isolated from the outside world
 
 ## Users and Authentication
