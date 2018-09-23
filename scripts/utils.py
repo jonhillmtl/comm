@@ -34,5 +34,5 @@ def aip(data, u1, u2, robustness=5):
                 '--ip={}'.format(data[u2]['ip']),
                 '--port={}'.format(data[u2]['port'])
             ])
-    except KeyError:
-        pass
+    except KeyError as e:
+        print(e)

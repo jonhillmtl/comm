@@ -483,25 +483,30 @@ class SeekUsersThread(threading.Thread):
             time.sleep(random.randint(interval, interval * 2))
 
     def _seek_users(self):
-        # TODO JHILL: ping them
-        # if they don't respond, seek_them but don't remove from ipcache
-        # if they do respond, challenge them
-        # if they fail the challenge, remove them from ipcache and seek them
         for k in self.user.ipcache.keys():
             print(colored("*" * 100, "cyan"))
-            print(colored("* {} challenging {}".format(self.user.username, k), "cyan"))
-            challenge = self.user.challenge_user_pk(k)
+            print(colored("* {} pinging {}".format(self.user.username, k), "cyan"))
+            ping = self.user.ping_user(k)
 
-            if challenge is True:
-                print(colored("* challenge passed", "cyan"))
-                print(colored("*" * 100, "cyan"))
-
-            else:
-                print(colored("* seeking them because they failed the challenge", "cyan"))
+            if ping is False:
+                print(colored("* seeking them because they failed the ping", "cyan"))
                 self.user.seek_user(k)
+            else:
+                print(colored("* {} challenging {}".format(self.user.username, k), "cyan"))
+                challenge = self.user.challenge_user_pk(k)
+
+                if challenge is True:
+                    print(colored("* challenge passed", "cyan"))
+                    print(colored("*" * 100, "cyan"))
+
+                else:
+                    print(colored("* removing and seeking them because they failed the challenge", "cyan"))
+                    self.user.remove_contact_ip_port(k)
+                    self.user.seek_user(k)
+
             print(colored("*" * 100, "cyan"))
 
-        return True, 120
+        return True, 5
 
 
 class SurfaceUserThread(threading.Thread):

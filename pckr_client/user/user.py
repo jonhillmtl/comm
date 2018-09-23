@@ -217,6 +217,8 @@ class User(object):
         assert os.path.exists(self.seek_tokens_path) is False
         os.makedirs(self.seek_tokens_path)
 
+        return True
+
     def initiate_rsa(self):
         new_key = generate_rsa_pub_priv()
         with open(self.public_key_path, "wb") as f:
@@ -226,6 +228,13 @@ class User(object):
             f.write(new_key.exportKey("PEM"))
 
         return True
+
+
+    def ping_user(self, u2):
+        frame = Frame(action="ping", payload=dict())
+        response = send_frame_users(frame, self, u2)
+        return response['success']
+
 
     def challenge_user_pk(self, u2):
         challenge_text = str(uuid.uuid4())

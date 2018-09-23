@@ -140,9 +140,7 @@ def seek_user(args):
 
 def ping_user(args):
     user = User(args.username)
-    frame = Frame(action="ping", payload=dict())
-    response = send_frame_users(frame, user, args.u2)
-    pprint.pprint(response, indent=4)
+    user.ping_user(args.u2)
 
     return True
 
