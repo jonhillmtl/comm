@@ -35,10 +35,6 @@ Instructions are provided elsewhere.
     - specifically, `frame`s are sent out to gather information about the health of the network topology
     - `u1` and `u2` would do well to heed the advice of these `frame`s, and challenge or expel inconsistently recognized users in their reachable networks
 
-## File Transfer
-
-- since everyone is so well connected and cryptographic protocols are established and verifiable between users, we might as well also send files to each other
-
 ## Philosophically Though
 
 - it might seem a pain to bootstrap over the phone or WhatsApp or Telegram or what have you but you can create small networks isolated from the outside world
@@ -68,8 +64,6 @@ Instructions are provided elsewhere.
 
 ### Surfacing
 
-
-
 ### Seeking
 
 - `u1` can seek out any user in their reachable network, if they know that user's `public_key`
@@ -83,6 +77,9 @@ Instructions are provided elsewhere.
 - `u1` can process the `seek_user_response` to store `u2`'s `ip:port` in their `ipcache`
 - `u2` is free to store `u1`'s `ip:port` combination as well
     - `u2` is equally free to challenge `u1` before doing so
+    
+    
+### Network Topology Checks
 
 ## Challenges
 
@@ -101,3 +98,11 @@ Instructions are provided elsewhere.
 - this makes the exchange of `public_keys`s as early as possible quite important for the health of the network
 
 ## IPCache
+
+## Security
+
+[all](security_concerns.md)
+
+## File Transfer
+
+- since everyone is so well connected and cryptographic protocols are established and verifiable between users, we might as well also send files to each other
