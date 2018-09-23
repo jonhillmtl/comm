@@ -32,6 +32,7 @@ class SocketThread(threading.Thread):
         # TODO JHILL: assert the user exists?
 
     def _receive_ping(self, request):
+        assert type(request) == dict
         return dict(
             success=True,
             message="pong"
@@ -137,16 +138,24 @@ class SocketThread(threading.Thread):
 
         # TODO JHILL: make this nicer
         return dict(
-            success=True,
-            frame_id=request['frame_id']
+            success=True
         )
 
 
     def _receive_public_key_response(self, request):
+        assert type(request) == dict, 'request is not dict'
+
         self.user.store_public_key_response(request) 
-        return dict(success=True, frame_id=request['frame_id'])
+
+        return dict(
+            success=True
+        )
 
     def _receive_challenge_user_pk(self, request):
+        assert type(request) == dict, "request is not dict"
+        assert 'payload' in request, "payload not in request"
+        assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
+        
         try:
             decrypted = decrypt_rsa(
                 hexstr2bytes(request['payload']['challenge_text']),
@@ -164,12 +173,18 @@ class SocketThread(threading.Thread):
             )
 
     def _receive_challenge_user_has_pk(self, request):
-        # TODO JHILL: obviously this could fail if we don't know their public_key
-        # TODO JHILL: also be more careful about charging into dictionaries
+        assert type(request) == dict
+        assert 'payload' in request
+        assert 'from_username' in request['payload']
+        assert 'challenge_text' in request['payload']
+
         public_key_text = self.user.get_contact_public_key(request["payload"]["from_username"])
 
         if public_key_text is None:
-            return dict(success=False, error="we don't have the asking users public_key so this won't work at all")
+            return dict(
+                success=False,
+                error="we don't have the asking users public_key so this won't work at all"
+            )
         else:
             challenge_rsaed = bytes2hexstr(encrypt_rsa(request["payload"]["challenge_text"], public_key_text))
 
@@ -277,8 +292,7 @@ class SocketThread(threading.Thread):
             f.write(json.dumps(key))
 
         return dict(
-            success=True,
-            frame_id=request['frame_id']
+            success=True
         )
 
     def _receive_surface_user(self, request):
@@ -348,8 +362,7 @@ class SocketThread(threading.Thread):
             self.user.set_contact_ip_port(host_info['username'], host_info['ip'], int(host_info['port']))
             os.remove(seek_token_path)
             return dict(
-                success=True,
-                frame_id=request['frame_id']
+                success=True
             )
         else:
             return dict(
@@ -357,7 +370,12 @@ class SocketThread(threading.Thread):
                 error='seek token not found'
             )
 
+
     def _receive_pulse_network(self, request):
+        assert type(request) == dict
+        assert 'payload' in request, "payload not in request"
+        assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
+
         self.user.pulse_network(request['payload']['custody_chain'])
 
         return dict(
@@ -366,6 +384,11 @@ class SocketThread(threading.Thread):
 
 
     def _receive_nt(self, request):
+        assert type(request) == dict
+        assert 'payload' in request, "payload not in request"
+        assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
+        assert 'hashed_ipcaches' in request['payload'], "hashed_ipcaches not in request['payload']"
+
         self.user.nt(
             request['payload']['custody_chain'],
             request['payload']['hashed_ipcaches']
@@ -375,56 +398,68 @@ class SocketThread(threading.Thread):
             success=True,
         )
 
-    def process_request(self, request_text):
+    def process_request(self, request):
         print(colored("*"*100, "blue"))
-        request_data = json.loads(request_text)
-        print("action: ", colored(request_data['action'], "green"))
+        print("action: ", colored(request['action'], "green"))
         print("request:")
-        print(colored(pprint.pformat(request_data), "green"))
+        print(colored(pprint.pformat(request), "green"))
         print(colored("*"*100, "blue"))
 
-        if request_data['action'] == 'ping':
-            return self._receive_ping(request_data)
-        elif request_data['action'] == 'send_message':
-            return self._receive_send_message(request_data)
-        elif request_data['action'] == 'send_message_key':
-            return self._receive_send_message_key(request_data)
-        elif request_data['action'] == 'send_message_term':
-            return self._receive_send_message_term(request_data)
-        elif request_data['action'] == 'request_public_key':
-            return self._receive_request_public_key(request_data)
-        elif request_data['action'] == 'public_key_response':
-            return self._receive_public_key_response(request_data)
-        elif request_data['action'] == 'challenge_user_has_pk':
-            return self._receive_challenge_user_has_pk(request_data)
-        elif request_data['action'] == 'challenge_user_pk':
-            return self._receive_challenge_user_pk(request_data)
-        elif request_data['action'] == 'seek_user':
-            return self._receive_seek_user(request_data)
-        elif request_data['action'] == 'seek_user_response':
-            return self._receive_seek_user_response(request_data)
-        elif request_data['action'] == 'surface_user':
-            return self._receive_surface_user(request_data)
-        elif request_data['action'] == 'pulse_network':
-            return self._receive_pulse_network(request_data)
-        elif request_data['action'] == 'nt':
-            return self._receive_nt(request_data)
-        else:
-            return dict(
-                success=False,
-                error="unknown action '{}'".format(request_data['action'])
-            )
+        try:
+            assert 'action' in request, 'request has no action'
+
+            if request['action'] == 'ping':
+                return self._receive_ping(request)
+            elif request['action'] == 'send_message':
+                return self._receive_send_message(request)
+            elif request['action'] == 'send_message_key':
+                return self._receive_send_message_key(request)
+            elif request['action'] == 'send_message_term':
+                return self._receive_send_message_term(request)
+            elif request['action'] == 'request_public_key':
+                return self._receive_request_public_key(request)
+            elif request['action'] == 'public_key_response':
+                return self._receive_public_key_response(request)
+            elif request['action'] == 'challenge_user_has_pk':
+                return self._receive_challenge_user_has_pk(request)
+            elif request['action'] == 'challenge_user_pk':
+                return self._receive_challenge_user_pk(request)
+            elif request['action'] == 'seek_user':
+                return self._receive_seek_user(request)
+            elif request['action'] == 'seek_user_response':
+                return self._receive_seek_user_response(request)
+            elif request['action'] == 'surface_user':
+                return self._receive_surface_user(request)
+            elif request['action'] == 'pulse_network':
+                return self._receive_pulse_network(request)
+            elif request['action'] == 'nt':
+                return self._receive_nt(request)
+            else:
+                return dict(
+                    success=False,
+                    error="unknown action '{}'".format(request['action'])
+                )
+        except AssertionError as e:
+                return dict(
+                    success=False,
+                    error=str(e)
+                )
 
     def run(self):
         request_text = self.clientsocket.recv(int(65536 / 2)).decode()
-        response = self.process_request(request_text)
+        request = json.loads(request_text)
+        response = self.process_request(request)
+
+        assert 'frame_id' in request
+        response.update(response_to_frame=request['frame_id'])
 
         if type(response) == dict:
             response = json.dumps(response)
         else:
             print(colored("passing anything but dicts is deprecated", "red"))
             assert False
-        
+
+
         print("\n")
         print("response", colored(response, "green"))
         print("\n")
