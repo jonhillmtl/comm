@@ -101,7 +101,7 @@ Instructions are provided elsewhere.
 
 ## Security
 
-[all](security_concerns.md)
+[all](docs/security_concerns.md)
 
 ## File Transfer
 
