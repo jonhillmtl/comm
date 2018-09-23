@@ -34,7 +34,7 @@ class SocketThread(threading.Thread):
         receive the ping request and respond with a pong message
         """
 
-        assert type(request) == dict
+        assert type(request) == dict, "request must be dict"
 
         return dict(
             success=True,
@@ -47,7 +47,7 @@ class SocketThread(threading.Thread):
         and respond to the user that was seeking you if you can
         """
 
-        assert type(request) == dict
+        assert type(request) == dict, "request must be dict"
         assert 'payload' in request, 'payload not in request'
         # TODO JHILL: the rest of the asserts
 
@@ -239,7 +239,7 @@ class SocketThread(threading.Thread):
 
     def _receive_challenge_user_has_pk(self, request):
         assert type(request) == dict
-        assert 'payload' in request
+        assert 'payload' in request, 'payload not in request'
         assert 'from_username' in request['payload']
         assert 'challenge_text' in request['payload']
 
@@ -644,12 +644,13 @@ class SeekUsersThread(threading.Thread):
 
         # TODO JHILL: we should also seek out all of the users that we have public_keys for, that
         # we don't have in our ipcache.... makes sense to be connected if we can
-
+        """
         for u in self.public_keys:
             if u not in self.user.ipcache.keys():
                 print(colored("*" * 100, "cyan"))
                 print(colored("* nope", "cyan"))
                 print(colored("*" * 100, "cyan"))
+        """
 
         # iterate through all of the cached ips that we have, and check if the users are still there
         # first ping them.... if they pass the ping, challenge them.

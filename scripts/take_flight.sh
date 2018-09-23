@@ -7,5 +7,9 @@ ttab ./scripts/surface_user.sh jasmin
 # ttab ./scripts/surface_user.sh rescha
 # ttab ./scripts/surface_user.sh gyrilh
 
+ttab tail -f logs/assert.log
+ttab tail -f logs/surface.log
+
 sleep 10;
 python ./scripts/stitch_network.py
+
