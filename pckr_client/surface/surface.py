@@ -49,6 +49,7 @@ class SocketThread(threading.Thread):
 
         assert type(request) == dict
         assert 'payload' in request, 'payload not in request'
+        # TODO JHILL: the rest of the asserts
 
         responded = False
 
@@ -88,7 +89,11 @@ class SocketThread(threading.Thread):
 
             u2 = host_info['from_username']
             ip, port = self.user.get_contact_ip_port(u2)
-            self.user.set_contact_ip_port(u2, host_info['ip'], host_info['port'])
+            self.user.set_contact_ip_port(
+                u2,
+                host_info['ip'],
+                host_info['port']
+            )
 
             ping = self.user.ping_user(u2)
             if ping is False:
@@ -132,13 +137,19 @@ class SocketThread(threading.Thread):
             responded = True
 
         except ValueError as e:
+            # this means we couldn't decrypt the message so we should just carry on
             pass
 
+        # if it wasn't us, we should pass the message along
         if responded == False:
-            if len(request['payload']['custody_chain']) > 4:
-                return dict(success=True, message='custody_chain len exceeded')
 
-            # 2) if we can't decrypt and respond we should pass the message along
+            # don't go more than 4 hops away
+            if len(request['payload']['custody_chain']) >= 4:
+                return dict(
+                    success=True,
+                    message='custody_chain len exceeded'
+                )
+
             count = 0
 
             request['payload']['custody_chain'].append(
@@ -155,11 +166,25 @@ class SocketThread(threading.Thread):
                     response = send_frame_users(frame, self.user, k)
                     count = count + 1
 
-            return dict(success=True, message="propagated to {} other clients".format(count))
+            return dict(
+                success=True,
+                message="propagated to {} other clients".format(count)
+            )
         else:
-            return dict(success=True, message="that was me, a seek_user_response is imminent")
+            return dict(
+                success=True,
+                message="that was me, a seek_user_response is imminent"
+            )
 
     def _receive_request_public_key(self, request):
+        """
+        a user is requesting our public key, so we'll store the request
+        so we can look at it later.
+        
+        this doesn't automatically send your public key out, you have to do 
+        process_public_key_requests to process them and send them back to the other user
+        """
+
         assert type(request) == dict, 'request is not dict'
 
         self.user.store_public_key_request(request)
@@ -171,6 +196,18 @@ class SocketThread(threading.Thread):
 
 
     def _receive_public_key_response(self, request):
+        """
+        a user has responded to our public_key request
+        
+        store the response away so we can process it later
+        
+        this isn't an automatic action
+        """
+
+        # TODO JHILL: maybe just make this automatic, don't store it to a
+        # file for later processing. we could challenge the user back
+        # and see if it's really them, and then add it to our cache
+
         assert type(request) == dict, 'request is not dict'
 
         self.user.store_public_key_response(request) 
@@ -487,7 +524,7 @@ class SocketThread(threading.Thread):
         return dict(
             success=True,
         )
-    
+
     def _receive_net_topo_damaged(self, request):
         assert type(request) == dict, "request must be a dict"
         assert 'payload' in request, "payload not in request"
@@ -537,21 +574,15 @@ class SocketThread(threading.Thread):
                 return self._receive_check_net_topo(request)
             elif request['action'] == 'net_topo_damaged':
                 return self._receive_net_topo_damaged(request)
-
             else:
                 return dict(
                     success=False,
                     error="unknown action '{}'".format(request['action'])
                 )
+
         except AssertionError as e:
             assert_logger.error(e)
 
-            return dict(
-                success=False,
-                error=str(e)
-            )
-        except json.decoder.JSONDecodeError as e:
-            print(e)
             return dict(
                 success=False,
                 error=str(e)
@@ -578,7 +609,6 @@ class SocketThread(threading.Thread):
         else:
             print(colored("passing anything but dicts is deprecated", "red"))
             assert False
-
 
         print("\n")
         print("response", colored(response, "green"))
@@ -614,6 +644,12 @@ class SeekUsersThread(threading.Thread):
 
         # TODO JHILL: we should also seek out all of the users that we have public_keys for, that
         # we don't have in our ipcache.... makes sense to be connected if we can
+
+        for u in self.public_keys:
+            if u not in self.user.ipcache.keys():
+                print(colored("*" * 100, "cyan"))
+                print(colored("* nope", "cyan"))
+                print(colored("*" * 100, "cyan"))
 
         # iterate through all of the cached ips that we have, and check if the users are still there
         # first ping them.... if they pass the ping, challenge them.
