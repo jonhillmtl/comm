@@ -192,7 +192,7 @@ class User(object):
         except FileNotFoundError as e:
             return None
 
-    def initiate_directory_structure(self):
+    def init_directory_structure(self):
         assert os.path.exists(self.path) is False
         os.makedirs(self.path)
 
@@ -219,7 +219,7 @@ class User(object):
 
         return True
 
-    def initiate_rsa(self):
+    def init_rsa(self):
         new_key = generate_rsa_pub_priv()
         with open(self.public_key_path, "wb") as f:
             f.write(new_key.publickey().exportKey("PEM") )
@@ -229,16 +229,22 @@ class User(object):
 
         return True
 
-
     def ping_user(self, u2):
         frame = Frame(action="ping", payload=dict())
         response = send_frame_users(frame, self, u2)
         return response['success']
 
-
+    #----------------------------------------------------------------------------------------
+    #
+    # challenge challenges
+    # challenge_user_pk
+    # challenge_user_pk
+    #
+    #-----------------------------------------------------------------------------------------
     def challenge_user_pk(self, u2):
         challenge_text = str(uuid.uuid4())
 
+        # TODO JHILL: this isn't necessarily a failure if we don't have their public_key
         public_key_text = self.get_contact_public_key(u2)
         if public_key_text is not None:
             challenge_text_encrypted = bytes2hexstr(encrypt_rsa(
@@ -429,8 +435,7 @@ class User(object):
 
     #----------------------------------------------------------------------------------------
     #
-    # public_key_response
-    # public_key_responses
+    # ipcache
     #
     #-----------------------------------------------------------------------------------------
     @property
@@ -477,30 +482,49 @@ class User(object):
 
         return True
 
+    #----------------------------------------------------------------------------------------
+    #
+    # network topology
+    # nt
+    #
+    #-----------------------------------------------------------------------------------------
     def hashed_ipcache(self):
-        hip = dict()
+        """
+        prepare a version of our ipcache where the usernames and the ip:port
+        are hashed... then we can pass them around without revealing much
+        about the users we have contact with.
+        
+        this will be used in the nt call
+        """
+        hips = dict()
 
         for k in self.ipcache.keys():
             v = self.ipcache[k]
-            hashed_username = str2hashed_hexstr(k)
-            hip[hashed_username] = str2hashed_hexstr(json.dumps(v))
+            hips[str2hashed_hexstr(k)] = str2hashed_hexstr(json.dumps(v))
 
-        return dict(
-            username=str2hashed_hexstr(self.username),
-            hip=hip
-        )
+        return hips
 
-    def nt(self, custody_chain=[], hashed_ipcaches=[]):
+    def check_net_topo(self, custody_chain=[], hashed_ipcaches=dict()):
         custody_chain.append(str2hashed_hexstr(self.username))
-        hashed_ipcaches.append(self.hashed_ipcache())
+
+        for k, v in self.hashed_ipcache().items():
+            if k in hashed_ipcaches and hashed_ipcaches[k] != v:
+                # TODO JHILL: poisoned
+                hashed_ipcaches[k] = v
+                assert False
+            else:
+                hashed_ipcaches[k] = v
 
         for k in self.ipcache.keys():
             hashed_username = str2hashed_hexstr(k)
             if hashed_username not in custody_chain:
-                frame = Frame(payload=dict(
-                    custody_chain=custody_chain,
-                    hashed_ipcaches=hashed_ipcaches
-                ), action='nt')
+                frame = Frame(
+                    action='check_net_topo',
+                    payload=dict(
+                        custody_chain=custody_chain,
+                        hashed_ipcaches=hashed_ipcaches
+                    )
+                )
 
                 response = send_frame_users(frame, self, k)
 

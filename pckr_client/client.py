@@ -17,20 +17,30 @@ import json
 import random
 
 def init_user(args):
+    """
+    initialize a user with args.username as their username
+    """
+
     user = User(args.username)
 
     if user.exists:
-        # TODO JHILL: ALSO CHECK SERVER
         print(colored("this user already exists: {}".format(args.username), "red"))
     else:
-        user.initiate_directory_structure()
-        user.initiate_rsa()
+        user.init_directory_structure()
+        user.init_rsa()
         print(colored("created user: {}".format(args.username), "green"))
 
     return True
 
 
 def challenge_user_pk(args):
+    """
+    challenge a user's public key... ie: send them a challenge asking them if they can decrypt
+    something that we encrypted with what we believe is their public key
+    
+    the challenged user is specified by args.u2
+    """
+
     user = User(args.username)
     result = user.challenge_user_pk(args.u2)
 
@@ -43,6 +53,14 @@ def challenge_user_pk(args):
 
 
 def challenge_user_has_pk(args):
+    """
+    challenge a user to ask if they have our public key. they can try to encrypt some text
+    with what they believe is our public key. if we can decrypt it we know they have our
+    public key
+    
+    the challenged user is specified by args.u2
+    """
+
     user = User(args.username)
     result = user.challenge_user_has_pk(args.u2)
     if result:
@@ -54,21 +72,31 @@ def challenge_user_has_pk(args):
 
 
 def request_public_key(args):
+    """
+    request another user's public key
+    
+    the requested user is specified by args.u2
+    """
+
     user = User(args.username)
     public_key_text = user.get_contact_public_key(args.u2)
 
+    # check to see if we don't already have it... if we do we can skip
+    # asking them safely
     if public_key_text is None:
         frame = Frame(
+            action="request_public_key",
             payload=dict(
                 from_username=args.username,
                 public_key=user.public_key_text
-            ), 
-            action="request_public_key"
+            )
         )
 
         response = send_frame_users(frame, user, args.u2)
         pprint.pprint(response, indent=4)
-
+        
+        # after that, they have a public_key_request.... they will answer
+        # it when they want, and we'll get a public_key_response
     return True
 
 
@@ -181,9 +209,9 @@ def pulse_network(args):
     return True
 
 
-def nt(args):
+def check_net_topo(args):
     user = User(args.username)
-    user.nt()
+    user.check_net_topo()
 
     return True
 
@@ -217,7 +245,7 @@ COMMANDS = [
     'add_ipcache',
     'remove_ipcache',
     'pulse_network',
-    'nt'
+    'check_net_topo'
 ]
 
 
@@ -235,7 +263,7 @@ COMMAND_ALIASES = dict(
     aip='add_ipcache',
     rip='remove_ipcache',
     pn='pulse_network',
-    nt='nt'
+    cnt='check_net_topo'
 )
 
 
@@ -300,7 +328,7 @@ def main():
     elif command == 'pulse_network':
         pass
     
-    elif command == 'nt':
+    elif command == 'check_net_topo':
         pass
 
     else:

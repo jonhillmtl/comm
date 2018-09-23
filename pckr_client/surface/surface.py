@@ -75,6 +75,8 @@ class SocketThread(threading.Thread):
                 password.encode()
             ))
 
+            # ask them if they have our public key
+            # maybe we should ask them to prove their public key, as well
             challenge = self.user.challenge_user_has_pk(host_info['from_username'])
             if challenge is False:
                 return dict(
@@ -313,21 +315,25 @@ class SocketThread(threading.Thread):
         )
 
         public_key_text = self.user.get_contact_public_key(host_info['from_username'])
-        if False: # public_key_text is None:
+        if public_key_text is None:
             return dict(
                 success=False,
                 error="we don't have their public key, don't care about storing their IP"
             )
         else:
             # TODO JHILL: challenge the user
-
             # except there has to be two challenges
             # 1) you have my public key
             # 2) this is your public key
             # right now only #1 is implemented, strangely enough
             # clean that up at the same time. for now just store their ip
             # TODO JHILL: SECURITY RISK
-            self.user.set_contact_ip_port(host_info['from_username'], host_info['ip'], int(host_info['port']))
+            self.user.set_contact_ip_port(
+                host_info['from_username'],
+                host_info['ip'],
+                int(host_info['port'])
+            )
+
             return dict(
                 success=True
             )
@@ -396,13 +402,14 @@ class SocketThread(threading.Thread):
         )
 
 
-    def _receive_nt(self, request):
+    def _receive_check_net_topo(self, request):
         assert type(request) == dict
         assert 'payload' in request, "payload not in request"
         assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
         assert 'hashed_ipcaches' in request['payload'], "hashed_ipcaches not in request['payload']"
+        assert type(request['payload']['hashed_ipcaches']) is dict, "hashed_ipcaches must be a dict"
 
-        self.user.nt(
+        self.user.check_net_topo(
             request['payload']['custody_chain'],
             request['payload']['hashed_ipcaches']
         )
@@ -445,8 +452,8 @@ class SocketThread(threading.Thread):
                 return self._receive_surface_user(request)
             elif request['action'] == 'pulse_network':
                 return self._receive_pulse_network(request)
-            elif request['action'] == 'nt':
-                return self._receive_nt(request)
+            elif request['action'] == 'check_net_topo':
+                return self._receive_check_net_topo(request)
             else:
                 return dict(
                     success=False,
@@ -505,6 +512,14 @@ class SeekUsersThread(threading.Thread):
         real user again
         """
 
+        # TODO JHILL: we should also seek out all of the users that we have public_keys for, that
+        # we don't have in our ipcache.... makes sense to be connected if we can
+
+        # iterate through all of the cached ips that we have, and check if the users are still there
+        # first ping them.... if they pass the ping, challenge them.
+        # if they fail the ping, seek them out
+        # if they fail the challenge after the ping, remove them from the ipcache
+        # and seek them out
         for k in self.user.ipcache.keys():
             print(colored("*" * 100, "cyan"))
             print(colored("* {} pinging {}".format(self.user.username, k), "cyan"))
@@ -514,21 +529,24 @@ class SeekUsersThread(threading.Thread):
                 print(colored("* seeking them because they failed the ping", "cyan"))
                 self.user.seek_user(k)
             else:
-                print(colored("* {} challenging {}".format(self.user.username, k), "cyan"))
-                challenge = self.user.challenge_user_pk(k)
+                public_key_text = self.user.get_contact_public_key(k)
+                if public_key_text:
+                    print(colored("* {} challenging {}".format(self.user.username, k), "cyan"))
+                    challenge = self.user.challenge_user_pk(k)
 
-                if challenge is True:
-                    print(colored("* challenge passed", "cyan"))
-                    print(colored("*" * 100, "cyan"))
+                    if challenge is True:
+                        print(colored("* challenge passed", "cyan"))
+                        print(colored("*" * 100, "cyan"))
 
+                    else:
+                        print(colored("* removing and seeking them because they failed the challenge", "cyan"))
+                        self.user.remove_contact_ip_port(k)
+                        self.user.seek_user(k)
                 else:
-                    print(colored("* removing and seeking them because they failed the challenge", "cyan"))
-                    self.user.remove_contact_ip_port(k)
-                    self.user.seek_user(k)
-
+                    print(colored("* we don't have their public_key", "cyan"))
             print(colored("*" * 100, "cyan"))
 
-        return True, 5
+        return True, 60
 
 
 class SurfaceUserThread(threading.Thread):
