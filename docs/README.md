@@ -74,15 +74,16 @@ Instructions are provided elsewhere.
 
 - `u1` can challenge `u2` in 2 ways:
     - does `u2` have the private key that matches the `public_key` that `u1` has stored for them
-        - `u1` encrypts an aritrary piece of data and sends it to `u2`
+        - `u1` encrypts an arbitrary piece of data using `u1`'s `public_key` and sends it to `u2`
         - `u2` responds by using their `private_key` to decrypt the data and send it back
         - `u1` can verify the data
+        - if it matches, the challenge has succeeded
     - does `u2` have `u1`'s `public_key`
-        - `u1` sends a piece of data
+        - `u1` sends a piece of data to `u2`
         - `u2` encrypts it using the `public_key` of `u1`
-        - `u1` decrypts is using their `private_key`
+        - `u1` decrypts it using their `private_key`
 - by using both methods, `u1` and `u2` can verify a solid cryptographical link
-- either user can also ensure that the user presenting at a certain `ip:port` is who they report to be
+- either user can also ensure that the user presenting at a certain `ip:port` is who they claim to be
 - this makes the exchange of `public_keys`s as early as possible quite important for the health of the network
 
 
