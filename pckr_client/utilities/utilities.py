@@ -11,6 +11,8 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
 from Crypto.PublicKey import RSA 
 
+flatten = lambda l: [item for sublist in l for item in sublist]
+
 def command_header(action, args):
     return colored("{}\n*\n* {}\n*\n{}\n*\n{}\n\n".format(
         "*" * 100,

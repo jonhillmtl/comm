@@ -216,6 +216,38 @@ def check_net_topo(args):
     return True
 
 
+def public_keys(args):
+    user = User(args.username)
+    for pk in user.public_keys:
+        print("{} at {}".format(pk['username'], pk['modified_at'].isoformat()))
+
+    return True
+
+
+def ipcache(args):
+    """
+    print out the user ip cache
+    """
+
+    user = User(args.username)
+    for username, ip in user.ipcache.items():
+        print("{} at {}:{}".format(username, ip['ip'], ip['port']))
+
+    return True
+
+
+def messages(args):
+    """
+    print out the user ip cache
+    """
+
+    user = User(args.username)
+    for message in user.messages:
+        print(message)
+
+    return True
+
+
 def massage_args(argparser):
     args = argparser.parse_args()
     if args.username is None:
@@ -245,7 +277,10 @@ COMMANDS = [
     'add_ipcache',
     'remove_ipcache',
     'pulse_network',
-    'check_net_topo'
+    'check_net_topo',
+    'public_keys',
+    'ipcache',
+    'messages'
 ]
 
 
@@ -263,7 +298,10 @@ COMMAND_ALIASES = dict(
     aip='add_ipcache',
     rip='remove_ipcache',
     pn='pulse_network',
-    cnt='check_net_topo'
+    cnt='check_net_topo',
+    pks='public_keys',
+    ipc='ipcache',
+    ms='messages'
 )
 
 
@@ -329,6 +367,15 @@ def main():
         pass
     
     elif command == 'check_net_topo':
+        pass
+    
+    elif command == 'public_keys':
+        pass
+
+    elif command == 'ipcache':
+        pass
+    
+    elif command == 'messages':
         pass
 
     else:

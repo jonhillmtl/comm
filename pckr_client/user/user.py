@@ -1,5 +1,5 @@
 from ..frame import Frame
-from ..utilities import command_header, send_frame_users, normalize_path
+from ..utilities import command_header, send_frame_users, normalize_path, flatten
 from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric, decrypt_rsa, generate_rsa_pub_priv
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 
@@ -49,10 +49,6 @@ class User(object):
         return os.path.join(self.path, "public.key")
 
     @property
-    def public_keys_path(self):
-        return os.path.join(self.path, "public_keys")
-
-    @property
     def private_key_path(self):
         return os.path.join(self.path, "private.key")
 
@@ -67,10 +63,6 @@ class User(object):
     @property
     def private_key_text(self):
         return open(self.private_key_path).read()
-
-    @property
-    def messages_path(self):
-        return os.path.join(self.path, "messages")
 
     @property
     def message_keys_path(self):
@@ -123,6 +115,49 @@ class User(object):
                 )
 
         return True
+
+    #----------------------------------------------------------------------------------------
+    #
+    # messages
+    #
+    #-----------------------------------------------------------------------------------------
+
+    @property
+    def messages_path(self):
+        return os.path.join(self.path, "messages")
+
+    @property
+    def messages(self):
+        messages = [dict(
+            message_id=sd,
+            created_at=datetime.datetime.fromtimestamp(
+                os.path.getmtime(os.path.join(self.messages_path, sd))
+            ),
+            files=flatten([
+                [os.path.join(d, f) for f in files] for d, sds, files in os.walk(os.path.join(self.messages_path, sd))
+            ])
+        ) for sd in os.listdir(self.messages_path)]
+        return messages
+
+    #----------------------------------------------------------------------------------------
+    #
+    # public_keys
+    #
+    #-----------------------------------------------------------------------------------------
+    
+    @property
+    def public_keys_path(self):
+        return os.path.join(self.path, "public_keys")
+
+    @property 
+    def public_keys(self):
+        pks = [dict(
+            username=sd,
+            modified_at=datetime.datetime.fromtimestamp(
+                os.path.getmtime(os.path.join(self.public_keys_path, sd, 'public.key'))
+            )
+        ) for sd in os.listdir(self.public_keys_path)]
+        return pks
 
     #----------------------------------------------------------------------------------------
     #
