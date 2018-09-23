@@ -53,3 +53,18 @@ Instructions are provided elsewhere.
     - it's entirely possible that your ipcache will become overrun with duplicate usernames of people purporting to be who they say they are. woe to you and them! public key challenges to the rescue.
     - seriously though this could be a problem
     - remember to contact your contacts out of band as appropriate to verify their identities
+
+## Network Topology
+
+- the health of the network is achieved by voluntary participation in two activities
+    - seeking users
+    - surfacing
+- clients are encouraged to surface on startup
+    - they need to tell all of the contacts they have in their `ipcache` that they are alive
+    - they do this by encrypting their `ip:port` using their contacts' `public_key`s, and transmitting that information to each contact
+- clients are also encouraged to `ping` and `challenge` all users they have knowledge of
+    - clients can `ping` or `challenge` any conact in their `ipcache`
+    - they can also `seek` contacts that they have a `public_key` for
+- the health of the network is improved through the voluntary participation in both mechanisms use of both mechanisms is 
+
+

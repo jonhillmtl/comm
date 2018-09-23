@@ -286,7 +286,8 @@ COMMANDS = [
     'check_net_topo',
     'public_keys',
     'ipcache',
-    'messages'
+    'messages',
+    'current_ip'
 ]
 
 
@@ -307,7 +308,8 @@ COMMAND_ALIASES = dict(
     cnt='check_net_topo',
     pks='public_keys',
     ipc='ipcache',
-    ms='messages'
+    ms='messages',
+    cip='cip'
 )
 
 
