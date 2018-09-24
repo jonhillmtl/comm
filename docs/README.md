@@ -14,7 +14,7 @@ This is a high-level view of how the network is created and how users are bootst
 
 Instructions are provided elsewhere.
 
-- `u1` is created with a public/private key pair
+- `u1` is created with a `public_key`/`private_key` pair
 - `u1` can then expose an interface to the world (we which we call their `surface`) at an `ip:port` combination
     - the `surface` will listen for incoming `frame`s and react to them
 - `u1` will be very lonely indeed until bootstrapped into a network
@@ -25,8 +25,8 @@ Instructions are provided elsewhere.
     - no cryptographic protocol is established beween the users at this point, so `u1`'s `public_key` is transmitted in the clear
 - `u2` can accept this request for their `public_key`
 - `u2` can also store `u1`'s `public_key` which was just transmitted
-- `u2` will encrypt their `public_key` with a password, and encrypt that password with `u1`'s `public_key`, and send it back
-- `u1` can decrypt the password using their private key, and then decrypt `u2`'s `public_key` using the password
+- `u2` will encrypt their `public_key` with a `password`, and encrypt that `password` with `u1`'s `public_key`, and send it back
+- `u1` can decrypt the `password` using their `private_key`, and then decrypt `u2`'s `public_key` using the `password`
 - at this point `u1` and `u2` are sharing `public_key`s, and are aware of each other's `ip:port`s
 - both `u1` and `u2` will periodically seek each other out, to ping the other and challenge their stored `public_key`s
 - `u1` and `u2` are also expected to transmit `frame`s from users that are surfacing into the network, and users that are seeking other users
@@ -76,12 +76,12 @@ Instructions are provided elsewhere.
 ### Seeking
 
 - `u1` can seek out any user in their reachable network, if they know that user's `public_key`
-- `u1` encrypts a password using `u2`'s public key
+- `u1` encrypts a `password` using `u2`'s `public_key`
 - they also encrypt their own `ip:port` combination, along with their `username`
-- they also generate a random `seek_token`, which they encrypt using the password, and send that along as well
+- they also generate a random `seek_token`, which they encrypt using the `password`, and send that along as well
 - the `seek_token` is stored locally
 - they send the message out to every contact they have in their `ipcache`
-- each contact can try to decrypt the password
+- each contact can try to decrypt the `password`
 - if they can decrypt it, they reply directly to `u1` using the `ip:port` combination they get by decrypting it from the `frame`'s `payload`
 - `u1` can process the `seek_user_response` to store `u2`'s `ip:port` in their `ipcache`
 - `u2` is free to store `u1`'s `ip:port` combination as well
@@ -93,7 +93,7 @@ Instructions are provided elsewhere.
 ## Challenges
 
 - `u1` can challenge `u2` in 2 ways:
-    - does `u2` have the private key that matches the `public_key` that `u1` has stored for them
+    - does `u2` have the `private_key` that matches the `public_key` that `u1` has stored for them
         - `u1` encrypts an arbitrary piece of data using `u1`'s `public_key` and sends it to `u2`
         - `u2` responds by using their `private_key` to decrypt the data and send it back
         - `u1` can verify the data
