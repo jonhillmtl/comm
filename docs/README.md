@@ -28,8 +28,8 @@ Instructions are provided elsewhere.
 - `u2` will encrypt their `public_key` with a `password`, and encrypt that `password` with `u1`'s `public_key`, and send it back
 - `u1` can decrypt the `password` using their `private_key`, and then decrypt `u2`'s `public_key` using the `password`
 - at this point `u1` and `u2` are sharing `public_key`s, and are aware of each other's `ip:port`s
-- both `u1` and `u2` will periodically seek each other out, to ping the other and challenge their stored `public_key`s
-- `u1` and `u2` are also expected to transmit `frame`s from users that are surfacing into the network, and users that are seeking other users
+- both `u1` and `u2` will periodically `seek_user` to seek each other out, to `ping` the other and `challenge` their stored `public_key`s
+- `u1` and `u2` are also expected to transmit `frame`s from users that are surfacing into the network, and users that are `seek_user`ing other users
     - more details on both follow
 - `u1` and `u2` are also expected to transmit `frame`s pertaining to the health of the network
     - specifically, `frame`s are sent out to gather information about the health of the network topology
@@ -62,9 +62,9 @@ Instructions are provided elsewhere.
 ## Network Topology
 
 - the health of the network is achieved by voluntary participation in two activities
-    - seeking users
-    - surfacing
-- clients are encouraged to surface on startup
+    - `seek_users`
+    - `surface_user`
+- clients are encouraged to `surface_user` on startup
     - they need to tell all of the contacts they have in their `ipcache` that they are alive
     - they do this by encrypting their `ip:port` using their contacts' `public_key`s, and transmitting that information to each contact
 - clients are also encouraged to `ping` and `challenge` all users they have knowledge of
