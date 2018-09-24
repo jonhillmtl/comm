@@ -10,10 +10,10 @@ setup(name='pckr',
     license='MIT',
 
     install_requires=[
+        'blowfish',
         'boto',
         'flask',
         'pycryptodome',
-        'blowfish',
         'requests',
         'termcolor'
     ],
@@ -21,8 +21,8 @@ setup(name='pckr',
     entry_points={
         'console_scripts': [
             'pckr = pckr.client:main',
-            'pckr_plot_nt = pckr.plot_nt:main',
-            'pckr_nt = pckr.nt:main'
+            'pckr_nt = pckr.nt:main',
+            'pckr_plot_nt = pckr.plot_nt:main'
         ]
     }
 )
