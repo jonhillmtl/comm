@@ -79,12 +79,12 @@ def dump_topo():
                 if len(user.public_key_requests):
                     print("\npublic_key_requests")
                     for ppk_req in user.public_key_requests:
-                        print(ppk_req['from_username'], ppk_req['modified_at'])
+                        print(ppk_req['u2'], ppk_req['modified_at'])
 
         if len(user.public_key_responses):
             print("\npublic_key_responses")
             for ppk_req in user.public_key_responses:
-                print(ppk_req['from_username'], ppk_req['modified_at'])
+                print(ppk_req['u2'], ppk_req['modified_at'])
 
         print(colored("*" * 100, "blue"))
         print("\n")

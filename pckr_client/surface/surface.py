@@ -63,11 +63,14 @@ class SocketThread(threading.Thread):
 
             # now we have to open up the message and challenge that user
             decrypted_text = decrypt_symmetric(hexstr2bytes(request['payload']['host_info']), password_decrypted)
+
+            # TODO JHILL: error handling
             host_info = json.loads(decrypted_text)
 
             password = str(uuid.uuid4())
             password_encrypted = bytes2hexstr(encrypt_rsa(password, host_info['public_key']))
 
+            # TODO JHILL: better way to do this
             path = os.path.join(self.user.path, "current_ip_port.json")
             data = json.loads(open(path).read())
 
@@ -87,7 +90,7 @@ class SocketThread(threading.Thread):
                 password.encode()
             ))
 
-            u2 = host_info['from_username']
+            u2 = host_info['u2']
             ip, port = self.user.get_contact_ip_port(u2)
             self.user.set_contact_ip_port(
                 u2,
@@ -240,10 +243,10 @@ class SocketThread(threading.Thread):
     def _receive_challenge_user_has_pk(self, request):
         assert type(request) == dict
         assert 'payload' in request, 'payload not in request'
-        assert 'from_username' in request['payload'], "from_username not in request['payload']"
+        assert 'u2' in request['payload'], "u2 not in request['payload']"
         assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
 
-        public_key_text = self.user.get_contact_public_key(request["payload"]["from_username"])
+        public_key_text = self.user.get_contact_public_key(request["payload"]["u2"])
 
         if public_key_text is None:
             return dict(
@@ -403,11 +406,11 @@ class SocketThread(threading.Thread):
             host_info_decrypted
         )
 
-        assert 'from_username' in host_info, "from_username not in host_info"
+        assert 'u2' in host_info, "u2 not in host_info"
         assert 'ip' in host_info, "ip not in host_info"
         assert 'port' in host_info, "port not in host_info"
 
-        public_key_text = self.user.get_contact_public_key(host_info['from_username'])
+        public_key_text = self.user.get_contact_public_key(host_info['u2'])
         if public_key_text is None:
             return dict(
                 success=False,
@@ -422,7 +425,7 @@ class SocketThread(threading.Thread):
             # clean that up at the same time. for now just store their ip
             # TODO JHILL: SECURITY RISK
             self.user.set_contact_ip_port(
-                host_info['from_username'],
+                host_info['u2'],
                 host_info['ip'],
                 int(host_info['port'])
             )
@@ -456,7 +459,7 @@ class SocketThread(threading.Thread):
             host_info_decrypted
         )
 
-        # TODO JHILL: should be from_username
+        # TODO JHILL: should be u2
         assert 'username' in host_info
         assert 'ip' in host_info
         assert 'port' in host_info

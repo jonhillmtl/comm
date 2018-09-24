@@ -142,4 +142,7 @@ def send_frame_users(frame, u1, u2):
     else:
         # TODO JHILL: remove them from the cache
         # and then send out a seek user for them
-        return dict(success=False, error='ip:port unknown')
+        return dict(
+            success=False,
+            error='ip:port unknown for user'.format(u2)
+        )

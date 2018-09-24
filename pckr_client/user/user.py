@@ -89,9 +89,8 @@ class User(object):
                 password = str(uuid.uuid4())
                 password_encrypted = bytes2hexstr(encrypt_rsa(password, public_key_text))
 
-                # TODO JHILL: from_username should be u2 everywhere...
                 host_info = dict(
-                    from_username=self.username,
+                    u2=self.username,
                     ip=self.current_ip_port['ip'],
                     port=int(self.current_ip_port['port'])
                 )
@@ -204,7 +203,7 @@ class User(object):
             ip=self.current_ip_port['ip'],
             port=self.current_ip_port['port'],
             public_key=self.public_key_text,
-            from_username=self.username,
+            u2=self.username,
             seek_token=seek_token
         )
 
@@ -285,11 +284,9 @@ class User(object):
     #
     #-----------------------------------------------------------------------------------------
     def challenge_user_pk(self, u2):
-        challenge_text = str(uuid.uuid4())
-
-        # TODO JHILL: this isn't necessarily a failure if we don't have their public_key
         public_key_text = self.get_contact_public_key(u2)
         if public_key_text is not None:
+            challenge_text = str(uuid.uuid4())
             challenge_text_encrypted = bytes2hexstr(encrypt_rsa(
                 challenge_text,
                 public_key_text
@@ -297,7 +294,7 @@ class User(object):
 
             frame = Frame(
                 payload=dict(
-                    from_username=self.username,
+                    u2=self.username,
                     challenge_text=challenge_text_encrypted
                 ),
                 action="challenge_user_pk"
@@ -315,7 +312,7 @@ class User(object):
 
         frame = Frame(
             payload=dict(
-                from_username=self.username,
+                u2=self.username,
                 challenge_text=challenge_text
             ),
             action="challenge_user_has_pk"
@@ -359,7 +356,7 @@ class User(object):
         return requests
 
     def store_voluntary_public_key(self, request):
-        public_keys_path = os.path.join(self.public_keys_path, request['payload']['from_username'])
+        public_keys_path = os.path.join(self.public_keys_path, request['payload']['u2'])
         if not os.path.exists(public_keys_path):
             os.makedirs(public_keys_path)
 
@@ -372,7 +369,7 @@ class User(object):
     def store_public_key_request(self, request):
         request_path = os.path.join(
             self.public_key_requests_path,
-            request['payload']['from_username']
+            request['payload']['u2']
         )
         if not os.path.exists(request_path):
             os.makedirs(request_path)
@@ -383,7 +380,7 @@ class User(object):
         return True
 
     def process_public_key_request(self, request):
-        print("request_public_key message from: {}".format(request['from_username']))
+        print("request_public_key message from: {}".format(request['u2']))
         print(request)
 
         password = str(uuid.uuid4())
@@ -395,17 +392,17 @@ class User(object):
             action='public_key_response',
             payload=dict(
                 public_key=public_key_encrypted,
-                from_username=self.username,
+                u2=self.username,
                 password=password_rsaed
             )
         )
 
-        frame_response = send_frame_users(frame, self, request['from_username'])
+        frame_response = send_frame_users(frame, self, request['u2'])
         pprint.pprint(frame_response)
         return True
 
     def remove_public_key_request(self, request):
-        request_path = os.path.join(self.public_key_requests_path, request['from_username'], 'request.json')
+        request_path = os.path.join(self.public_key_requests_path, request['u2'], 'request.json')
         if os.path.exists(request_path):
             os.remove(request_path)
             return True
@@ -440,7 +437,7 @@ class User(object):
     def store_public_key_response(self, request):
         response_path = os.path.join(
             self.public_key_responses_path,
-            request['payload']['from_username']
+            request['payload']['u2']
         )
 
         if not os.path.exists(response_path):
@@ -453,7 +450,7 @@ class User(object):
 
     def process_public_key_response(self, response):
         print(response)
-        public_keys_path = os.path.join(self.public_keys_path, response['from_username'])
+        public_keys_path = os.path.join(self.public_keys_path, response['u2'])
         if not os.path.exists(public_keys_path):
             os.makedirs(public_keys_path)
 
@@ -469,7 +466,7 @@ class User(object):
         return True
 
     def remove_public_key_response(self, response):
-        response_path = os.path.join(self.public_key_responses_path, response['from_username'], 'response.json')
+        response_path = os.path.join(self.public_key_responses_path, response['u2'], 'response.json')
         if os.path.exists(response_path):
             os.remove(response_path)
 

@@ -88,7 +88,7 @@ def request_public_key(args):
         frame = Frame(
             action="request_public_key",
             payload=dict(
-                from_username=args.username,
+                u2=args.username,
                 public_key=user.public_key_text
             )
         )
@@ -102,7 +102,6 @@ def request_public_key(args):
 
 
 def surface_user(args):
-    # TODO JHILL: verify the user exists, both here and on the server!
     surface = Surface(args.username, args.port)
     surface.start()
 
@@ -123,7 +122,6 @@ def surface_user(args):
     with open(path, "w+") as f:
         f.write(json.dumps(data))
 
-    # TODO JHILL: don't remove this...
     user = User(args.username)
     path = os.path.join(user.path, "current_ip_port.json")
     with open(path, "w+") as f:
