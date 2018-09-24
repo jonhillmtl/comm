@@ -2,7 +2,7 @@ import os
 import json
 import subprocess
 import random
-from utils import aip, rpk
+from utils import aip, rpk, , gather_user_ip_ports
 from argparse import ArgumentParser
 
 def main():
@@ -16,21 +16,13 @@ def main():
         '--username={}'.format(args.username)
     ])
 
-    path = os.path.expanduser("~/pckr/surfaced.json")
-    data = json.loads(open(path).read())
+    users = gather_user_ip_ports()
 
-    users = []
-    root = os.path.expanduser("~/pckr/")
-    for sd in os.listdir(root):
-        path = os.path.join(root, sd)
-        if os.path.isdir(path):
-            users.append(sd)
+    for i in enumerate.keys():
+        aip(users, args.username, i)
 
-    for i, _ in enumerate(users):
-        aip(data, args.username, users[i])
-
-    for i, _ in enumerate(users):
-        rpk(args.username, users[i])
+    for i in enumerate.keys():
+        rpk(args.username, i)
 
 if __name__ == '__main__':
     main()

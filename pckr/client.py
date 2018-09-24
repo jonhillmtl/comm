@@ -105,27 +105,13 @@ def surface_user(args):
     surface = Surface(args.username, args.port)
     surface.start()
 
-    # TODO JHILL: remove this, the stitcher can read the current_ip.json file
-    # instead
-    path = os.path.expanduser("~/pckr/surfaced.json")
-    data = dict()
-    try:
-        data = json.loads(open(path).read())
-    except:
-        pass
-
-    data[args.username] = dict(
-        ip=surface.serversocket.getsockname()[0],
-        port=surface.port
-    )
-
-    with open(path, "w+") as f:
-        f.write(json.dumps(data))
-
     user = User(args.username)
     path = os.path.join(user.path, "current_ip_port.json")
     with open(path, "w+") as f:
-        f.write(json.dumps(dict(ip=surface.serversocket.getsockname()[0], port=surface.port)))
+        f.write(json.dumps(dict(
+            ip=surface.serversocket.getsockname()[0],
+            port=surface.port)
+        ))
 
     print(colored("surfaced on {}:{}".format(surface.serversocket.getsockname()[0], surface.port), "green"))
     surface_logger.info("{} surfaced on {}:{}".format(

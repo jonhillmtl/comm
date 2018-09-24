@@ -56,7 +56,8 @@ class User(object):
     def current_ip_port(self):
         # TODO JHILL: memoize
         try:
-            return json.loads(open(os.path.join(self.path, "current_ip_port.json")).read())
+            return json.loads(open(
+                os.path.join(self.path, "current_ip_port.json")).read())
         except FileNotFoundError:
             return None
 
