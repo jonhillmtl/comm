@@ -1,11 +1,10 @@
+from .user import User
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import sys
 import os
 import json
-
-sys.path.append("..")
-from pckr.user import User
 
 def main():
     users = []
@@ -52,5 +51,3 @@ def main():
         pos[p][1] += 0.07
     nx.draw_networkx_labels(G, pos)
     plt.show()
-
-main()

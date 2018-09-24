@@ -1,10 +1,10 @@
-import os
-import json
+from .user import User
+
 from termcolor import colored
+import json
+import os
 import sys
 
-sys.path.append("..")
-from pckr.user import User
 
 def _users():
     users = []
@@ -93,6 +93,3 @@ def dump_topo():
 def main():
     dump_topo()
     analyze_topo()
-
-if __name__ == '__main__':
-    main()

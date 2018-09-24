@@ -20,7 +20,9 @@ setup(name='pckr',
 
     entry_points={
         'console_scripts': [
-            'pckr = pckr:main'
+            'pckr = pckr.client:main',
+            'pckr_plot_nt = pckr.plot_nt:main',
+            'pckr_nt = pckr.nt:main'
         ]
     }
 )
