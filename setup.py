@@ -1,12 +1,12 @@
 from distutils.core import setup
 
-setup(name='pckr_client',
+setup(name='pckr',
     version='0.3',
     description='Pickr',
     author='Jon Hill',
     author_email='jon@jonhill.ca',
     url='',
-    packages = ['pckr_client'],
+    packages = ['pckr'],
     license='MIT',
 
     install_requires=[
@@ -20,7 +20,7 @@ setup(name='pckr_client',
 
     entry_points={
         'console_scripts': [
-            'pckr_client = pckr_client:main'
+            'pckr = pckr:main'
         ]
     }
 )

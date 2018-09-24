@@ -11,7 +11,7 @@ def main():
     args = argparser.parse_args()
 
     subprocess.check_call([
-        'pckr_client',
+        'pckr',
         'init_user',
         '--username={}'.format(args.username)
     ])

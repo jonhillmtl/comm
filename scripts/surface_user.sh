@@ -1,5 +1,5 @@
 source /usr/local/bin/virtualenvwrapper.sh
-workon pckr_client
+workon pckr
 export PCKR_USERNAME=$1
-pckr_client init_user
-pckr_client surface_user
+pckr init_user
+pckr surface_user

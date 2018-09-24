@@ -4,7 +4,7 @@ from termcolor import colored
 import sys
 
 sys.path.append("..")
-from pckr_client.user import User
+from pckr.user import User
 
 def _users():
     users = []

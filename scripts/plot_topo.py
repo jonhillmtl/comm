@@ -5,7 +5,7 @@ import os
 import json
 
 sys.path.append("..")
-from pckr_client.user import User
+from pckr.user import User
 
 def main():
     users = []

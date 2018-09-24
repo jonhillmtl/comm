@@ -4,20 +4,20 @@ import random
 def rpk(u1, u2, robustness=5):
     if random.randint(0, 10) < robustness:
         subprocess.check_call([
-            'pckr_client',
+            'pckr',
             'rpk',
             '--username={}'.format(u1),
             '--u2={}'.format(u2)
         ])
     
         subprocess.check_call([
-            'pckr_client',
+            'pckr',
             'ppk_req',
             '--username={}'.format(u2)
         ])
 
         subprocess.check_call([
-            'pckr_client',
+            'pckr',
             'ppk_resp',
             '--username={}'.format(u1)
         ])
@@ -27,7 +27,7 @@ def aip(data, u1, u2, robustness=5):
     assert u2 in data
     if random.randint(0, 10) < robustness:
         subprocess.check_call([
-            'pckr_client',
+            'pckr',
             'aip',
             '--username={}'.format(u1),
             '--u2={}'.format(u2),
