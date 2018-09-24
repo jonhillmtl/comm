@@ -46,6 +46,6 @@ def aip(users, u1, u2, robustness=5):
             'aip',
             '--username={}'.format(u1),
             '--u2={}'.format(u2),
-            '--ip={}'.format(data[u2]['ip']),
-            '--port={}'.format(data[u2]['port'])
+            '--ip={}'.format(users[u2]['ip']),
+            '--port={}'.format(users[u2]['port'])
         ])
