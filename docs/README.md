@@ -2,7 +2,7 @@
 
 pckr (picker) is
 
-- a P2P network discovery framework
+- a P2P `network` discovery framework
 - a `public_key` infrastructure
 - a messaging service
 - an end-to-end encrypted file transfer service
@@ -10,14 +10,14 @@ pckr (picker) is
 
 ## Mechanism By Which The Above is Accomplished
 
-This is a high-level view of how the network is created and how users are bootstrapped into it.
+This is a high-level view of how the `network` is created and how users are bootstrapped into it.
 
 Instructions are provided elsewhere.
 
 - `u1` is created with a `public_key`/`private_key` pair
 - `u1` can then expose an interface to the world (we which we call their `surface`) at an `ip:port` combination
     - the `surface` will listen for incoming `frame`s and react to them
-- `u1` will be very lonely indeed until bootstrapped into a network
+- `u1` will be very lonely indeed until bootstrapped into a `network`
 - `u1` is encouraged to contact a friend (`u2`) out-of-band to exchange `ip:port` info
 - `u1` can then stitch `u2` into their `ipcache`
 - at this point either `u1` or `u2` can request the other's `public_key`
@@ -29,31 +29,31 @@ Instructions are provided elsewhere.
 - `u1` can decrypt the `password` using their `private_key`, and then decrypt `u2`'s `public_key` using the `password`
 - at this point `u1` and `u2` are sharing `public_key`s, and are aware of each other's `ip:port`s
 - both `u1` and `u2` will periodically `seek_user` to seek each other out, to `ping` the other and `challenge` their stored `public_key`s
-- `u1` and `u2` are also expected to transmit `frame`s from users that are surfacing into the network, and users that are `seek_user`ing other users
+- `u1` and `u2` are also expected to transmit `frame`s from users that are surfacing into the `network`, and users that are `seek_user`ing other users
     - more details on both follow
-- `u1` and `u2` are also expected to transmit `frame`s pertaining to the health of the network
-    - specifically, `frame`s are sent out to gather information about the health of the network topology
-    - `u1` and `u2` would do well to heed the advice of these `frame`s, and challenge or expel inconsistently recognized users in their reachable networks
+- `u1` and `u2` are also expected to transmit `frame`s pertaining to the health of the `network`
+    - specifically, `frame`s are sent out to gather information about the health of the `network` topology
+    - `u1` and `u2` would do well to heed the advice of these `frame`s, and challenge or expel inconsistently recognized users in their reachable `network`
 
 ## Philosophically Though
 
 - my first drafts of the client include a server, which coördinated `ip:port` combinations for certain users. very early drafts also included the `public_key` of each user, in plain text, as a column, sitting on a Postgres database behind a REST API
-- the challenge was to make it a true P2P network, with no coördinating server
-- since no coördinating server was desirable, every client has to ensure that they remain a part of the network
-- for this reason, the network is hereby referred to as a `murmuration`
+- the challenge was to make it a true P2P `network`, with no coördinating server
+- since no coördinating server was desirable, every client has to ensure that they remain a part of the `network`
+- for this reason, the `network` is hereby referred to as a `murmuration`
 - no such thing is true
-- each client is responsible for tagging-along by informing the network of their whereabouts ("surfacing") or verifying the `ip:port` and cryptographical links of their contacts ("seeking")
-- clients also have a role to play in ensuring the health of their network topology, by propagating `frames` which aim to collect information about the consistency of the network
-    - such network topology checks might also then inform clients about inconsistently recognized users, which the client could then choose to expel from their `ipcache`, or challenge, as they wish
+- each client is responsible for tagging-along by informing the `network` of their whereabouts ("surfacing") or verifying the `ip:port` and cryptographical links of their contacts ("seeking")
+- clients also have a role to play in ensuring the health of their `network` topology, by propagating `frames` which aim to collect information about the consistency of the `network`
+    - such `network` topology checks might also then inform clients about inconsistently recognized users, which the client could then choose to expel from their `ipcache`, or challenge, as they wish
     - every client is also free to do nothing
-- it might seem a pain to bootstrap over the phone or WhatsApp or Telegram or what have you but you can create small networks isolated from the outside world
+- it might seem a pain to bootstrap over the phone or WhatsApp or Telegram or what have you but you can create small `network`s isolated from the outside world
 
 ## Users and Authentication
 
 - user information is thrown into a directory tree
 - the client was written to allow unfettered access to users on the same account or physical machine as you
 - no passwords exist. anyone that has access to your computer has access to your pckr "account"
-- users are not guaranteed unique across a network of any size greater than 1
+- users are not guaranteed unique across a `network` of any size greater than 1
     - `public_key` challenges are used when needed to establish the identity of your contacts
     - it's entirely possible that your `ipcache` will become overrun with duplicate usernames of people purporting to be who they say they are. woe to you and them! `public_key` challenges to the rescue.
     - seriously though this could be a problem
@@ -61,7 +61,7 @@ Instructions are provided elsewhere.
 
 ## Network Topology
 
-- the health of the network is achieved by voluntary participation in two activities
+- the health of the `network` is achieved by voluntary participation in two activities
     - `seek_users`
     - `surface_user`
 - clients are encouraged to `surface_user` on startup
@@ -75,7 +75,7 @@ Instructions are provided elsewhere.
 
 ### Seeking
 
-- `u1` can seek out any user in their reachable network, if they know that user's `public_key`
+- `u1` can seek out any user in their reachable `network`, if they know that user's `public_key`
 - `u1` encrypts a `password` using `u2`'s `public_key`
 - they also encrypt their own `ip:port` combination, along with their `username`
 - they also generate a random `seek_token`, which they encrypt using the `password`, and send that along as well
@@ -104,9 +104,14 @@ Instructions are provided elsewhere.
         - `u1` decrypts it using their `private_key`
 - by using both methods, `u1` and `u2` can verify a solid cryptographical link
 - either user can also ensure that the user presenting at a certain `ip:port` is who they claim to be
-- this makes the exchange of `public_keys`s as early as possible quite important for the health of the network
+- this makes the exchange of `public_keys`s as early as possible quite important for the health of the `network`
 
 ## IPCache
+
+- users can (and even must) store their contacts in their `ipcache`
+- the contents of the `ipcache` are updated or adjusted in response to particular `frames`
+- users can also stich a contact into their `network` manually
+    - in fact, this is how they are bootstrapped into the `network`
 
 ## Security Concerns
 
