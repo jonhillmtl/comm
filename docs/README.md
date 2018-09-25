@@ -76,14 +76,16 @@ Instructions are provided elsewhere.
 ### Seeking
 
 - `u1` can seek out any user in their reachable `network`, if they know that user's `public_key`
-- `u1` encrypts a `password` using `u2`'s `public_key`
-- they also encrypt their own `ip:port` combination, along with their `username`
-- they also generate a random `seek_token`, which they encrypt using the `password`, and send that along as well
+- `u1` prepares a `payload` for destined for `u2`
+    - `u1` encrypts a `password` using `u2`'s `public_key`
+    - they encrypt their own `ip:port` combination as `json`, along with their `username`, using the `password`
+    - they also generate a random `seek_token`, which they encrypt using the `password`
 - the `seek_token` is stored locally
-- they send the message out to every contact they have in their `ipcache`
+- they send the `frame` out to every contact they have in their `ipcache`
 - each contact can try to decrypt the `password`
 - if they can decrypt it, they reply directly to `u1` using the `ip:port` combination they get by decrypting it from the `frame`'s `payload`
 - `u1` can process the `seek_user_response` to store `u2`'s `ip:port` in their `ipcache`
+    - `u1` can ensure that `u2` send back the correct `seek_token`
 - `u2` is free to store `u1`'s `ip:port` combination as well
     - `u2` is equally free to challenge `u1` before doing so
     
@@ -108,8 +110,10 @@ Instructions are provided elsewhere.
 
 ## IPCache
 
-- users can (and even must) store their contacts in their `ipcache`
+- users can (and even must) store the `ip:port` of their contacts in their `ipcache`
 - the contents of the `ipcache` are updated or adjusted in response to particular `frames`
+    - `u2` can store the `ip:port` of `u1` that is included in a `seek_user` `frame`
+    - `u1` can store the `ip:port` of `u2` that they might receive in a `seek_user_response` `frame`
 - users can also stich a contact into their `network` manually
     - in fact, this is how they are bootstrapped into the `network`
 
