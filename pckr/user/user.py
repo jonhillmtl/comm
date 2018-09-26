@@ -356,7 +356,7 @@ class User(object):
                         requests.append(request)
         return requests
 
-    def store_voluntary_public_key(self, request):
+    def store_volunteered_public_key(self, request):
         public_keys_path = os.path.join(self.public_keys_path, request['payload']['u2'])
         if not os.path.exists(public_keys_path):
             os.makedirs(public_keys_path)

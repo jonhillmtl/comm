@@ -3,7 +3,7 @@ from ..utilities import command_header, send_frame_users, normalize_path, is_bin
 from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
-from ..utilities.logging import assert_logger
+from ..utilities.logging import assert_logger, debug_logger
 from termcolor import colored
 
 import binascii
@@ -191,7 +191,7 @@ class SocketThread(threading.Thread):
         assert type(request) == dict, 'request is not dict'
 
         self.user.store_public_key_request(request)
-        self.user.store_voluntary_public_key(request)
+        self.user.store_volunteered_public_key(request)
 
         return dict(
             success=True
@@ -648,13 +648,13 @@ class SeekUsersThread(threading.Thread):
 
         # TODO JHILL: we should also seek out all of the users that we have public_keys for, that
         # we don't have in our ipcache.... makes sense to be connected if we can
-        """
-        for u in self.public_keys:
-            if u not in self.user.ipcache.keys():
+        for u in self.user.public_keys:
+            if u['username'] not in self.user.ipcache.keys():
                 print(colored("*" * 100, "cyan"))
                 print(colored("* nope", "cyan"))
+                debug_logger.debug(u['username'], u)
+                self.user.seek_user(u['username'])
                 print(colored("*" * 100, "cyan"))
-        """
 
         # iterate through all of the cached ips that we have, and check if the users are still there
         # first ping them.... if they pass the ping, challenge them.
