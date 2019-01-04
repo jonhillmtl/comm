@@ -20,34 +20,39 @@ import subprocess
 import sys
 
 
-class SocketThread(threading.Thread):
+class IncomingFrameThread(threading.Thread):
+    """
+    this class does all of the heavy lifting for incoming Frames
+    Frames are processed as they come in from other clients
+    """
+
     clientsocket = None
     user = None
 
     def __init__(self, clientsocket, username):
-        super(SocketThread, self).__init__()
+        super(IncomingFrameThread, self).__init__()
         self.clientsocket = clientsocket
         self.user = User(username)
 
-    def _receive_ping(self, request):
+    def _receive_ping(self, frame):
         """
-        receive the ping request and respond with a pong message
+        receive the ping frame and respond with the payload for a pong frame
         """
 
-        assert type(request) == dict, "request must be dict"
+        assert type(frame) == dict, "frame must be dict"
 
         return dict(
             success=True,
             message="pong"
         )
 
-    def _receive_seek_user(self, request):
+    def _receive_seek_user(self, frame):
         """
-        receive the seek_user request. try to decrypt the message contained in it
+        receive the seek_user frame. try to decrypt the message contained in it
         and respond to the user that was seeking you if you can
         """
 
-        assert type(request) == dict, "request must be dict"
+        assert type(frame) == dict, "request must be frame"
         assert 'payload' in request, 'payload not in request'
         # TODO JHILL: the rest of the asserts
 
@@ -434,24 +439,29 @@ class SocketThread(threading.Thread):
                 success=True
             )
 
-    def _receive_seek_user_response(self, request):
-        assert type(request) == dict, 'request must be a dict'
-        assert 'payload' in request, 'payload not in request'
-        assert 'password' in request['payload'], "password not in request['payload']"
-        assert 'seek_token' in request['payload'], "seek_token not in request['payload']"
-        assert 'host_info' in request['payload'], "host_info not in request['payload']"
+    def _receive_seek_user_response(self, frame):
+        """
+        
+        receive a seek_user_response frame and process it.
+        
+        """
+        assert type(frame) == dict, 'frame must be a dict'
+        assert 'payload' in frame, 'payload not in frame'
+        assert 'password' in frame['payload'], "password not in frame['payload']"
+        assert 'seek_token' in frame['payload'], "seek_token not in frame['payload']"
+        assert 'host_info' in frame['payload'], "host_info not in frame['payload']"
 
         password = decrypt_rsa(
-            hexstr2bytes(request['payload']['password']),
+            hexstr2bytes(frame['payload']['password']),
             self.user.private_key_text
         )
 
         seek_token_decrypted = decrypt_symmetric(
-            hexstr2bytes(request['payload']['seek_token']),
+            hexstr2bytes(frame['payload']['seek_token']),
             password
         )
         host_info_decrypted = decrypt_symmetric(
-            hexstr2bytes(request['payload']['host_info']),
+            hexstr2bytes(frame['payload']['host_info']),
             password
         )
 
@@ -501,12 +511,17 @@ class SocketThread(threading.Thread):
             )
 
 
-    def _receive_pulse_network(self, request):
-        assert type(request) == dict, "request must be a dict"
-        assert 'payload' in request, "payload not in request"
-        assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
+    def _receive_pulse_network(self, frame):
+        """
+        receive a pulse_netwokr frame and process it, by passing it along all of the other users
+        that we have knowledge of
+        """
 
-        self.user.pulse_network(request['payload']['custody_chain'])
+        assert type(frame) == dict, "frame must be a dict"
+        assert 'payload' in frame, "payload not in frame"
+        assert 'custody_chain' in frame['payload'], "custody_chain not in frame['payload']"
+
+        self.user.pulse_network(frame['payload']['custody_chain'])
 
         return dict(
             success=True
@@ -697,6 +712,10 @@ class SurfaceUserThread(threading.Thread):
         self.user = user
 
     def run(self):
+        """
+        surface the user once and then return/exit. I've seperated this out into a thread 
+        in case in the future we want to do this more often than just once
+        """
         self.user.surface()
         return True
 
@@ -714,6 +733,8 @@ class Surface(threading.Thread):
 
         while True:
             try:
+                # create a socket that the surface can listen on
+                # any incoming frames will end up here for processing
                 self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.serversocket.bind((socket.gethostname(), self.port))
                 self.serversocket.listen(5)
@@ -727,8 +748,10 @@ class Surface(threading.Thread):
     def run(self):
         while True:
             try:
+                # listen for incoming socket connections
+                # if we get one, then we spin up an IncomingFrameThread to handle it
                 (clientsocket, address) = self.serversocket.accept()
-                st = SocketThread(clientsocket, self.username)
+                st = IncomingFrameThread(clientsocket, self.username)
                 st.start()
             except ConnectionAbortedError:
                 pass

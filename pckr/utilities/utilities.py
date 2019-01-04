@@ -68,13 +68,16 @@ def encrypt_rsa(content, public_key_text):
 
     return PKCS1_OAEP.new(RSA.importKey(public_key_text)).encrypt(content)
 
+
 def decrypt_rsa(content, private_key_text):
     if type(content) == str:
         content = content.encode()
 
     return PKCS1_OAEP.new(RSA.importKey(private_key_text)).decrypt(content)
 
+
 def encrypt_symmetric(content, password, callback=None):
+    # TODO JHILL: docstring
     if type(password) is not bytes:
         password = password.encode()
 
@@ -102,6 +105,26 @@ def encrypt_symmetric(content, password, callback=None):
 
 
 def decrypt_symmetric(content, password, decode=True):
+    """
+    decrypt some content based on a password
+
+    Parameters
+    ----------
+    content : str | bytes
+        the content, will be byte encoded if it's not already
+
+    password : str| bytes
+        the password to use, will be byte-encoded if it's not already
+
+    decode :
+        do we need to decode that content before returning it?
+
+    Returns
+    -------
+    str | bytes
+        the decrypted data, will be bytes if decode is True
+    """
+
     if type(password) is not bytes:
         password = password.encode()
 
@@ -118,14 +141,64 @@ def decrypt_symmetric(content, password, decode=True):
 
 
 def normalize_path(path):
+    """
+    return a normalized and absolute path that maybe had to exapnd tildes as well
+
+    Parameters
+    ----------
+    path : str
+        the path
+
+    Returns
+    -------
+    str
+        a str representing the normalized, absolutized, expanded path
+    """
+
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
 
 def is_binary(mt):
+    """
+    determines if the media type is a binary media type
+    
+    Parameters
+    ----------
+    mt : str
+        the media type
+
+    Returns
+    -------
+    bool
+        true if the media is binary, false if not
+    """
+
     return mt in ['image/png', 'image/jpg']
 
+
 def send_frame_users(frame, u1, u2):
+    """
+    send a frame from u1 to u2
+
+    Parameters
+    ----------
+    frame : frame
+        the frame to send
+    
+    u1 : User
+        the sending user
+    
+    u2: User
+        the receiving user
+
+    Returns
+    -------
+    dict
+        a dict with a success and error flag
+    """
+
     ip, port = u1.get_contact_ip_port(u2)
+
     if ip and port:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -138,7 +211,10 @@ def send_frame_users(frame, u1, u2):
             sock.close()
             return response
         except ConnectionRefusedError:
-            return dict(success=False, error="connection refused")
+            return dict(
+                success=False,
+                error="connection refused"
+            )
     else:
         # TODO JHILL: remove them from the cache
         # and then send out a seek user for them
