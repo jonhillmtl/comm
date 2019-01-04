@@ -2,7 +2,6 @@ from .user import User
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import sys
 import os
 import json
 
@@ -25,10 +24,7 @@ def main():
         if os.path.exists(path):
             ipcache = json.loads(open(path).read())
             for k in sorted(ipcache.keys()):
-                v = ipcache[k]
                 G.add_edge(user.username, k)
-                public_key_text = user.get_contact_public_key(k)
-                has_pk = public_key_text != None
 
     # write in UTF-8 encoding
     fh = open('./test/edgelist.utf-8', 'wb')

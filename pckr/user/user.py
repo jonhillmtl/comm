@@ -1,9 +1,8 @@
 from ..frame import Frame
-from ..utilities import command_header, send_frame_users, normalize_path, flatten
-from ..utilities import encrypt_rsa, encrypt_symmetric, encrypt_rsa, decrypt_symmetric, decrypt_rsa, generate_rsa_pub_priv
+from ..utilities import send_frame_users, normalize_path, flatten
+from ..utilities import encrypt_symmetric, encrypt_rsa, decrypt_symmetric, decrypt_rsa, generate_rsa_pub_priv
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 
-import binascii
 import json
 import os
 import uuid
@@ -79,7 +78,7 @@ class User(object):
                     custody_chain=custody_chain
                 ), action='pulse_network')
 
-                response = send_frame_users(frame, self, k)
+                send_frame_users(frame, self, k)
 
         return True
 
@@ -101,7 +100,7 @@ class User(object):
                     password.encode()
                 ))
 
-                frame = Frame(
+                response_frame = Frame(
                     payload=dict(
                         password=password_encrypted,
                         host_info=host_info_encrypted
@@ -109,8 +108,8 @@ class User(object):
                     action='surface_user'
                 )
 
-                response = send_frame_users(
-                    frame,
+                send_frame_users(
+                    response_frame,
                     self,
                     k
                 )
@@ -218,13 +217,13 @@ class User(object):
 
         # send the message out to everyone we know
         for k in self.ipcache.keys():
-            frame = Frame(payload=dict(
+            response_frame = Frame(payload=dict(
                 host_info=encrypted_host_info,
                 password=password_encrypted,
                 custody_chain=[str2hashed_hexstr(self.username)]
             ), action='seek_user')
 
-            response = send_frame_users(frame, self, k)
+            send_frame_users(response_frame, self, k)
 
         return True
 
@@ -232,7 +231,7 @@ class User(object):
         try:
             path = os.path.join(self.public_keys_path, contact, "public.key")
             return open(path).read()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             return None
 
     def init_directory_structure(self):
@@ -610,7 +609,7 @@ class User(object):
                         )
                     )
 
-                    response = send_frame_users(frame, self, notification_user)
+                    send_frame_users(frame, self, notification_user)
             else:
                 hashed_ipcaches[k] = v
 
@@ -621,7 +620,7 @@ class User(object):
         for k in self.ipcache.keys():
             hashed_username = str2hashed_hexstr(k)
             if hashed_username not in custody_chain:
-                frame = Frame(
+                response_frame = Frame(
                     action='check_net_topo',
                     payload=dict(
                         custody_chain=custody_chain,
@@ -629,7 +628,7 @@ class User(object):
                     )
                 )
 
-                response = send_frame_users(frame, self, k)
+                send_frame_users(response_frame, self, k)
 
         return True
     

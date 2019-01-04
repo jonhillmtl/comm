@@ -1,13 +1,11 @@
 from ..user import User
-from ..utilities import command_header, send_frame_users, normalize_path, is_binary
+from ..utilities import is_binary, send_frame_users
 from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
 from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
 from ..utilities.logging import assert_logger, debug_logger
 from termcolor import colored
 
-import binascii
-import datetime
 import json
 import os
 import socket
@@ -17,7 +15,6 @@ import pprint
 import random
 import time
 import subprocess
-import sys
 
 
 class IncomingFrameThread(threading.Thread):
@@ -53,7 +50,7 @@ class IncomingFrameThread(threading.Thread):
         """
 
         assert type(frame) == dict, "request must be frame"
-        assert 'payload' in request, 'payload not in request'
+        assert 'payload' in frame, 'payload not in request'
         # TODO JHILL: the rest of the asserts
 
         responded = False
@@ -62,12 +59,12 @@ class IncomingFrameThread(threading.Thread):
         # if we can decrypt it we should answer the other host
         try:
             password_decrypted = decrypt_rsa(
-                hexstr2bytes(request['payload']['password']),
+                hexstr2bytes(frame['payload']['password']),
                 self.user.private_key_text
             )
 
             # now we have to open up the message and challenge that user
-            decrypted_text = decrypt_symmetric(hexstr2bytes(request['payload']['host_info']), password_decrypted)
+            decrypted_text = decrypt_symmetric(hexstr2bytes(frame['payload']['host_info']), password_decrypted)
 
             # TODO JHILL: error handling
             host_info = json.loads(decrypted_text)
@@ -130,7 +127,7 @@ class IncomingFrameThread(threading.Thread):
             )
 
             # now send back a response
-            frame = Frame(
+            response_frame = Frame(
                 action='seek_user_response',
                 payload=response_dict
             )
@@ -140,11 +137,11 @@ class IncomingFrameThread(threading.Thread):
                 host_info['ip'],
                 int(host_info['port'])
             )
-            response = send_frame_users(frame, self.user, u2)
+            send_frame_users(response_frame, self.user, u2)
 
             responded = True
 
-        except ValueError as e:
+        except ValueError:
             # this means we couldn't decrypt the message so we should just carry on
             pass
 
@@ -152,7 +149,7 @@ class IncomingFrameThread(threading.Thread):
         if responded == False:
 
             # don't go more than 4 hops away
-            if len(request['payload']['custody_chain']) >= 4:
+            if len(frame['payload']['custody_chain']) >= 4:
                 return dict(
                     success=True,
                     message='custody_chain len exceeded'
@@ -160,18 +157,18 @@ class IncomingFrameThread(threading.Thread):
 
             count = 0
 
-            request['payload']['custody_chain'].append(
+            frame['payload']['custody_chain'].append(
                 str2hashed_hexstr(self.user.username)
             )
 
             for k, _ in self.user.ipcache.items():
                 hashed_username = str2hashed_hexstr(k)
-                if hashed_username not in request['payload']['custody_chain']:
-                    frame = Frame(
-                        action=request['action'],
-                        payload=request['payload'],
+                if hashed_username not in frame['payload']['custody_chain']:
+                    response_frame = Frame(
+                        action=frame['action'],
+                        payload=frame['payload'],
                     )
-                    response = send_frame_users(frame, self.user, k)
+                    send_frame_users(response_frame, self.user, k)
                     count = count + 1
 
             return dict(
@@ -302,7 +299,7 @@ class IncomingFrameThread(threading.Thread):
                 f.write(content_decrypted)
         else:
             content_decrypted = decrypt_symmetric(
-                hexstr2bytes(content),
+                hexstr2bytes(request['payload']['content']),
                 key['password']
             )
 
@@ -482,7 +479,7 @@ class IncomingFrameThread(threading.Thread):
         seek_tokens = []
         try:
             seek_tokens = json.loads(open(seek_token_path).read())
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             return dict(
                 success=False,
                 error='seek_tokens not found'

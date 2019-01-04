@@ -14,6 +14,9 @@ from Crypto.PublicKey import RSA
 flatten = lambda l: [item for sublist in l for item in sublist]
 
 def command_header(action, args):
+    """
+    print a header for a command with its arguments
+    """
     return colored("{}\n*\n* {}\n*\n{}\n*\n{}\n\n".format(
         "*" * 100,
         action,

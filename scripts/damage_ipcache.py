@@ -1,8 +1,6 @@
-import os
-import json
-import subprocess
 import random
-from utils import aip, rpk, gather_user_ip_ports
+import subprocess
+from utils import gather_user_ip_ports
 
 
 def main():
@@ -17,6 +15,7 @@ def main():
                     '--username={}'.format(i),
                     '--u2={}'.format(j)
                 ])
+
 
 if __name__ == '__main__':
     main()

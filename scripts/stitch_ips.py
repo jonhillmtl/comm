@@ -1,8 +1,4 @@
-import os
-import json
-import subprocess
-import random
-from utils import aip, rpk, gather_user_ip_ports
+from utils import aip, gather_user_ip_ports
 
 
 def main():
@@ -11,6 +7,7 @@ def main():
     for i in users.keys():
         for j in users.keys():
             aip(users, i, j, robustness=11)
+
 
 if __name__ == '__main__':
     main()

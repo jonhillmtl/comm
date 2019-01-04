@@ -2,10 +2,11 @@ import json
 import uuid
 import time
 
-from ..utilities import command_header, send_frame_users, normalize_path, split_contents, is_binary
-from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
-from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
+from ..utilities import send_frame_users, split_contents, is_binary
+from ..utilities import encrypt_rsa, encrypt_symmetric
+from ..utilities import bytes2hexstr, str2hashed_hexstr
 from ..frame import Frame
+from termcolor import colored
 
 def _progress_callback(i, c):
     print("\b\b\b\b\b{0:.2f} %".format((i / c) * 100))

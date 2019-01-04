@@ -1,8 +1,4 @@
-import os
-import json
-import subprocess
-import random
-from utils import aip, rpk, gather_user_ip_ports
+from utils import rpk, gather_user_ip_ports
 
 
 def main():

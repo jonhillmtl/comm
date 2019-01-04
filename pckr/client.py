@@ -1,8 +1,6 @@
 from .surface import Surface, SurfaceUserThread, SeekUsersThread
 from .frame import Frame
 from .user import User
-from .utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
-from .utilities import encrypt_rsa, encrypt_symmetric, decrypt_rsa
 from .utilities import command_header, send_frame_users
 from .utilities.logging import surface_logger
 from .message import Message
@@ -12,7 +10,6 @@ from termcolor import colored
 import argparse
 import os
 import pprint
-import uuid
 import sys
 import json
 import random
