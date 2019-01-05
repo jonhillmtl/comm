@@ -1,9 +1,17 @@
+"""
+
+creates a weird network.
+
+usage: python scripts/weird_network.py
+
+"""
+
 import random
 from utils import aip, rpk, gather_user_ip_ports
 
 
 def main():
-    """ the main handler function for this script """
+    """ the main handler function for this script. """
 
     users = gather_user_ip_ports()
     for i in users.keys():

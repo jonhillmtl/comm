@@ -8,7 +8,7 @@ from .user import User
 
 def _users():
     """
-    return all of the users in the ~/pckr/ directory
+    return all of the users in the ~/pckr/ directory.
 
     Returns
     -------
@@ -108,7 +108,7 @@ def dump_topo():
 
 
 def main():
-    """ the main handler function for this script """
+    """ the main handler function for this script. """
 
     dump_topo()
     analyze_topo()

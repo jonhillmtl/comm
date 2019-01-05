@@ -1,8 +1,16 @@
+"""
+
+stitch the ips of all users to all other users.
+
+usage: python scripts/stitch_ips.py
+
+"""
+
 from utils import aip, gather_user_ip_ports
 
 
 def main():
-    """ the main handler function for this script """
+    """ the main handler function for this script. """
 
     users = gather_user_ip_ports()
 

@@ -17,7 +17,7 @@ from .message import Message
 
 def init_user(args: argparse.Namespace) -> bool:
     """
-    initialize a user with args.username as their username
+    initialize a user with args.username as their username.
     """
 
     user = User(args.username)
@@ -34,7 +34,7 @@ def init_user(args: argparse.Namespace) -> bool:
 
 def challenge_user_pk(args: argparse.Namespace) -> bool:
     """
-    challenge a user's public key... ie: send them a challenge asking them if they can decrypt
+    challenge a user's public key... ie: send them a challenge asking them if they can decrypt.
     something that we encrypted with what we believe is their public key
 
     the challenged user is specified by args.user2
@@ -53,7 +53,7 @@ def challenge_user_pk(args: argparse.Namespace) -> bool:
 
 def challenge_user_has_pk(args: argparse.Namespace) -> bool:
     """
-    challenge a user to ask if they have our public key. they can try to encrypt some text
+    challenge a user to ask if they have our public key. they can try to encrypt some text.
     with what they believe is our public key. if we can decrypt it we know they have our
     public key
 
@@ -72,7 +72,7 @@ def challenge_user_has_pk(args: argparse.Namespace) -> bool:
 
 def request_public_key(args: argparse.Namespace) -> bool:
     """
-    request another user's public key
+    request another user's public key.
 
     the requested user is specified by args.user2
     """

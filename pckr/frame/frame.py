@@ -9,8 +9,8 @@ class Frame(object):
 
     def __init__(
         self,
-        payload : dict,
-        action : str
+        payload: dict,
+        action: str
     ) -> None:
         self.frame_id = str(uuid.uuid4())
         self.action = action

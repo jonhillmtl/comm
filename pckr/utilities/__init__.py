@@ -1,5 +1,6 @@
 # TODO JHILL: rename the file to utils and the directory above it
 
+from argparse import Namespace
 import binascii
 import hashlib
 import json
@@ -9,14 +10,32 @@ import socket
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from termcolor import colored
+from typing import Any
 
 import blowfish
 
-def flatten(l):
-    return [item for sublist in l for item in sublist]
+
+def flatten(data_list: list) -> list:
+    """
+    flatten a list of lists into one list.
+
+    Parameters
+    data_list : list
+        the list of lists to flatten
+
+    Returns
+    -------
+    list
+        the flattened list
+    """
+
+    return [item for sublist in data_list for item in sublist]
 
 
-def command_header(action, args):
+def command_header(
+    action: str,
+    args: Namespace
+) -> str:
     """
     print a header for a command with its arguments
     """
@@ -29,7 +48,10 @@ def command_header(action, args):
     ), "blue")
 
 
-def split_contents(contents, split_size=4096):
+def split_contents(
+    contents: str,
+    split_size: int = 4096
+) -> list:
     splits = []
     index = 0
     while index < len(contents):
@@ -38,17 +60,17 @@ def split_contents(contents, split_size=4096):
     return splits
 
 
-def hexstr2bytes(hs):
+def hexstr2bytes(hs: str) -> bytes:
     assert type(hs) == str
     return binascii.unhexlify(hs)
 
 
-def bytes2hexstr(bs):
+def bytes2hexstr(bs: bytes) -> str:
     assert type(bs) == bytes
     return binascii.hexlify(bs).decode()
 
 
-def str2hashed_hexstr(s):
+def str2hashed_hexstr(s: Any) -> str:
     if type(s) == str:
         s = s.encode()
 
@@ -57,7 +79,7 @@ def str2hashed_hexstr(s):
     return bytes2hexstr(m.digest())
 
 
-def pad_content(content):
+def pad_content(content: Any) -> str:
     padder = ' '
     if type(content) == bytes:
         padder = b' '

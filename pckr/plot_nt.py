@@ -8,7 +8,7 @@ from .user import User
 
 
 def main():
-    """ the main handler function for this script """
+    """ the main handler function for this script. """
 
     users = []
     root = os.path.expanduser("~/pckr/")

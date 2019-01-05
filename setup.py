@@ -1,3 +1,5 @@
+""" the setup file for pckr. """
+
 from distutils.core import setup
 
 setup(
