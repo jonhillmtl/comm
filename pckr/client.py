@@ -93,7 +93,7 @@ def request_public_key(args):
 
         response = send_frame_users(frame, user, args.u2)
         pprint.pprint(response, indent=4)
-        
+
         # after that, they have a public_key_request.... they will answer
         # it when they want, and we'll get a public_key_response
     return True

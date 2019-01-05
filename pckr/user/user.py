@@ -12,6 +12,7 @@ import datetime
 
 USER_ROOT = "~/pckr/"
 
+
 class User(object):
     username = None
     ipcache_data = None
@@ -27,7 +28,7 @@ class User(object):
             except json.decoder.JSONDecodeError:
                 pass
         self.ipcache_data = ipcache_data
-    
+
     def __str__(self):
         return self.username
 
@@ -116,11 +117,11 @@ class User(object):
 
         return True
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
     # messages
     #
-    #-----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------
 
     @property
     def messages_path(self):
@@ -139,17 +140,17 @@ class User(object):
         ) for sd in os.listdir(self.messages_path)]
         return messages
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
     # public_keys
     #
-    #-----------------------------------------------------------------------------------------
-    
+    # -----------------------------------------------------------------------------------------
+
     @property
     def public_keys_path(self):
         return os.path.join(self.path, "public_keys")
 
-    @property 
+    @property
     def public_keys(self):
         pks = [dict(
             username=sd,
@@ -159,11 +160,11 @@ class User(object):
         ) for sd in os.listdir(self.public_keys_path)]
         return pks
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
-    # seek 
+    # seek
     #
-    #-----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------
     @property
     def seek_tokens_path(self):
         return os.path.join(self.path, "seek_tokens")
@@ -249,7 +250,7 @@ class User(object):
 
         assert os.path.exists(self.messages_path) is False
         os.makedirs(self.messages_path)
-        
+
         assert os.path.exists(self.message_keys_path) is False
         os.makedirs(self.message_keys_path)
 
@@ -264,7 +265,7 @@ class User(object):
     def init_rsa(self):
         new_key = generate_rsa_pub_priv()
         with open(self.public_key_path, "wb") as f:
-            f.write(new_key.publickey().exportKey("PEM") )
+            f.write(new_key.publickey().exportKey("PEM"))
 
         with open(self.private_key_path, "wb") as f:
             f.write(new_key.exportKey("PEM"))
@@ -276,13 +277,13 @@ class User(object):
         response = send_frame_users(frame, self, u2)
         return response['success']
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
     # challenge challenges
     # challenge_user_pk
     # challenge_user_pk
     #
-    #-----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------
     def challenge_user_pk(self, u2):
         public_key_text = self.get_contact_public_key(u2)
         if public_key_text is not None:
@@ -301,7 +302,6 @@ class User(object):
             )
 
             response = send_frame_users(frame, self, u2)
-            assert type(challenge_text) == type(response['decrypted_challenge'])
             if response['success'] is True and response['decrypted_challenge'] == challenge_text:
                 return True
 
@@ -332,12 +332,12 @@ class User(object):
 
         return False
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
-    # public_key_request 
+    # public_key_request
     # public_key_requests
     #
-    #-----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------
     @property
     def public_key_requests_path(self):
         return os.path.join(self.path, "public_key_requests")
@@ -410,12 +410,12 @@ class User(object):
             print("PATH NOT FOUND")
             return False
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
     # public_key_response
     # public_key_responses
     #
-    #-----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------
     @property
     def public_key_responses_path(self):
         return os.path.join(self.path, "public_key_responses")
@@ -475,11 +475,12 @@ class User(object):
 
         return True
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
     # ipcache
     #
-    #-----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------
+
     @property
     def ipcache_path(self):
         """
@@ -544,18 +545,18 @@ class User(object):
 
         return True
 
-    #----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------
     #
     # network topology
     # nt
     #
-    #-----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------
     def hashed_ipcache(self):
         """
         prepare a version of our ipcache where the usernames and the ip:port
         are hashed... then we can pass them around without revealing much
         about the users we have contact with.
-        
+
         this will be used in the check_net_topo call
         """
 
@@ -583,11 +584,11 @@ class User(object):
         anyone receiving this can hash their users and their ip:ports and put it in the dictionary
         if someone tries to insert a different value for a particular key, they should alert
         the network that there is an inconsistent user 'net_topo_damaged'
-        
+
         clients receiving 'net_topo_damaged' can choose to flush that user from their cache
         and seek them out again if they care too, or have their public key
         """
-        
+
         # use the custody chain to ensure you don't forward this to anyone
         # who has already seen it
         custody_chain.append(str2hashed_hexstr(self.username))
@@ -631,4 +632,3 @@ class User(object):
                 send_frame_users(response_frame, self, k)
 
         return True
-    

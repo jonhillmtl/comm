@@ -1,20 +1,23 @@
-import socket
-import json
-import os
-import blowfish
-import binascii
-import hashlib
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
 from termcolor import colored
 
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA 
+import binascii
+import blowfish
+import hashlib
+import json
+import os
+import socket
+
 
 flatten = lambda l: [item for sublist in l for item in sublist]
+
 
 def command_header(action, args):
     """
     print a header for a command with its arguments
     """
+
     return colored("{}\n*\n* {}\n*\n{}\n*\n{}\n\n".format(
         "*" * 100,
         action,
@@ -27,8 +30,8 @@ def split_contents(contents, split_size=4096):
     splits = []
     index = 0
     while index < len(contents):
-         splits.append(contents[index:index+split_size])
-         index = index + split_size
+        splits.append(contents[index:index+split_size])
+        index = index + split_size
     return splits
 
 
@@ -60,7 +63,7 @@ def pad_content(content):
 
 
 def generate_rsa_pub_priv():
-    return RSA.generate(2048, e=65537) 
+    return RSA.generate(2048, e=65537)
 
 
 def encrypt_rsa(content, public_key_text):
@@ -162,7 +165,7 @@ def normalize_path(path):
 def is_binary(mt):
     """
     determines if the media type is a binary media type
-    
+
     Parameters
     ----------
     mt : str
@@ -185,10 +188,10 @@ def send_frame_users(frame, u1, u2):
     ----------
     frame : frame
         the frame to send
-    
+
     u1 : User
         the sending user
-    
+
     u2: User
         the receiving user
 

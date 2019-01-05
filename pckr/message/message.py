@@ -7,6 +7,7 @@ from ..utilities import send_frame_users, split_contents, is_binary, \
 from ..frame import Frame
 from termcolor import colored
 
+
 def _progress_callback(i, c):
     print("\b\b\b\b\b{0:.2f} %".format((i / c) * 100))
 
@@ -26,7 +27,7 @@ class Message(object):
         self.mime_type = mime_type
         self.message_id = str(uuid.uuid4())
         self.password = str(uuid.uuid4())
-        
+
     def __str__(self):
         return json.dumps(self.__dict__, default=str)
 
@@ -35,7 +36,7 @@ class Message(object):
         if public_key_text is None:
             print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
             return False
- 
+
         key = dict(
             password=self.password,
             message_id=self.message_id,
@@ -74,7 +75,7 @@ class Message(object):
         if public_key_text is None:
             print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
             return False
- 
+
         meta = dict(
             message_id=self.message_id,
             filename=self.filename,
@@ -128,7 +129,7 @@ class Message(object):
         if public_key_text is None:
             print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
             return False
- 
+
         term = dict(
             message_id=self.message_id,
             filename=self.filename,

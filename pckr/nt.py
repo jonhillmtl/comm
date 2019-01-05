@@ -8,7 +8,7 @@ import os
 def _users():
     """
     return all of the users in the ~/pckr/ directory
-    
+
     Returns
     -------
     list
@@ -77,17 +77,17 @@ def dump_topo():
                     u2 = User(k)
 
                     v = ipcache[k]
-                    user_has_u2_pk = user.get_contact_public_key(k) != None
-                    u2_has_user_pk = u2.get_contact_public_key(user.username) != None
-            
-                    print( 
+                    user_has_u2_pk = user.get_contact_public_key(k) is not None
+                    u2_has_user_pk = u2.get_contact_public_key(user.username) is not None
+
+                    print(
                         k,
-                        colored(v['ip'], "green"), 
+                        colored(v['ip'], "green"),
                         colored(v['port'], "green"),
                         colored("(pk)", "green") if user_has_u2_pk else colored("(no pk)", "red"),
-                        colored("(has {} pk)".format(user.username), "green") 
-                            if u2_has_user_pk 
-                            else colored("(does not have {} pk)".format(user.username), "red")
+                        colored("(has {} pk)".format(user.username), "green")
+                                if u2_has_user_pk 
+                                else colored("(does not have {} pk)".format(user.username), "red")
                     )
 
                 if len(user.public_key_requests):
