@@ -27,12 +27,12 @@ class IncomingFrameThread(threading.Thread):
     clientsocket = None
     user = None
 
-    def __init__(self, clientsocket, username):
+    def __init__(self, clientsocket: socket.socket, username: str):
         super(IncomingFrameThread, self).__init__()
         self.clientsocket = clientsocket
         self.user = User(username)
 
-    def _receive_ping(self, frame):
+    def _receive_ping(self, frame: dict):
         """
         receive the ping frame and respond with the payload for a pong frame
         """
@@ -44,7 +44,7 @@ class IncomingFrameThread(threading.Thread):
             message="pong"
         )
 
-    def _receive_seek_user(self, frame):
+    def _receive_seek_user(self, frame: dict):
         """
         receive the seek_user frame. try to decrypt the message contained in it
         and respond to the user that was seeking you if you can
@@ -558,6 +558,9 @@ class IncomingFrameThread(threading.Thread):
         try:
             assert 'action' in request, 'request has no action'
 
+            # TODO JHILL: wire up frames here, and use them throughout, this
+            # doesn't look great when you run it through the linter
+            # also rename it to frame instead of request before you hand it over
             if request['action'] == 'ping':
                 return self._receive_ping(request)
             elif request['action'] == 'send_message':
@@ -719,7 +722,7 @@ class SurfaceUserThread(threading.Thread):
 
 class Surface(threading.Thread):
     login_token = None
-    serversocket = None
+    serversocket = None  # type: socket.socket
     hostname = None
     username = None
 

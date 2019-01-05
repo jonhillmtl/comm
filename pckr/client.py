@@ -15,7 +15,7 @@ from .utilities.logging import surface_logger
 from .message import Message
 
 
-def init_user(args) -> bool:
+def init_user(args: argparse.Namespace) -> bool:
     """
     initialize a user with args.username as their username
     """
@@ -32,7 +32,7 @@ def init_user(args) -> bool:
     return True
 
 
-def challenge_user_pk(args) -> bool:
+def challenge_user_pk(args: argparse.Namespace) -> bool:
     """
     challenge a user's public key... ie: send them a challenge asking them if they can decrypt
     something that we encrypted with what we believe is their public key
@@ -51,7 +51,7 @@ def challenge_user_pk(args) -> bool:
     return True
 
 
-def challenge_user_has_pk(args) -> bool:
+def challenge_user_has_pk(args: argparse.Namespace) -> bool:
     """
     challenge a user to ask if they have our public key. they can try to encrypt some text
     with what they believe is our public key. if we can decrypt it we know they have our
@@ -70,7 +70,7 @@ def challenge_user_has_pk(args) -> bool:
     return True
 
 
-def request_public_key(args) -> bool:
+def request_public_key(args: argparse.Namespace) -> bool:
     """
     request another user's public key
 
@@ -99,7 +99,7 @@ def request_public_key(args) -> bool:
     return True
 
 
-def surface_user(args) -> bool:
+def surface_user(args: argparse.Namespace) -> bool:
     surface = Surface(args.username, args.port)
     surface.start()
 
@@ -131,7 +131,7 @@ def surface_user(args) -> bool:
     return True
 
 
-def add_ipcache(args)-> bool:
+def add_ipcache(args: argparse.Namespace)-> bool:
     user = User(args.username)
     user.set_contact_ip_port(args.user2, args.ip, args.port)
     print(user.ipcache)
@@ -139,7 +139,7 @@ def add_ipcache(args)-> bool:
     return True
 
 
-def remove_ipcache(args)-> bool:
+def remove_ipcache(args: argparse.Namespace)-> bool:
     user = User(args.username)
     user.remove_contact_ip_port(args.user2)
     print(user.ipcache)
@@ -147,21 +147,21 @@ def remove_ipcache(args)-> bool:
     return True
 
 
-def seek_user(args)-> bool:
+def seek_user(args: argparse.Namespace)-> bool:
     user = User(args.username)
     user.seek_user(args.user2)
 
     return True
 
 
-def ping_user(args) -> bool:
+def ping_user(args: argparse.Namespace) -> bool:
     user = User(args.username)
     user.ping_user(args.user2)
 
     return True
 
 
-def send_message(args) -> bool:
+def send_message(args: argparse.Namespace) -> bool:
     return Message(
         User(args.username),
         args.filename,
@@ -170,7 +170,7 @@ def send_message(args) -> bool:
     ).send()
 
 
-def process_public_key_responses(args) -> bool:
+def process_public_key_responses(args: argparse.Namespace) -> bool:
     user = User(args.username)
     for response in user.public_key_responses:
         if user.process_public_key_response(response):
@@ -179,7 +179,7 @@ def process_public_key_responses(args) -> bool:
     return True
 
 
-def process_public_key_requests(args) -> bool:
+def process_public_key_requests(args: argparse.Namespace) -> bool:
     user = User(args.username)
     for request in user.public_key_requests:
         if user.process_public_key_request(request):
@@ -188,7 +188,7 @@ def process_public_key_requests(args) -> bool:
     return True
 
 
-def pulse_network(args) -> bool:
+def pulse_network(args: argparse.Namespace) -> bool:
     user = User(args.username)
     assert user.exists
 
@@ -197,14 +197,14 @@ def pulse_network(args) -> bool:
     return True
 
 
-def check_net_topo(args) -> bool:
+def check_net_topo(args: argparse.Namespace) -> bool:
     user = User(args.username)
     user.check_net_topo()
 
     return True
 
 
-def public_keys(args) -> bool:
+def public_keys(args: argparse.Namespace) -> bool:
     user = User(args.username)
     for pk in user.public_keys:
         print("{} at {}".format(pk['username'], pk['modified_at'].isoformat()))
@@ -212,7 +212,7 @@ def public_keys(args) -> bool:
     return True
 
 
-def ipcache(args) -> bool:
+def ipcache(args: argparse.Namespace) -> bool:
     """
     print out the user ip cache
     """
@@ -224,7 +224,7 @@ def ipcache(args) -> bool:
     return True
 
 
-def messages(args) -> bool:
+def messages(args: argparse.Namespace) -> bool:
     """
     print out the user ip cache
     """
