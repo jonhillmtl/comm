@@ -201,13 +201,12 @@ class IncomingFrameThread(threading.Thread):
 
     def _receive_public_key_response(self, request):
         """
-        a user has responded to our public_key request
+        a user has responded to our public_key request.
 
-        store the response away so we can process it later
+        store the response away so we can process it later.
 
-        this isn't an automatic action
+        this isn't an automatic action.
         """
-
         # TODO JHILL: maybe just make this automatic, don't store it to a
         # file for later processing. we could challenge the user back
         # and see if it's really them, and then add it to our cache
