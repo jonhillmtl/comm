@@ -9,8 +9,8 @@ class Frame(object):
 
     def __init__(
         self,
-        payload,
-        action
+        payload : dict,
+        action : str
     ) -> None:
         self.frame_id = str(uuid.uuid4())
         self.action = action
@@ -18,8 +18,8 @@ class Frame(object):
 
         assert type(payload) == dict
 
-    def __unicode__(self):
+    def __unicode__(self) -> str:
         return str(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return json.dumps(self.__dict__)

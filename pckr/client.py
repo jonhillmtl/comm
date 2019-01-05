@@ -15,7 +15,7 @@ import json
 import random
 
 
-def init_user(args):
+def init_user(args) -> bool:
     """
     initialize a user with args.username as their username
     """
@@ -32,7 +32,7 @@ def init_user(args):
     return True
 
 
-def challenge_user_pk(args):
+def challenge_user_pk(args) -> bool:
     """
     challenge a user's public key... ie: send them a challenge asking them if they can decrypt
     something that we encrypted with what we believe is their public key
@@ -51,7 +51,7 @@ def challenge_user_pk(args):
     return True
 
 
-def challenge_user_has_pk(args):
+def challenge_user_has_pk(args) -> bool:
     """
     challenge a user to ask if they have our public key. they can try to encrypt some text
     with what they believe is our public key. if we can decrypt it we know they have our
@@ -70,7 +70,7 @@ def challenge_user_has_pk(args):
     return True
 
 
-def request_public_key(args):
+def request_public_key(args) -> bool:
     """
     request another user's public key
 
@@ -99,7 +99,7 @@ def request_public_key(args):
     return True
 
 
-def surface_user(args):
+def surface_user(args) -> bool:
     surface = Surface(args.username, args.port)
     surface.start()
 
@@ -131,7 +131,7 @@ def surface_user(args):
     return True
 
 
-def add_ipcache(args):
+def add_ipcache(args)-> bool:
     user = User(args.username)
     user.set_contact_ip_port(args.u2, args.ip, args.port)
     print(user.ipcache)
@@ -139,7 +139,7 @@ def add_ipcache(args):
     return True
 
 
-def remove_ipcache(args):
+def remove_ipcache(args)-> bool:
     user = User(args.username)
     user.remove_contact_ip_port(args.u2)
     print(user.ipcache)
@@ -147,21 +147,21 @@ def remove_ipcache(args):
     return True
 
 
-def seek_user(args):
+def seek_user(args)-> bool:
     user = User(args.username)
     user.seek_user(args.u2)
 
     return True
 
 
-def ping_user(args):
+def ping_user(args) -> bool:
     user = User(args.username)
     user.ping_user(args.u2)
 
     return True
 
 
-def send_message(args):
+def send_message(args) -> bool:
     return Message(
         User(args.username),
         args.filename,
@@ -170,7 +170,7 @@ def send_message(args):
     ).send()
 
 
-def process_public_key_responses(args):
+def process_public_key_responses(args) -> bool:
     user = User(args.username)
     for response in user.public_key_responses:
         if user.process_public_key_response(response):
@@ -179,7 +179,7 @@ def process_public_key_responses(args):
     return True
 
 
-def process_public_key_requests(args):
+def process_public_key_requests(args) -> bool:
     user = User(args.username)
     for request in user.public_key_requests:
         if user.process_public_key_request(request):
@@ -188,7 +188,7 @@ def process_public_key_requests(args):
     return True
 
 
-def pulse_network(args):
+def pulse_network(args) -> bool:
     user = User(args.username)
     assert user.exists
 
@@ -197,14 +197,14 @@ def pulse_network(args):
     return True
 
 
-def check_net_topo(args):
+def check_net_topo(args) -> bool:
     user = User(args.username)
     user.check_net_topo()
 
     return True
 
 
-def public_keys(args):
+def public_keys(args) -> bool:
     user = User(args.username)
     for pk in user.public_keys:
         print("{} at {}".format(pk['username'], pk['modified_at'].isoformat()))
@@ -212,7 +212,7 @@ def public_keys(args):
     return True
 
 
-def ipcache(args):
+def ipcache(args) -> bool:
     """
     print out the user ip cache
     """
@@ -224,7 +224,7 @@ def ipcache(args):
     return True
 
 
-def messages(args):
+def messages(args) -> bool:
     """
     print out the user ip cache
     """
@@ -236,7 +236,7 @@ def messages(args):
     return True
 
 
-def massage_args(argparser):
+def massage_args(argparser) -> dict:
     args = argparser.parse_args()
     if args.username is None:
         username = os.getenv('PCKR_USERNAME', None)

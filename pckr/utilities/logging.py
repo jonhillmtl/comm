@@ -1,8 +1,14 @@
+# from typing import Any
+
 import logging
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
 
-def setup_logger(name, log_file, level=logging.INFO):
+def setup_logger(
+    name : str, 
+    log_file : str, 
+    level : int=logging.INFO
+) -> logging.Logger:
     """
     Function setup as many loggers as you want
     """
