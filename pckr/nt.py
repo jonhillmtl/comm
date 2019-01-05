@@ -1,8 +1,9 @@
-from .user import User
-
-from termcolor import colored
 import json
 import os
+
+from termcolor import colored
+
+from .user import User
 
 
 def _users():
@@ -107,5 +108,7 @@ def dump_topo():
 
 
 def main():
+    """ the main handler function for this script """
+
     dump_topo()
     analyze_topo()

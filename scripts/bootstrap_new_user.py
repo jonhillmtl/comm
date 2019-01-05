@@ -1,6 +1,6 @@
 import subprocess
-from utils import aip, rpk, gather_user_ip_ports
 from argparse import ArgumentParser
+from utils import aip, rpk, gather_user_ip_ports
 
 
 def main():
@@ -16,10 +16,10 @@ def main():
 
     users = gather_user_ip_ports()
 
-    for i in enumerate.keys():
+    for i in users.keys():
         aip(users, args.username, i)
 
-    for i in enumerate.keys():
+    for i in users.keys():
         rpk(args.username, i)
 
 

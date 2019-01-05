@@ -1,11 +1,3 @@
-from ..user import User
-from ..utilities import is_binary, send_frame_users
-from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
-from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
-from ..frame import Frame
-from ..utilities.logging import assert_logger, debug_logger
-from termcolor import colored
-
 import json
 import os
 import socket
@@ -15,6 +7,15 @@ import pprint
 import random
 import time
 import subprocess
+
+from termcolor import colored
+
+from ..user import User
+from ..utilities import is_binary, send_frame_users
+from ..utilities import encrypt_rsa, encrypt_symmetric, decrypt_symmetric, decrypt_rsa
+from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
+from ..frame import Frame
+from ..utilities.logging import assert_logger, debug_logger
 
 
 class IncomingFrameThread(threading.Thread):

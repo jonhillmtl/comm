@@ -2,10 +2,11 @@ import json
 import uuid
 import time
 
+from termcolor import colored
+
 from ..utilities import send_frame_users, split_contents, is_binary, \
     encrypt_rsa, encrypt_symmetric, bytes2hexstr
 from ..frame import Frame
-from termcolor import colored
 
 
 def _progress_callback(i, c):

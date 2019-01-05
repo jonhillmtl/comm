@@ -1,18 +1,18 @@
-from .surface import Surface, SurfaceUserThread, SeekUsersThread
-from .frame import Frame
-from .user import User
-from .utilities import command_header, send_frame_users
-from .utilities.logging import surface_logger
-from .message import Message
-
-from termcolor import colored
-
 import argparse
 import os
 import pprint
 import sys
 import json
 import random
+
+from termcolor import colored
+
+from .surface import Surface, SurfaceUserThread, SeekUsersThread
+from .frame import Frame
+from .user import User
+from .utilities import command_header, send_frame_users
+from .utilities.logging import surface_logger
+from .message import Message
 
 
 def init_user(args) -> bool:
@@ -296,6 +296,8 @@ COMMAND_ALIASES = dict(
 
 
 def main():
+    """ the main handler function for the pckr client """
+
     argparser = argparse.ArgumentParser()
     argparser.add_argument('command')
     args, _ = argparser.parse_known_args()

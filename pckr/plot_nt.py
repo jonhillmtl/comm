@@ -1,12 +1,15 @@
-from .user import User
-
-import matplotlib.pyplot as plt
-import networkx as nx
 import os
 import json
 
+import matplotlib.pyplot as plt
+import networkx as nx
+
+from .user import User
+
 
 def main():
+    """ the main handler function for this script """
+
     users = []
     root = os.path.expanduser("~/pckr/")
     for sd in os.listdir(root):
@@ -14,7 +17,7 @@ def main():
         if os.path.isdir(path):
             users.append(sd)
 
-    G = nx.DiGraph()
+    graph = nx.DiGraph()
 
     for u in sorted(users):
         user = User(u)
@@ -25,26 +28,26 @@ def main():
         if os.path.exists(path):
             ipcache = json.loads(open(path).read())
             for k in sorted(ipcache.keys()):
-                G.add_edge(user.username, k)
+                graph.add_edge(user.username, k)
 
     # write in UTF-8 encoding
-    fh = open('./test/edgelist.utf-8', 'wb')
-    fh.write('# -*- coding: utf-8 -*-\n'.encode('utf-8'))  # encoding hint for emacs
-    nx.write_multiline_adjlist(G, fh, delimiter='\t', encoding='utf-8')
+    file_handle = open('./test/edgelist.utf-8', 'wb')
+    file_handle.write('# -*- coding: utf-8 -*-\n'.encode('utf-8'))  # encoding hint for emacs
+    nx.write_multiline_adjlist(graph, file_handle, delimiter='\t', encoding='utf-8')
 
     # read and store in UTF-8
-    fh = open('./test/edgelist.utf-8', 'rb')
-    H = nx.read_multiline_adjlist(fh, delimiter='\t', encoding='utf-8')
+    file_handle = open('./test/edgelist.utf-8', 'rb')
+    H = nx.read_multiline_adjlist(file_handle, delimiter='\t', encoding='utf-8')
 
-    for n in G.nodes():
-        if n not in H:
+    for node in graph.nodes():
+        if node not in H:
             print(False)
 
-    print(list(G.nodes()))
+    print(list(graph.nodes()))
 
-    pos = nx.spring_layout(G)
-    nx.draw(G, pos, font_size=16, with_labels=False)
+    pos = nx.spring_layout(graph)
+    nx.draw(graph, pos, font_size=16, with_labels=False)
     for p in pos:  # raise text positions
         pos[p][1] += 0.07
-    nx.draw_networkx_labels(G, pos)
+    nx.draw_networkx_labels(graph, pos)
     plt.show()
