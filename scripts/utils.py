@@ -1,7 +1,6 @@
 import subprocess
 import random
 import os
-import sys
 
 from pckr.user import User
 

@@ -32,6 +32,7 @@ class Message(object):
         return json.dumps(self.__dict__, default=str)
 
     def _send_key(self):
+        # TODO JHILL: docstring
         public_key_text = self.user.get_contact_public_key(self.u2)
         if public_key_text is None:
             print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
@@ -71,6 +72,7 @@ class Message(object):
         return True
 
     def _send_message(self):
+        # TODO JHILL: docstring
         public_key_text = self.user.get_contact_public_key(self.u2)
         if public_key_text is None:
             print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
@@ -125,6 +127,7 @@ class Message(object):
         return True
 
     def _send_message_term(self):
+        # TODO JHILL: docstring
         public_key_text = self.user.get_contact_public_key(self.u2)
         if public_key_text is None:
             print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
@@ -163,6 +166,7 @@ class Message(object):
         return True
 
     def send(self):
+        # TODO JHILL: docstring
         self._send_key()
         self._send_message()
         self._send_message_term()

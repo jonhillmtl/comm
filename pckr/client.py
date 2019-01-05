@@ -372,7 +372,8 @@ def main():
         assert False
 
     if command not in globals():
-        error_exit("{} is unimplemented".format(command))
+        # error_exit("{} is unimplemented".format(command))
+        sys.exit(1)
 
     args = massage_args(argparser)
     print(command_header(command, args))
@@ -387,6 +388,7 @@ def main():
     if run_command:
         globals()[command](args)
 
+    # TODO JHILL: put in the utilities file
     print("\n")
     print(colored("*" * 100, "blue"))
     print(colored("* end command", "blue"))
