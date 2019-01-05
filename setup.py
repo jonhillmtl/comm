@@ -1,12 +1,13 @@
 from distutils.core import setup
 
-setup(name='pckr',
+setup(
+    name='pckr',
     version='0.3',
     description='Pickr',
     author='Jon Hill',
     author_email='jon@jonhill.ca',
     url='',
-    packages = ['pckr'],
+    packages=['pckr'],
     license='MIT',
 
     install_requires=[

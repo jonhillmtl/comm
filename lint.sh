@@ -3,11 +3,10 @@
 set -e
 set -v
 
-python3 -m pyflakes .
+# python3 -m pyflakes .
 
 # typechecks
 python3 -m mypy \
-  --disallow-untyped-defs \
   --warn-unused-ignores \
   --ignore-missing-imports \
   --strict-optional \

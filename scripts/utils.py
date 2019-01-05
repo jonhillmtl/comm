@@ -3,12 +3,12 @@ import random
 import os
 import sys
 
-sys.path.append("..")
 from pckr.user import User
 
 
 def gather_user_ip_ports():
-    return {User(sd).username : User(sd).current_ip_port for sd in os.listdir(os.path.expanduser("~/pckr/"))}
+    return {User(sd).username: User(sd).current_ip_port for sd in os.listdir(os.path.expanduser("~/pckr/"))}
+
 
 def rpk(u1, u2, robustness=5):
     if u1 == u2:
@@ -21,7 +21,7 @@ def rpk(u1, u2, robustness=5):
             '--username={}'.format(u1),
             '--u2={}'.format(u2)
         ])
-    
+
         subprocess.check_call([
             'pckr',
             'ppk_req',

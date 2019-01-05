@@ -5,6 +5,7 @@ import networkx as nx
 import os
 import json
 
+
 def main():
     users = []
     root = os.path.expanduser("~/pckr/")

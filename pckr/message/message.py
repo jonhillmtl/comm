@@ -2,9 +2,8 @@ import json
 import uuid
 import time
 
-from ..utilities import send_frame_users, split_contents, is_binary
-from ..utilities import encrypt_rsa, encrypt_symmetric
-from ..utilities import bytes2hexstr, str2hashed_hexstr
+from ..utilities import send_frame_users, split_contents, is_binary, \
+    encrypt_rsa, encrypt_symmetric, bytes2hexstr
 from ..frame import Frame
 from termcolor import colored
 

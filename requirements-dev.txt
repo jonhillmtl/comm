@@ -1,0 +1,4 @@
+mypy==0.650
+mypy-extensions==0.4.1
+pycodestyle==2.4.0
+pyflakes==2.0.0
