@@ -80,14 +80,16 @@ def dump_topo():
                     user_has_u2_pk = user.get_contact_public_key(k) is not None
                     u2_has_user_pk = u2.get_contact_public_key(user.username) is not None
 
+                    if u2_has_user_pk:
+                        has_user_pk_message = colored("(has {} pk)".format(user.username), "green")
+                    else:
+                        has_user_pk_message = colored("(does not have {} pk)".format(user.username), "red")
                     print(
                         k,
                         colored(v['ip'], "green"),
                         colored(v['port'], "green"),
                         colored("(pk)", "green") if user_has_u2_pk else colored("(no pk)", "red"),
-                        colored("(has {} pk)".format(user.username), "green")
-                                if u2_has_user_pk 
-                                else colored("(does not have {} pk)".format(user.username), "red")
+                        has_user_pk_message
                     )
 
                 if len(user.public_key_requests):

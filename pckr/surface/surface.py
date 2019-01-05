@@ -146,7 +146,7 @@ class IncomingFrameThread(threading.Thread):
             pass
 
         # if it wasn't us, we should pass the message along
-        if responded == False:
+        if responded is False:
 
             # don't go more than 4 hops away
             if len(frame['payload']['custody_chain']) >= 4:
@@ -185,8 +185,8 @@ class IncomingFrameThread(threading.Thread):
         """
         a user is requesting our public key, so we'll store the request
         so we can look at it later.
-        
-        this doesn't automatically send your public key out, you have to do 
+
+        this doesn't automatically send your public key out, you have to do
         process_public_key_requests to process them and send them back to the other user
         """
 
@@ -199,13 +199,12 @@ class IncomingFrameThread(threading.Thread):
             success=True
         )
 
-
     def _receive_public_key_response(self, request):
         """
         a user has responded to our public_key request
-        
+
         store the response away so we can process it later
-        
+
         this isn't an automatic action
         """
 
@@ -215,7 +214,7 @@ class IncomingFrameThread(threading.Thread):
 
         assert type(request) == dict, 'request is not dict'
 
-        self.user.store_public_key_response(request) 
+        self.user.store_public_key_response(request)
 
         return dict(
             success=True
@@ -262,7 +261,6 @@ class IncomingFrameThread(threading.Thread):
                 success=True,
                 encrypted_challenge=challenge_rsaed
             )
-
 
     def _receive_send_message(self, request):
         password_decrypted = decrypt_rsa(
@@ -438,9 +436,9 @@ class IncomingFrameThread(threading.Thread):
 
     def _receive_seek_user_response(self, frame):
         """
-        
+
         receive a seek_user_response frame and process it.
-        
+
         """
         assert type(frame) == dict, 'frame must be a dict'
         assert 'payload' in frame, 'payload not in frame'
@@ -507,10 +505,9 @@ class IncomingFrameThread(threading.Thread):
                 error='seek_token not found'
             )
 
-
     def _receive_pulse_network(self, frame):
         """
-        receive a pulse_netwokr frame and process it, by passing it along all of the other users
+        receive a pulse_network frame and process it, by passing it along all of the other users
         that we have knowledge of
         """
 
@@ -523,7 +520,6 @@ class IncomingFrameThread(threading.Thread):
         return dict(
             success=True
         )
-
 
     def _receive_check_net_topo(self, request):
         assert type(request) == dict, "request must be a dict"
@@ -637,8 +633,10 @@ class IncomingFrameThread(threading.Thread):
         self.clientsocket.sendall(response.encode())
         self.clientsocket.close()
 
+
 class SeekUsersThread(threading.Thread):
     user = None
+
     def __init__(self, user):
         super(SeekUsersThread, self).__init__()
         self.user = user
@@ -704,15 +702,17 @@ class SeekUsersThread(threading.Thread):
 
 class SurfaceUserThread(threading.Thread):
     user = None
+
     def __init__(self, user):
         super(SurfaceUserThread, self).__init__()
         self.user = user
 
     def run(self):
         """
-        surface the user once and then return/exit. I've seperated this out into a thread 
+        surface the user once and then return/exit. I've seperated this out into a thread
         in case in the future we want to do this more often than just once
         """
+
         self.user.surface()
         return True
 

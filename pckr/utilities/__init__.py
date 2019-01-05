@@ -12,7 +12,8 @@ import os
 import socket
 
 
-flatten = lambda l: [item for sublist in l for item in sublist]
+def flatten(l):
+    return [item for sublist in l for item in sublist]
 
 
 def command_header(action, args):
