@@ -4,6 +4,8 @@ from utils import aip, rpk, gather_user_ip_ports
 
 
 def main():
+    """ the main handler function for this script. """
+
     argparser = ArgumentParser()
     argparser.add_argument("--username", required=True)
     args = argparser.parse_args()

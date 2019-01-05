@@ -1,7 +1,9 @@
 """
+
 use this script to damage the ip cache of all local users
 
 usage: python scripts/damage_ip_cache.py
+
 """
 
 import random
@@ -10,7 +12,7 @@ from utils import gather_user_ip_ports
 
 
 def main():
-    """ the main handler function for this script """
+    """ the main handler function for this script. """
 
     users = gather_user_ip_ports()
 

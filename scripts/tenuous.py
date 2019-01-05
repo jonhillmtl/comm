@@ -1,3 +1,11 @@
+"""
+
+create a tenous network (ie: one that is loosely connected).
+
+usage: python scripts/tenuous_network.py
+
+"""
+
 from utils import aip, rpk, gather_user_ip_ports
 
 
