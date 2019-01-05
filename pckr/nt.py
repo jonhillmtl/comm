@@ -6,6 +6,14 @@ import os
 
 
 def _users():
+    """
+    return all of the users in the ~/pckr/ directory
+    
+    Returns
+    -------
+    list
+        a sorted list of local users
+    """
     users = []
     root = os.path.expanduser("~/pckr/")
     for sd in os.listdir(root):
@@ -48,10 +56,11 @@ def analyze_topo():
                 cached_ip
             )))
             consistent = False
-    
+
     if consistent:
         print(colored("network topology is consistent", "green"))
     print("\n")
+
 
 def dump_topo():
     for u in _users():
