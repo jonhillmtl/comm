@@ -92,17 +92,17 @@ class IncomingFrameThread(threading.Thread):
                 password.encode()
             ))
 
-            u2 = host_info['u2']
-            ip, port = self.user.get_contact_ip_port(u2)
+            user2 = host_info['user2']
+            ip, port = self.user.get_contact_ip_port(user2)
             self.user.set_contact_ip_port(
-                u2,
+                user2,
                 host_info['ip'],
                 host_info['port']
             )
 
-            ping = self.user.ping_user(u2)
+            ping = self.user.ping_user(user2)
             if ping is False:
-                self.user.set_contact_ip_port(u2, ip, port)
+                self.user.set_contact_ip_port(user2, ip, port)
 
                 return dict(
                     success=False,
@@ -111,9 +111,9 @@ class IncomingFrameThread(threading.Thread):
 
             # ask them if they have our public key
             # maybe we should ask them to prove their public key, as well
-            challenge = self.user.challenge_user_has_pk(u2)
+            challenge = self.user.challenge_user_has_pk(user2)
             if challenge is False:
-                self.user.set_contact_ip_port(u2, ip, port)
+                self.user.set_contact_ip_port(user2, ip, port)
 
                 return dict(
                     success=False,
@@ -133,11 +133,11 @@ class IncomingFrameThread(threading.Thread):
             )
 
             self.user.set_contact_ip_port(
-                u2,
+                user2,
                 host_info['ip'],
                 int(host_info['port'])
             )
-            send_frame_users(response_frame, self.user, u2)
+            send_frame_users(response_frame, self.user, user2)
 
             responded = True
 
@@ -243,10 +243,10 @@ class IncomingFrameThread(threading.Thread):
     def _receive_challenge_user_has_pk(self, request):
         assert type(request) == dict
         assert 'payload' in request, 'payload not in request'
-        assert 'u2' in request['payload'], "u2 not in request['payload']"
+        assert 'user2' in request['payload'], "user2 not in request['payload']"
         assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
 
-        public_key_text = self.user.get_contact_public_key(request["payload"]["u2"])
+        public_key_text = self.user.get_contact_public_key(request["payload"]["user2"])
 
         if public_key_text is None:
             return dict(
@@ -405,11 +405,11 @@ class IncomingFrameThread(threading.Thread):
             host_info_decrypted
         )
 
-        assert 'u2' in host_info, "u2 not in host_info"
+        assert 'user2' in host_info, "user2 not in host_info"
         assert 'ip' in host_info, "ip not in host_info"
         assert 'port' in host_info, "port not in host_info"
 
-        public_key_text = self.user.get_contact_public_key(host_info['u2'])
+        public_key_text = self.user.get_contact_public_key(host_info['user2'])
         if public_key_text is None:
             return dict(
                 success=False,
@@ -424,7 +424,7 @@ class IncomingFrameThread(threading.Thread):
             # clean that up at the same time. for now just store their ip
             # TODO JHILL: SECURITY RISK
             self.user.set_contact_ip_port(
-                host_info['u2'],
+                host_info['user2'],
                 host_info['ip'],
                 int(host_info['port'])
             )
@@ -463,7 +463,7 @@ class IncomingFrameThread(threading.Thread):
             host_info_decrypted
         )
 
-        # TODO JHILL: should be u2
+        # TODO JHILL: should be user2
         assert 'username' in host_info
         assert 'ip' in host_info
         assert 'port' in host_info

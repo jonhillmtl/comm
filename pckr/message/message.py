@@ -14,15 +14,15 @@ def _progress_callback(i, c):
 
 class Message(object):
     user = None
-    u2 = None
+    user2 = None
     filename = None
     mime_type = None
     message_id = None
     password = None
 
-    def __init__(self, user, filename, mime_type, u2):
+    def __init__(self, user, filename, mime_type, user2):
         self.user = user
-        self.u2 = u2
+        self.user2 = user2
         self.filename = filename
         self.mime_type = mime_type
         self.message_id = str(uuid.uuid4())
@@ -33,9 +33,9 @@ class Message(object):
 
     def _send_key(self):
         # TODO JHILL: docstring
-        public_key_text = self.user.get_contact_public_key(self.u2)
+        public_key_text = self.user.get_contact_public_key(self.user2)
         if public_key_text is None:
-            print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
+            print(colored("public_key for {} not found, can't send message".format(self.user2), "red"))
             return False
 
         key = dict(
@@ -66,16 +66,16 @@ class Message(object):
             action='send_message_key',
             payload=payload
         )
-        response = send_frame_users(key_frame, self.user, self.u2)
+        response = send_frame_users(key_frame, self.user, self.user2)
         print("send_message_key", response)
 
         return True
 
     def _send_message(self):
         # TODO JHILL: docstring
-        public_key_text = self.user.get_contact_public_key(self.u2)
+        public_key_text = self.user.get_contact_public_key(self.user2)
         if public_key_text is None:
-            print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
+            print(colored("public_key for {} not found, can't send message".format(self.user2), "red"))
             return False
 
         meta = dict(
@@ -120,7 +120,7 @@ class Message(object):
                 )
             )
 
-            response = send_frame_users(frame, self.user, self.u2)
+            response = send_frame_users(frame, self.user, self.user2)
             print("send_message", index, response, time.time() - ft, (index / len(content_splits) * 100))
 
         print("total time", time.time() - tt)
@@ -128,9 +128,9 @@ class Message(object):
 
     def _send_message_term(self):
         # TODO JHILL: docstring
-        public_key_text = self.user.get_contact_public_key(self.u2)
+        public_key_text = self.user.get_contact_public_key(self.user2)
         if public_key_text is None:
-            print(colored("public_key for {} not found, can't send message".format(self.u2), "red"))
+            print(colored("public_key for {} not found, can't send message".format(self.user2), "red"))
             return False
 
         term = dict(
@@ -160,7 +160,7 @@ class Message(object):
             payload=payload
         )
 
-        response = send_frame_users(term_frame, self.user, self.u2)
+        response = send_frame_users(term_frame, self.user, self.user2)
         print("send_frame_term", response)
 
         return True

@@ -19,3 +19,6 @@ pycodestyle --max-line-length=140 .
 
 # enforce docstrings
 pep257 --add-ignore=D202
+
+# and now just to be really hard on yourself
+pylint pckr scripts

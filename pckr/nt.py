@@ -74,13 +74,13 @@ def dump_topo():
             if len(ipcache.keys()):
                 print("\n")
                 for k in sorted(ipcache.keys()):
-                    u2 = User(k)
+                    user2 = User(k)
 
                     v = ipcache[k]
-                    user_has_u2_pk = user.get_contact_public_key(k) is not None
-                    u2_has_user_pk = u2.get_contact_public_key(user.username) is not None
+                    user_has_user2_pk = user.get_contact_public_key(k) is not None
+                    user2_has_user_pk = user2.get_contact_public_key(user.username) is not None
 
-                    if u2_has_user_pk:
+                    if user2_has_user_pk:
                         has_user_pk_message = colored("(has {} pk)".format(user.username), "green")
                     else:
                         has_user_pk_message = colored("(does not have {} pk)".format(user.username), "red")
@@ -88,19 +88,19 @@ def dump_topo():
                         k,
                         colored(v['ip'], "green"),
                         colored(v['port'], "green"),
-                        colored("(pk)", "green") if user_has_u2_pk else colored("(no pk)", "red"),
+                        colored("(pk)", "green") if user_has_user2_pk else colored("(no pk)", "red"),
                         has_user_pk_message
                     )
 
                 if len(user.public_key_requests):
                     print("\npublic_key_requests")
                     for ppk_req in user.public_key_requests:
-                        print(ppk_req['u2'], ppk_req['modified_at'])
+                        print(ppk_req['user2'], ppk_req['modified_at'])
 
         if len(user.public_key_responses):
             print("\npublic_key_responses")
             for ppk_req in user.public_key_responses:
-                print(ppk_req['u2'], ppk_req['modified_at'])
+                print(ppk_req['user2'], ppk_req['modified_at'])
 
         print(colored("*" * 100, "blue"))
         print("\n")

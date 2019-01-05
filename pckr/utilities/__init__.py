@@ -1,16 +1,16 @@
 # TODO JHILL: rename the file to utils and the directory above it
 
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from termcolor import colored
-
 import binascii
-import blowfish
 import hashlib
 import json
 import os
 import socket
 
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
+from termcolor import colored
+
+import blowfish
 
 def flatten(l):
     return [item for sublist in l for item in sublist]
@@ -183,19 +183,19 @@ def is_binary(mt):
     return mt in ['image/png', 'image/jpg']
 
 
-def send_frame_users(frame, u1, u2):
+def send_frame_users(frame, user1, user2):
     """
-    send a frame from u1 to u2
+    send a frame from user1 to user2
 
     Parameters
     ----------
     frame : frame
         the frame to send
 
-    u1 : User
+    user1 : User
         the sending user
 
-    u2: User
+    user2: User
         the receiving user
 
     Returns
@@ -204,7 +204,7 @@ def send_frame_users(frame, u1, u2):
         a dict with a success and error flag
     """
 
-    ip, port = u1.get_contact_ip_port(u2)
+    ip, port = user1.get_contact_ip_port(user2)
 
     if ip and port:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -227,5 +227,5 @@ def send_frame_users(frame, u1, u2):
         # and then send out a seek user for them
         return dict(
             success=False,
-            error='ip:port unknown for user'.format(u2)
+            error='ip:port unknown for user'.format(user2)
         )

@@ -13,7 +13,7 @@ def main():
                     'pckr',
                     'rip',
                     '--username={}'.format(i),
-                    '--u2={}'.format(j)
+                    '--user2={}'.format(j)
                 ])
 
 
