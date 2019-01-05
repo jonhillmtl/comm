@@ -2,6 +2,7 @@ import subprocess
 from utils import aip, rpk, gather_user_ip_ports
 from argparse import ArgumentParser
 
+
 def main():
     argparser = ArgumentParser()
     argparser.add_argument("--username", required=True)
@@ -20,6 +21,7 @@ def main():
 
     for i in enumerate.keys():
         rpk(args.username, i)
+
 
 if __name__ == '__main__':
     main()

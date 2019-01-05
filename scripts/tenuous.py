@@ -23,5 +23,6 @@ def main():
 
     rpk(g1[-1], g2[0])
 
+
 if __name__ == '__main__':
     main()

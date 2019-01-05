@@ -76,7 +76,9 @@ def dump_topo():
                         colored(v['ip'], "green"), 
                         colored(v['port'], "green"),
                         colored("(pk)", "green") if user_has_u2_pk else colored("(no pk)", "red"),
-                        colored("(has {} pk)".format(user.username), "green") if u2_has_user_pk else colored("(does not have {} pk)".format(user.username), "red")
+                        colored("(has {} pk)".format(user.username), "green") 
+                            if u2_has_user_pk 
+                            else colored("(does not have {} pk)".format(user.username), "red")
                     )
 
                 if len(user.public_key_requests):

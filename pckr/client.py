@@ -14,6 +14,7 @@ import sys
 import json
 import random
 
+
 def init_user(args):
     """
     initialize a user with args.username as their username
@@ -35,7 +36,7 @@ def challenge_user_pk(args):
     """
     challenge a user's public key... ie: send them a challenge asking them if they can decrypt
     something that we encrypted with what we believe is their public key
-    
+
     the challenged user is specified by args.u2
     """
 
@@ -55,7 +56,7 @@ def challenge_user_has_pk(args):
     challenge a user to ask if they have our public key. they can try to encrypt some text
     with what they believe is our public key. if we can decrypt it we know they have our
     public key
-    
+
     the challenged user is specified by args.u2
     """
 
@@ -72,7 +73,7 @@ def challenge_user_has_pk(args):
 def request_public_key(args):
     """
     request another user's public key
-    
+
     the requested user is specified by args.u2
     """
 
@@ -351,19 +352,19 @@ def main():
 
     elif command == 'remove_ipcache':
         argparser.add_argument("--u2", required=True)
-    
+
     elif command == 'pulse_network':
         pass
-    
+
     elif command == 'check_net_topo':
         pass
-    
+
     elif command == 'public_keys':
         pass
 
     elif command == 'ipcache':
         pass
-    
+
     elif command == 'messages':
         pass
 

@@ -12,4 +12,4 @@ python3 -m mypy \
   --strict-optional \
   .
 
-pycodestyle --max-line-length=110 .
+pycodestyle --max-line-length=140 .
