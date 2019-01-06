@@ -536,7 +536,7 @@ COMMAND_ALIASES = dict(
 )
 
 
-def main():
+def main() -> None:
     """
     the main handler function for the pckr client.
 

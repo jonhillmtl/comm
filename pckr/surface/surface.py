@@ -209,7 +209,10 @@ class IncomingFrameThread(threading.Thread):
                 message="that was me, a seek_user_response is imminent"
             )
 
-    def _receive_request_public_key(self, frame):
+    def _receive_request_public_key(
+        self,
+        request_frame: dict
+    ) -> dict:
         """
         a user is requesting our public key, so we'll store the request and look at it later.
 
@@ -227,14 +230,17 @@ class IncomingFrameThread(threading.Thread):
              dictionary that can be packaged into a Frame
         """
 
-        self.user.store_public_key_request(frame)
-        self.user.store_volunteered_public_key(frame)
+        self.user.store_public_key_request(request_frame)
+        self.user.store_volunteered_public_key(request_frame)
 
         return dict(
             success=True
         )
 
-    def _receive_public_key_response(self, frame):
+    def _receive_public_key_response(
+        self,
+        request_frame: dict
+    ) -> dict:
         """
         a user has responded to our public_key request.
 
@@ -257,19 +263,22 @@ class IncomingFrameThread(threading.Thread):
         # file for later processing. we could challenge the user back
         # and see if it's really them, and then add it to our cache
 
-        self.user.store_public_key_response(frame)
+        self.user.store_public_key_response(request_frame)
 
         return dict(
             success=True
         )
 
-    def _receive_challenge_user_pk(self, request):
-        assert 'payload' in request, "payload not in request"
-        assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
+    def _receive_challenge_user_pk(
+        self,
+        request_frame: dict
+    ) -> dict:
+        assert 'payload' in request_frame, "payload not in request"
+        assert 'challenge_text' in request_frame['payload'], "challenge_text not in request_frame['payload']"
 
         try:
             decrypted = decrypt_rsa(
-                hexstr2bytes(request['payload']['challenge_text']),
+                hexstr2bytes(request_frame['payload']['challenge_text']),
                 self.user.private_key_text
             )
 
@@ -283,12 +292,17 @@ class IncomingFrameThread(threading.Thread):
                 error="that isn't my public key apparently"
             )
 
-    def _receive_challenge_user_has_pk(self, request):
-        assert 'payload' in request, 'payload not in request'
-        assert 'user2' in request['payload'], "user2 not in request['payload']"
-        assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
+    def _receive_challenge_user_has_pk(
+        self,
+        request_frame: dict
+    ) -> dict:
+        assert 'payload' in request_frame, 'payload not in request'
+        assert 'user2' in request_frame['payload'], "user2 not in request['payload']"
+        assert 'challenge_text' in request_frame['payload'], "challenge_text not in request_frame['payload']"
 
-        public_key_text = self.user.get_contact_public_key(request["payload"]["user2"])
+        public_key_text = self.user.get_contact_public_key(
+            request_frame["payload"]["user2"]
+        )
 
         if public_key_text is None:
             return dict(
@@ -296,21 +310,24 @@ class IncomingFrameThread(threading.Thread):
                 error="we don't have the asking users public_key so this won't work at all"
             )
         else:
-            challenge_rsaed = bytes2hexstr(encrypt_rsa(request["payload"]["challenge_text"], public_key_text))
+            challenge_rsaed = bytes2hexstr(encrypt_rsa(request_frame["payload"]["challenge_text"], public_key_text))
 
             return dict(
                 success=True,
                 encrypted_challenge=challenge_rsaed
             )
 
-    def _receive_send_message(self, request):
+    def _receive_send_message(
+        self,
+        request_frame: dict
+    ) -> dict:
         password_decrypted = decrypt_rsa(
-            hexstr2bytes(request['payload']['password']),
+            hexstr2bytes(request_frame['payload']['password']),
             self.user.private_key_text
         )
 
         meta_decrypted = decrypt_symmetric(
-            hexstr2bytes(request['payload']['meta']),
+            hexstr2bytes(request_frame['payload']['meta']),
             password_decrypted
         )
 
@@ -328,7 +345,7 @@ class IncomingFrameThread(threading.Thread):
 
         if is_binary(meta['mime_type']):
             content_decrypted = decrypt_symmetric(
-                hexstr2bytes(request['payload']['content']),
+                hexstr2bytes(request_frame['payload']['content']),
                 key['password'],
                 decode=False
             )
@@ -338,7 +355,7 @@ class IncomingFrameThread(threading.Thread):
                 f.write(content_decrypted)
         else:
             content_decrypted = decrypt_symmetric(
-                hexstr2bytes(request['payload']['content']),
+                hexstr2bytes(request_frame['payload']['content']),
                 key['password']
             )
 
@@ -349,18 +366,21 @@ class IncomingFrameThread(threading.Thread):
             success=True
         )
 
-    def _receive_send_message_term(self, request):
-        assert 'payload' in request, 'payload not in request'
-        assert 'password' in request['payload'], "password not in request['payload']"
-        assert 'term' in request['payload'], "term not in request['payload']"
+    def _receive_send_message_term(
+        self,
+        request_frame: dict
+    ) -> dict:
+        assert 'payload' in request_frame, 'payload not in request_frame'
+        assert 'password' in request_frame['payload'], "password not in request_frame['payload']"
+        assert 'term' in request_frame['payload'], "term not in request_frame['payload']"
 
         password_decrypted = decrypt_rsa(
-            hexstr2bytes(request['payload']['password']),
+            hexstr2bytes(request_frame['payload']['password']),
             self.user.private_key_text
         )
 
         term_decrypted = decrypt_symmetric(
-            hexstr2bytes(request['payload']['term']),
+            hexstr2bytes(request_frame['payload']['term']),
             password_decrypted
         )
 
@@ -400,16 +420,19 @@ class IncomingFrameThread(threading.Thread):
             success=True
         )
 
-    def _receive_send_message_key(self, request):
-        print(request)
+    def _receive_send_message_key(
+        self,
+        request_frame: dict
+    ) -> dict:
+        print(request_frame)
 
         password_decrypted = decrypt_rsa(
-            hexstr2bytes(request['payload']['password']),
+            hexstr2bytes(request_frame['payload']['password']),
             self.user.private_key_text
         )
 
         key_decrypted = decrypt_symmetric(
-            hexstr2bytes(request['payload']['key']),
+            hexstr2bytes(request_frame['payload']['key']),
             password_decrypted
         )
 
@@ -426,18 +449,21 @@ class IncomingFrameThread(threading.Thread):
             success=True
         )
 
-    def _receive_surface_user(self, request):
-        assert 'payload' in request, 'payload not in request'
-        assert 'password' in request['payload'], "password not in request['payload']"
-        assert 'host_info' in request['payload'], "host_info not in request['payload']"
+    def _receive_surface_user(
+        self,
+        request_frame: dict
+    ) -> dict:
+        assert 'payload' in request_frame, 'payload not in request_frame'
+        assert 'password' in request_frame['payload'], "password not in request_frame['payload']"
+        assert 'host_info' in request_frame['payload'], "host_info not in request_frame['payload']"
 
         password = decrypt_rsa(
-            hexstr2bytes(request['payload']['password']),
+            hexstr2bytes(request_frame['payload']['password']),
             self.user.private_key_text
         )
 
         host_info_decrypted = decrypt_symmetric(
-            hexstr2bytes(request['payload']['host_info']),
+            hexstr2bytes(request_frame['payload']['host_info']),
             password
         )
 
@@ -473,28 +499,31 @@ class IncomingFrameThread(threading.Thread):
                 success=True
             )
 
-    def _receive_seek_user_response(self, frame):
+    def _receive_seek_user_response(
+        self,
+        request_frame: dict
+    ) -> dict:
         """
 
         receive a seek_user_response frame and process it.
 
         """
-        assert 'payload' in frame, 'payload not in frame'
-        assert 'password' in frame['payload'], "password not in frame['payload']"
-        assert 'seek_token' in frame['payload'], "seek_token not in frame['payload']"
-        assert 'host_info' in frame['payload'], "host_info not in frame['payload']"
+        assert 'payload' in request_frame, 'payload not in request_frame'
+        assert 'password' in request_frame['payload'], "password not in request_frame['payload']"
+        assert 'seek_token' in request_frame['payload'], "seek_token not in request_frame['payload']"
+        assert 'host_info' in request_frame['payload'], "host_info not in request_frame['payload']"
 
         password = decrypt_rsa(
-            hexstr2bytes(frame['payload']['password']),
+            hexstr2bytes(request_frame['payload']['password']),
             self.user.private_key_text
         )
 
         seek_token_decrypted = decrypt_symmetric(
-            hexstr2bytes(frame['payload']['seek_token']),
+            hexstr2bytes(request_frame['payload']['seek_token']),
             password
         )
         host_info_decrypted = decrypt_symmetric(
-            hexstr2bytes(frame['payload']['host_info']),
+            hexstr2bytes(request_frame['payload']['host_info']),
             password
         )
 
@@ -543,46 +572,63 @@ class IncomingFrameThread(threading.Thread):
                 error='seek_token not found'
             )
 
-    def _receive_pulse_network(self, frame):
+    def _receive_pulse_network(
+        self,
+        request_frame: dict
+    ) -> dict:
         """
         receive a pulse_network frame and process it, by passing it along all of the other users
         that we have knowledge of
         """
 
-        assert 'payload' in frame, "payload not in frame"
-        assert 'custody_chain' in frame['payload'], "custody_chain not in frame['payload']"
+        assert 'payload' in request_frame, "payload not in request_frame"
+        assert 'custody_chain' in request_frame['payload'], "custody_chain not in request_frame['payload']"
 
-        self.user.pulse_network(frame['payload']['custody_chain'])
+        self.user.pulse_network(
+            request_frame['payload']['custody_chain']
+        )
 
         return dict(
             success=True
         )
 
-    def _receive_check_net_topo(self, request):
-        assert 'payload' in request, "payload not in request"
-        assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
-        assert 'hashed_ipcaches' in request['payload'], "hashed_ipcaches not in request['payload']"
+    def _receive_check_net_topo(
+        self,
+        request_frame: dict
+    ) -> dict:
+        assert 'payload' in request_frame, "payload not in request_frame"
+        assert 'custody_chain' in request_frame['payload'], "custody_chain not in request_frame['payload']"
+        assert 'hashed_ipcaches' in request_frame['payload'], "hashed_ipcaches not in request_frame['payload']"
 
         self.user.check_net_topo(
-            request['payload']['custody_chain'],
-            request['payload']['hashed_ipcaches']
+            request_frame['payload']['custody_chain'],
+            request_frame['payload']['hashed_ipcaches']
         )
 
         return dict(
             success=True,
         )
 
-    def _receive_net_topo_damaged(self, request):
-        assert 'payload' in request, "payload not in request"
-        assert 'inconsistent_user' in request['payload'], "custody_chain not in request['payload']"
+    def _receive_net_topo_damaged(
+        self,
+        request_frame: dict
+    ) -> dict:
+        assert 'payload' in request_frame, "payload not in request_frame"
+        assert 'inconsistent_user' in request_frame['payload'], "custody_chain not in request_frame['payload']"
 
-        self.user.flush_inconsistent_user(request['payload']['inconsistent_user'])
+        self.user.flush_inconsistent_user(
+            request_frame['payload']['inconsistent_user']
+        )
 
         return dict(
             success=True
         )
 
-    def process_request(self, request):
+    def process_request(
+        self,
+        request: dict
+    ) -> dict:
+        # TODO JHILL: use header banner
         print(colored("*"*100, "blue"))
         print("action: ", colored(request['action'], "green"))
         print("request:")
