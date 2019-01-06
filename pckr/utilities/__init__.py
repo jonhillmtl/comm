@@ -88,14 +88,13 @@ def split_contents(
 
 def hexstr2bytes(hs: str) -> bytes:
     """ convert hs to bytes. """
-    assert type(hs) == str
+
     return binascii.unhexlify(hs)
 
 
 def bytes2hexstr(bs: bytes) -> str:
     """ convert bs to a hex str. """
 
-    assert type(bs) == bytes
     return binascii.hexlify(bs).decode()
 
 

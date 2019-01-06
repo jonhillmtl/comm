@@ -14,7 +14,7 @@ python3 -m pyflakes .
 pycodestyle --max-line-length=140 .
 
 # enforce docstrings
-pep257 --add-ignore=D202,D210
+# pep257 --add-ignore=D202,D210
 
 # and now just to be really hard on yourself
-pylint pckr scripts setup.py --max-line-length=140 -d C0111 -d W0511 -d R0904
+pylint pckr scripts setup.py --max-line-length=140 -d C0111 -d W0511 -d R0904 -d R0912 -d R0914 -d R0913

@@ -13,7 +13,7 @@ from ..utilities import hexstr2bytes, bytes2hexstr, str2hashed_hexstr
 USER_ROOT = "~/pckr/"
 
 
-class User(object):
+class User:
     username = None
     ipcache_data = None
 
@@ -515,17 +515,17 @@ class User(object):
 
         return responses
 
-    def store_public_key_response(self, request):
+    def store_public_key_response(self, frame):
         response_path = os.path.join(
             self.public_key_responses_path,
-            request['payload']['user2']
+            frame['payload']['user2']
         )
 
         if not os.path.exists(response_path):
             os.makedirs(response_path)
 
         with open(os.path.join(response_path, "response.json"), "w+") as f:
-            f.write(json.dumps(request['payload']))
+            f.write(json.dumps(frame['payload']))
 
         return True
 

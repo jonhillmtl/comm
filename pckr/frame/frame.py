@@ -2,7 +2,7 @@ import json
 import uuid
 
 
-class Frame(object):
+class Frame:
     frame_id = None
     payload = None
     action = None
@@ -15,8 +15,6 @@ class Frame(object):
         self.frame_id = str(uuid.uuid4())
         self.action = action
         self.payload = payload
-
-        assert type(payload) == dict
 
     def __unicode__(self) -> str:
         return str(self)

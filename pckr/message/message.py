@@ -9,11 +9,7 @@ from ..utilities import send_frame_users, split_contents, is_binary, \
 from ..frame import Frame
 
 
-def _progress_callback(i, c):
-    print("\b\b\b\b\b{0:.2f} %".format((i / c) * 100))
-
-
-class Message(object):
+class Message:
     user = None
     user2 = None
     filename = None

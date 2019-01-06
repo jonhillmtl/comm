@@ -58,8 +58,6 @@ class IncomingFrameThread(threading.Thread):
              dictionary that can be packaged into a Frame
         """
 
-        assert type(frame) == dict, "frame must be dict"
-
         return dict(
             success=True,
             message="pong"
@@ -80,7 +78,6 @@ class IncomingFrameThread(threading.Thread):
              dictionary that can be packaged into a Frame
         """
 
-        assert type(frame) == dict, "request must be frame"
         assert 'payload' in frame, 'payload not in request'
         # TODO JHILL: the rest of the asserts
 
@@ -230,8 +227,6 @@ class IncomingFrameThread(threading.Thread):
              dictionary that can be packaged into a Frame
         """
 
-        assert type(frame) == dict, 'frame is not dict'
-
         self.user.store_public_key_request(frame)
         self.user.store_volunteered_public_key(frame)
 
@@ -239,29 +234,36 @@ class IncomingFrameThread(threading.Thread):
             success=True
         )
 
-    def _receive_public_key_response(self, request):
+    def _receive_public_key_response(self, frame):
         """
         a user has responded to our public_key request.
 
         store the response away so we can process it later.
 
         this isn't an automatic action.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
         """
 
         # TODO JHILL: maybe just make this automatic, don't store it to a
         # file for later processing. we could challenge the user back
         # and see if it's really them, and then add it to our cache
 
-        assert type(request) == dict, 'request is not dict'
-
-        self.user.store_public_key_response(request)
+        self.user.store_public_key_response(frame)
 
         return dict(
             success=True
         )
 
     def _receive_challenge_user_pk(self, request):
-        assert type(request) == dict, "request is not dict"
         assert 'payload' in request, "payload not in request"
         assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
 
@@ -282,7 +284,6 @@ class IncomingFrameThread(threading.Thread):
             )
 
     def _receive_challenge_user_has_pk(self, request):
-        assert type(request) == dict
         assert 'payload' in request, 'payload not in request'
         assert 'user2' in request['payload'], "user2 not in request['payload']"
         assert 'challenge_text' in request['payload'], "challenge_text not in request['payload']"
@@ -349,7 +350,6 @@ class IncomingFrameThread(threading.Thread):
         )
 
     def _receive_send_message_term(self, request):
-        assert type(request) == dict, 'request must be a dict'
         assert 'payload' in request, 'payload not in request'
         assert 'password' in request['payload'], "password not in request['payload']"
         assert 'term' in request['payload'], "term not in request['payload']"
@@ -427,7 +427,6 @@ class IncomingFrameThread(threading.Thread):
         )
 
     def _receive_surface_user(self, request):
-        assert type(request) == dict, 'request must be a dict'
         assert 'payload' in request, 'payload not in request'
         assert 'password' in request['payload'], "password not in request['payload']"
         assert 'host_info' in request['payload'], "host_info not in request['payload']"
@@ -480,7 +479,6 @@ class IncomingFrameThread(threading.Thread):
         receive a seek_user_response frame and process it.
 
         """
-        assert type(frame) == dict, 'frame must be a dict'
         assert 'payload' in frame, 'payload not in frame'
         assert 'password' in frame['payload'], "password not in frame['payload']"
         assert 'seek_token' in frame['payload'], "seek_token not in frame['payload']"
@@ -551,7 +549,6 @@ class IncomingFrameThread(threading.Thread):
         that we have knowledge of
         """
 
-        assert type(frame) == dict, "frame must be a dict"
         assert 'payload' in frame, "payload not in frame"
         assert 'custody_chain' in frame['payload'], "custody_chain not in frame['payload']"
 
@@ -562,11 +559,9 @@ class IncomingFrameThread(threading.Thread):
         )
 
     def _receive_check_net_topo(self, request):
-        assert type(request) == dict, "request must be a dict"
         assert 'payload' in request, "payload not in request"
         assert 'custody_chain' in request['payload'], "custody_chain not in request['payload']"
         assert 'hashed_ipcaches' in request['payload'], "hashed_ipcaches not in request['payload']"
-        assert type(request['payload']['hashed_ipcaches']) is dict, "hashed_ipcaches must be a dict"
 
         self.user.check_net_topo(
             request['payload']['custody_chain'],
@@ -578,7 +573,6 @@ class IncomingFrameThread(threading.Thread):
         )
 
     def _receive_net_topo_damaged(self, request):
-        assert type(request) == dict, "request must be a dict"
         assert 'payload' in request, "payload not in request"
         assert 'inconsistent_user' in request['payload'], "custody_chain not in request['payload']"
 
