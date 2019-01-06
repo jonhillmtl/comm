@@ -643,6 +643,8 @@ class User(object):
     def set_contact_ip_port(self, username, ip, port):
         """
         cache the ip:port for username, and write it to disk for later user.
+
+        TODO JHILL: better docstring
         """
 
         self.ipcache_data[username] = dict(

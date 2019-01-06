@@ -478,16 +478,18 @@ def massage_args(argparser: argparse.ArgumentParser) -> argparse.Namespace:
     if args.username is None:
         username = os.getenv('PCKR_USERNAME', None)
         if username:
+            # TODO JHILL: error_exit
             print(colored("used ENV to get username: {}".format(username), "yellow"))
             sys.argv.extend(['--username', username])
         else:
+            # TODO JHILL: error_exit
             print(colored("no username found on command line or in ENV", "red"))
             sys.exit(1)
 
     # then reparse them to grab any --username that might have been added
     return argparser.parse_args()
 
-
+# these are the accepted commands, anything else won't run
 COMMANDS = [
     'init_user',
     'surface_user',
@@ -509,7 +511,8 @@ COMMANDS = [
     'current_ip'
 ]
 
-
+# these are the short codes for the above accepted commands. the user
+# can specify one of these instead of the longer form above.
 COMMAND_ALIASES = dict(
     iu='init_user',
     surface='surface_user',
@@ -533,16 +536,23 @@ COMMAND_ALIASES = dict(
 
 
 def main():
-    """ the main handler function for the pckr client. """
+    """ 
+    the main handler function for the pckr client.
 
+    TODO JHILL: much better documentation
+    """
+
+    # first we try to tweeze out what command they want.
     argparser = argparse.ArgumentParser()
     argparser.add_argument('command')
     args, _ = argparser.parse_known_args()
 
+    # the command could have a short name. if so find the long name of the command.
     command = args.command
     if command not in COMMANDS:
         alias_command = COMMAND_ALIASES.get(command, None)
         if alias_command is None:
+            # TODO JHILL: error_exit
             print(colored("unrecognized command: {}".format(command), "red"))
             sys.exit(1)
         else:
@@ -551,7 +561,12 @@ def main():
     # TODO JHILL: check for username?
     argparser.add_argument("--username", required=False, default=None)
 
+    # before running most of these commands we need to check if the specified user exists.
+    # we keep this boolean around to determine if we want to check that based on the command type.
     check_user_exists = True
+
+    # each command has special arguments that we need to add to the argparser. parse the command name
+    # and mark up the arguments as required
     if command == 'init_user':
         check_user_exists = False
 
@@ -610,24 +625,35 @@ def main():
     else:
         assert False
 
+    # enforce existence of the command.
     if command not in globals():
+        # TODO JHILL: write this function
         # error_exit("{} is unimplemented".format(command))
         sys.exit(1)
 
+    # it might be that their username is defined in an environment variable.
+    # this function will add it to the arguments if so.
+    # this function will also re-enforce the command-specific arguments added above.
     args = massage_args(argparser)
     print(command_header(command, args))
 
+    # we are now done processing the arguments
+
     run_command = True
+
+    # finally check if the user exists here
     if check_user_exists is True:
         user = User(args.username)
         if user.exists is False:
             print(colored("user {} does not exist".format(args.username), "red"))
             run_command = False
 
+    # we can now run the command by name, looking for it in the dictionary of functions
+    # that are loaded as globals.
     if run_command:
         globals()[command](args)
 
-    # TODO JHILL: put in the utilities file
+    # TODO JHILL: put in the utilities file, command_header
     print("\n")
     print(colored("*" * 100, "blue"))
     print(colored("* end command", "blue"))
