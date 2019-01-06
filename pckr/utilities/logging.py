@@ -1,4 +1,12 @@
-# from typing import Any
+"""
+this file contains functions to set up loggers as well as predefined loggers.
+
+you could for instance:
+
+from ..utilities.logging import assert_logger, debug_logger
+assert_logger.error("error message")
+
+"""
 
 import logging
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -10,7 +18,18 @@ def setup_logger(
     level: int = logging.INFO
 ) -> logging.Logger:
     """
-    Function setup as many loggers as you want
+    Function setup as many loggers as you want.
+
+    Parameters
+    ----------
+    name: str
+    log_file: str
+    level: int
+
+    Returns
+    -------
+    logging.Logger
+        the logger that was created
     """
 
     handler = logging.FileHandler(log_file)

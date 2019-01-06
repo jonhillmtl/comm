@@ -489,6 +489,7 @@ def massage_args(argparser: argparse.ArgumentParser) -> argparse.Namespace:
     # then reparse them to grab any --username that might have been added
     return argparser.parse_args()
 
+
 # these are the accepted commands, anything else won't run
 COMMANDS = [
     'init_user',
@@ -536,7 +537,7 @@ COMMAND_ALIASES = dict(
 
 
 def main():
-    """ 
+    """
     the main handler function for the pckr client.
 
     TODO JHILL: much better documentation
