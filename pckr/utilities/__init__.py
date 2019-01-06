@@ -1,3 +1,11 @@
+"""
+
+__init__.py for this module.
+
+contains numerous utility functions
+
+"""
+
 # TODO JHILL: rename the file to utils and the directory above it
 # TODO JHILL: better docstrings, some don't have parameters or returns
 
@@ -131,28 +139,35 @@ def decrypt_rsa(content, private_key_text):
 
 
 def encrypt_symmetric(content, password, callback=None):
+    """
+    encrypt some content with a password
+
+    Parameters
+    ----------
+    content: str or bytes
+        the content to encrypt
+
+    password: str or bytes
+        the password to use
+
+    Returns
+    -------
+    bytes:
+        the encrypted content
+    """
+
     if type(password) is not bytes:
         password = password.encode()
 
     content = pad_content(content)
     if type(content) is not bytes:
         content = content.encode()
-    total_ecbs = len(content) / 6.5
 
     cipher = blowfish.Cipher(password)
-    if False:
-        ecbs = cipher.encrypt_ecb(content)
-        data_encrypted = b""
-        for index, ecb in enumerate(ecbs):
-            data_encrypted = data_encrypted + ecb
+    data_encrypted = b"".join(cipher.encrypt_ecb(content))
 
-            if index % 10000:
-                callback(index, total_ecbs)
-    else:
-        data_encrypted = b"".join(cipher.encrypt_ecb(content))
-
-    data_decrypted = b"".join(cipher.decrypt_ecb(data_encrypted))
-    assert content == data_decrypted
+    # data_decrypted = b"".join(cipher.decrypt_ecb(data_encrypted))
+    # assert content == data_decrypted
 
     return data_encrypted
 
