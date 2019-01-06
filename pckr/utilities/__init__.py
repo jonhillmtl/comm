@@ -1,4 +1,5 @@
 # TODO JHILL: rename the file to utils and the directory above it
+# TODO JHILL: better docstrings, some don't have parameters or returns
 
 from argparse import Namespace
 import binascii
@@ -52,6 +53,23 @@ def split_contents(
     contents: str,
     split_size: int = 4096
 ) -> list:
+    """
+    split contents up into a list of the contents split into split_size.
+
+    Parameters
+    ----------
+    contents: str
+        the contents to split
+
+    split_size: int
+        the desired size of each content after the split
+
+    Returns
+    -------
+    list
+        the list of split contents
+    """
+
     splits = []
     index = 0
     while index < len(contents):
@@ -61,16 +79,21 @@ def split_contents(
 
 
 def hexstr2bytes(hs: str) -> bytes:
+    """ convert hs to bytes. """
     assert type(hs) == str
     return binascii.unhexlify(hs)
 
 
 def bytes2hexstr(bs: bytes) -> str:
+    """ convert bs to a hex str. """
+
     assert type(bs) == bytes
     return binascii.hexlify(bs).decode()
 
 
 def str2hashed_hexstr(s: Any) -> str:
+    """ convert s to a hashed hex str. """
+
     if type(s) == str:
         s = s.encode()
 
@@ -80,6 +103,8 @@ def str2hashed_hexstr(s: Any) -> str:
 
 
 def pad_content(content: Any) -> str:
+    """ pad content out to 16 bytes. """
+
     padder = ' '
     if type(content) == bytes:
         padder = b' '

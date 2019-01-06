@@ -25,6 +25,12 @@ def _users():
 
 
 def analyze_topo():
+    """
+    analyze the topography of the local network.
+
+    for testing only.
+    """
+
     cached_ips = dict()
     for u in _users():
         user = User(u)
@@ -64,6 +70,12 @@ def analyze_topo():
 
 
 def dump_topo():
+    """
+    dump the topography of the local network.
+
+    for testing only.
+    """
+
     for u in _users():
         user = User(u)
         print(colored("*" * 100, "blue"))

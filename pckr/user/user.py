@@ -34,22 +34,40 @@ class User(object):
 
     @property
     def exists(self):
+        """
+        determine if the user already exists locally.
+
+        Returns
+        -------
+        bool
+            true or false, do they or not?
+        """
+
         return os.path.exists(self.path)
 
     @property
     def path(self):
+        """
+        return the base path for this user
+
+        Returns
+        -------
+        str
+            the path
+        """
+
         return normalize_path(os.path.join(USER_ROOT, self.username))
 
     @property
-    def public_key_text(self):
-        return open(self.public_key_path).read()
-
-    @property
-    def public_key_path(self):
-        return os.path.join(self.path, "public.key")
-
-    @property
     def private_key_path(self):
+        """
+        return the path to this user's private key file.
+
+        Returns
+        -------
+        str
+            the path
+        """
         return os.path.join(self.path, "private.key")
 
     @property
@@ -63,10 +81,30 @@ class User(object):
 
     @property
     def private_key_text(self):
+        """
+        open the private key file, read it, and return it.
+
+        Returns
+        -------
+        str
+            the path
+        """
+
         return open(self.private_key_path).read()
 
     @property
     def message_keys_path(self):
+        """
+        return the path to this user's message_keys.
+
+        TODO JHILL: what does that mean?
+
+        Returns
+        -------
+        str
+            the path
+        """
+
         return os.path.join(self.path, "message_keys")
 
     def pulse_network(self, custody_chain=[]):
@@ -145,6 +183,31 @@ class User(object):
     # public_keys
     #
     # -----------------------------------------------------------------------------------------
+    @property
+    def public_key_path(self):
+        """
+        return the path to this user's public key file.
+
+        Returns
+        -------
+        str
+            the path
+        """
+
+        return os.path.join(self.path, "public.key")
+
+    @property
+    def public_key_text(self):
+        """
+        open the public key file, read it, and return it.
+
+        Returns
+        -------
+        str
+            the contents of the public_key_path
+        """
+
+        return open(self.public_key_path).read()
 
     @property
     def public_keys_path(self):

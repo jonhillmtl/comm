@@ -459,7 +459,21 @@ def messages(args: argparse.Namespace) -> bool:
     return True
 
 
-def massage_args(argparser) -> dict:
+def massage_args(argparser: argparse.ArgumentParser) -> argparse.Namespace:
+    """
+    allow the username to be specified by the os env PCKR_USERNAME.
+
+    Parameters
+    ----------
+    argparser: ArgumentParser
+        the ArgumentParser that the username must be added to
+
+    Returns
+    -------
+    argparse.Namespace
+        the massaged arguments
+    """
+
     args = argparser.parse_args()
     if args.username is None:
         username = os.getenv('PCKR_USERNAME', None)
@@ -519,7 +533,7 @@ COMMAND_ALIASES = dict(
 
 
 def main():
-    """ the main handler function for the pckr client """
+    """ the main handler function for the pckr client. """
 
     argparser = argparse.ArgumentParser()
     argparser.add_argument('command')

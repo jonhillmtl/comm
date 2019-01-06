@@ -20,7 +20,8 @@ from ..utilities.logging import assert_logger, debug_logger
 
 class IncomingFrameThread(threading.Thread):
     """
-    this class does all of the heavy lifting for incoming Frames
+    this class does all of the heavy lifting for incoming Frames.
+
     Frames are processed as they come in from other clients
     """
 
