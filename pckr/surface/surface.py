@@ -683,7 +683,7 @@ class IncomingFrameThread(threading.Thread):
                 error=str(e)
             )
 
-    def run(self):
+    def run(self) -> bool:
         request_text = self.clientsocket.recv(int(65536 / 2)).decode()
         try:
             request = json.loads(request_text)
@@ -716,20 +716,25 @@ class IncomingFrameThread(threading.Thread):
         self.clientsocket.sendall(response.encode())
         self.clientsocket.close()
 
+        return True
+
 
 class SeekUsersThread(threading.Thread):
-    user = None
+    user = None  # type: User
 
     def __init__(self, user):
         super(SeekUsersThread, self).__init__()
         self.user = user
 
-    def run(self):
+    def run(self) -> bool:
         while True:
-            success, interval = self._seek_users()
+            interval = 60
+            self._seek_users()
             time.sleep(random.randint(interval, interval * 2))
 
-    def _seek_users(self):
+        return True
+
+    def _seek_users(self) -> bool:
         """
         seek out all of the other users that self.user knows about
         ping them first.... if they fail that, seek them
@@ -780,26 +785,25 @@ class SeekUsersThread(threading.Thread):
                     print(colored("* we don't have their public_key", "cyan"))
             print(colored("*" * 100, "cyan"))
 
-        return True, 60
+        return True
 
 
 class SurfaceUserThread(threading.Thread):
     """ this class represents a thread that lets other users know that this user is here. """
 
-    user = None
+    user = None  # type: User
 
-    def __init__(self, user):
+    def __init__(self, user: User):
         super(SurfaceUserThread, self).__init__()
         self.user = user
 
-    def run(self):
+    def run(self) -> None:
         """
         surface the user once and then return/exit. I've seperated this out into a thread
         in case in the future we want to do this more often than just once
         """
 
         self.user.surface()
-        return True
 
 
 class Surface(threading.Thread):
@@ -814,7 +818,7 @@ class Surface(threading.Thread):
     hostname = None
     username = None
 
-    def __init__(self, username, port):
+    def __init__(self, username: str, port: int):
         super(Surface, self).__init__()
         self.port = port
         self.username = username
@@ -833,7 +837,7 @@ class Surface(threading.Thread):
 
         self.hostname = socket.gethostname()
 
-    def run(self):
+    def run(self) -> None:
         while True:
             try:
                 # listen for incoming socket connections
