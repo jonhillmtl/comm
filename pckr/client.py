@@ -83,6 +83,7 @@ def challenge_user_pk(args: argparse.Namespace) -> bool:
 def challenge_user_has_pk(args: argparse.Namespace) -> bool:
     """
     challenge a user to ask if they have our public key. they can try to encrypt some text.
+
     with what they believe is our public key. if we can decrypt it we know they have our
     public key
 
@@ -149,6 +150,20 @@ def request_public_key(args: argparse.Namespace) -> bool:
 
 
 def surface_user(args: argparse.Namespace) -> bool:
+    """
+    expose the user surface (ie: args.username has joined the network).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     surface = Surface(args.username, args.port)
     surface.start()
 
@@ -181,6 +196,20 @@ def surface_user(args: argparse.Namespace) -> bool:
 
 
 def add_ipcache(args: argparse.Namespace)-> bool:
+    """
+    add args.user2 to your ipcache at args.ip and args.port.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     user.set_contact_ip_port(args.user2, args.ip, args.port)
     print(user.ipcache)
@@ -189,6 +218,20 @@ def add_ipcache(args: argparse.Namespace)-> bool:
 
 
 def remove_ipcache(args: argparse.Namespace)-> bool:
+    """
+    remove args.user2 from your ipcache.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     user.remove_contact_ip_port(args.user2)
     print(user.ipcache)
@@ -197,6 +240,20 @@ def remove_ipcache(args: argparse.Namespace)-> bool:
 
 
 def seek_user(args: argparse.Namespace)-> bool:
+    """
+    seek args.user2 by sending out seek_user frames to your network.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     user.seek_user(args.user2)
 
@@ -204,6 +261,20 @@ def seek_user(args: argparse.Namespace)-> bool:
 
 
 def ping_user(args: argparse.Namespace) -> bool:
+    """
+    ping args.user2.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     user.ping_user(args.user2)
 
@@ -211,6 +282,20 @@ def ping_user(args: argparse.Namespace) -> bool:
 
 
 def send_message(args: argparse.Namespace) -> bool:
+    """
+    send a message from username to user2.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     return Message(
         User(args.username),
         args.filename,
@@ -220,6 +305,20 @@ def send_message(args: argparse.Namespace) -> bool:
 
 
 def process_public_key_responses(args: argparse.Namespace) -> bool:
+    """
+    interactively process the public key responses.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     for response in user.public_key_responses:
         if user.process_public_key_response(response):
@@ -229,6 +328,19 @@ def process_public_key_responses(args: argparse.Namespace) -> bool:
 
 
 def process_public_key_requests(args: argparse.Namespace) -> bool:
+    """
+    interactively process the public key requests.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
     user = User(args.username)
     for request in user.public_key_requests:
         if user.process_public_key_request(request):
@@ -238,6 +350,20 @@ def process_public_key_requests(args: argparse.Namespace) -> bool:
 
 
 def pulse_network(args: argparse.Namespace) -> bool:
+    """
+    pulse the network (send out a tracer frame).
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     assert user.exists
 
@@ -247,6 +373,20 @@ def pulse_network(args: argparse.Namespace) -> bool:
 
 
 def check_net_topo(args: argparse.Namespace) -> bool:
+    """
+    check the topology of the user's network.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     user.check_net_topo()
 
@@ -254,6 +394,20 @@ def check_net_topo(args: argparse.Namespace) -> bool:
 
 
 def public_keys(args: argparse.Namespace) -> bool:
+    """
+    print out the user public keys.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
+    """
+
     user = User(args.username)
     for pk in user.public_keys:
         print("{} at {}".format(pk['username'], pk['modified_at'].isoformat()))
@@ -263,7 +417,17 @@ def public_keys(args: argparse.Namespace) -> bool:
 
 def ipcache(args: argparse.Namespace) -> bool:
     """
-    print out the user ip cache
+    print out the user ip cache.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
     """
 
     user = User(args.username)
@@ -275,7 +439,7 @@ def ipcache(args: argparse.Namespace) -> bool:
 
 def messages(args: argparse.Namespace) -> bool:
     """
-    print out the user ip cache
+    print out the user messages.
 
     Parameters
     ----------
