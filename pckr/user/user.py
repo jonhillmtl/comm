@@ -643,7 +643,8 @@ class User(object):
 
     def check_net_topo(self, custody_chain=[], hashed_ipcaches=dict()):
         """
-        see what everyone says about the state of the network togography
+        see what everyone says about the state of the network togography.
+
         anyone receiving this can hash their users and their ip:ports and put it in the dictionary
         if someone tries to insert a different value for a particular key, they should alert
         the network that there is an inconsistent user 'net_topo_damaged'
