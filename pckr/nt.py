@@ -1,3 +1,13 @@
+"""
+
+inspect the network togography (nt) of the locally connected network.
+
+for testing only
+
+usage: pckr_nt
+
+"""
+
 import json
 import os
 

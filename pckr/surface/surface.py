@@ -1,12 +1,22 @@
+"""
+
+this file contains all of the classes and utility functions that define the surface.
+
+the surface is the network surface that is exposed to traffic from other users.
+
+TODO JHILL: much more documentation
+
+"""
+
 import json
 import os
-import socket
-import threading
-import uuid
 import pprint
 import random
-import time
+import socket
 import subprocess
+import threading
+import time
+import uuid
 
 from termcolor import colored
 
@@ -36,6 +46,16 @@ class IncomingFrameThread(threading.Thread):
     def _receive_ping(self, frame: dict):
         """
         receive the ping frame and respond with the payload for a pong frame.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
         """
 
         assert type(frame) == dict, "frame must be dict"
@@ -48,6 +68,16 @@ class IncomingFrameThread(threading.Thread):
     def _receive_seek_user(self, frame: dict):
         """
         receive the seek_user frame. try to decrypt the and respond to the message contained in it.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
         """
 
         assert type(frame) == dict, "request must be frame"
@@ -182,19 +212,28 @@ class IncomingFrameThread(threading.Thread):
                 message="that was me, a seek_user_response is imminent"
             )
 
-    def _receive_request_public_key(self, request):
+    def _receive_request_public_key(self, frame):
         """
         a user is requesting our public key, so we'll store the request and look at it later.
 
         this doesn't automatically send your public key out, you have to do
         process_public_key_requests to process them and send them back to the other user
 
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
         """
 
-        assert type(request) == dict, 'request is not dict'
+        assert type(frame) == dict, 'frame is not dict'
 
-        self.user.store_public_key_request(request)
-        self.user.store_volunteered_public_key(request)
+        self.user.store_public_key_request(frame)
+        self.user.store_volunteered_public_key(frame)
 
         return dict(
             success=True
@@ -208,6 +247,7 @@ class IncomingFrameThread(threading.Thread):
 
         this isn't an automatic action.
         """
+
         # TODO JHILL: maybe just make this automatic, don't store it to a
         # file for later processing. we could challenge the user back
         # and see if it's really them, and then add it to our cache
