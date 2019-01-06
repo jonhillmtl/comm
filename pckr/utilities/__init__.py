@@ -131,7 +131,6 @@ def decrypt_rsa(content, private_key_text):
 
 
 def encrypt_symmetric(content, password, callback=None):
-    # TODO JHILL: docstring
     if type(password) is not bytes:
         password = password.encode()
 

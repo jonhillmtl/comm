@@ -565,7 +565,12 @@ class User(object):
     @property
     def ipcache_path(self):
         """
-        the path for the directory holding the ipcache
+        the path for the directory holding the ipcache.
+
+        Returns
+        -------
+        str
+            the path to the ipcache for this user
         """
 
         return os.path.join(self.path, "ipcache")
@@ -573,7 +578,12 @@ class User(object):
     @property
     def ipcache(self):
         """
-        load the ipcache from disk and return it as a dict
+        load the ipcache from disk and return it as a dict.
+
+        Returns
+        -------
+        dict
+            the entire ipcache for this user
         """
 
         try:
@@ -586,7 +596,17 @@ class User(object):
 
     def remove_contact_ip_port(self, username):
         """
-        remove the cached ip:port for a user identified by their username
+        remove the cached ip:port for a user identified by their username.
+
+        Parameters
+        ----------
+        username: str
+            the username of the user
+
+        Returns
+        -------
+        bool
+            true or false for success or failure
         """
 
         try:
@@ -602,7 +622,17 @@ class User(object):
 
     def get_contact_ip_port(self, username):
         """
-        get the cached ip:port for a user identified by their username
+        get the cached ip:port for a user identified by their username.
+
+        Parameters
+        ----------
+        username: str
+            the username of the user
+
+        Returns
+        -------
+        (str, int)
+            the ip port combo for the requested user
         """
 
         try:
@@ -612,7 +642,7 @@ class User(object):
 
     def set_contact_ip_port(self, username, ip, port):
         """
-        cache the ip:port for username, and write it to disk for later user
+        cache the ip:port for username, and write it to disk for later user.
         """
 
         self.ipcache_data[username] = dict(
@@ -634,11 +664,17 @@ class User(object):
     # -----------------------------------------------------------------------------------------
     def hashed_ipcache(self):
         """
-        prepare a version of our ipcache where the usernames and the ip:port
-        are hashed... then we can pass them around without revealing much
+        prepare a version of our ipcache where the usernames and the ip:port are hashed
+
+        then we can pass them around without revealing much
         about the users we have contact with.
 
         this will be used in the check_net_topo call
+
+        Returns
+        -------
+        dict
+            the user's usernames hashed to a dump of their ip/port
         """
 
         hips = dict()

@@ -35,7 +35,7 @@ class IncomingFrameThread(threading.Thread):
 
     def _receive_ping(self, frame: dict):
         """
-        receive the ping frame and respond with the payload for a pong frame
+        receive the ping frame and respond with the payload for a pong frame.
         """
 
         assert type(frame) == dict, "frame must be dict"
@@ -47,8 +47,7 @@ class IncomingFrameThread(threading.Thread):
 
     def _receive_seek_user(self, frame: dict):
         """
-        receive the seek_user frame. try to decrypt the message contained in it
-        and respond to the user that was seeking you if you can
+        receive the seek_user frame. try to decrypt the and respond to the message contained in it.
         """
 
         assert type(frame) == dict, "request must be frame"
@@ -185,11 +184,11 @@ class IncomingFrameThread(threading.Thread):
 
     def _receive_request_public_key(self, request):
         """
-        a user is requesting our public key, so we'll store the request
-        so we can look at it later.
+        a user is requesting our public key, so we'll store the request and look at it later.
 
         this doesn't automatically send your public key out, you have to do
         process_public_key_requests to process them and send them back to the other user
+
         """
 
         assert type(request) == dict, 'request is not dict'
@@ -705,6 +704,8 @@ class SeekUsersThread(threading.Thread):
 
 
 class SurfaceUserThread(threading.Thread):
+    """ this class represents a thread that lets other users know that this user is here. """
+
     user = None
 
     def __init__(self, user):
@@ -722,6 +723,12 @@ class SurfaceUserThread(threading.Thread):
 
 
 class Surface(threading.Thread):
+    """
+    this class represents the network surface that is exposed for a user.
+
+    all interaction from external users will be pointed at this surface.
+    """
+
     login_token = None
     serversocket = None  # type: socket.socket
     hostname = None
