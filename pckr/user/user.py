@@ -211,10 +211,28 @@ class User(object):
 
     @property
     def public_keys_path(self):
+        """
+        return the path to this users store of other users' public keys.
+
+        Returns
+        -------
+        str
+            the contents of the public_key_path
+        """
+
         return os.path.join(self.path, "public_keys")
 
     @property
     def public_keys(self):
+        """
+        return a representation of this user's store of other users' public keys.
+
+        Returns
+        -------
+        str
+            the contents of the public_key_path
+        """
+
         pks = [dict(
             username=sd,
             modified_at=datetime.datetime.fromtimestamp(
@@ -651,6 +669,8 @@ class User(object):
 
         clients receiving 'net_topo_damaged' can choose to flush that user from their cache
         and seek them out again if they care too, or have their public key
+
+
         """
 
         # use the custody chain to ensure you don't forward this to anyone
