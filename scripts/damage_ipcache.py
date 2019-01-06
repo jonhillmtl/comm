@@ -1,6 +1,6 @@
 """
 
-use this script to damage the ip cache of all local users
+use this script to damage the ip cache of all local users.
 
 usage: python scripts/damage_ip_cache.py
 

@@ -1,3 +1,11 @@
+"""
+
+use this script to grant public keys between all users.
+
+usage: python scripts/stitch_network.py
+
+"""
+
 from utils import aip, rpk, gather_user_ip_ports
 
 

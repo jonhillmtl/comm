@@ -1,3 +1,15 @@
+"""
+
+use this script to add a new user.
+
+adds the user and stitches it together with all users
+in the local network. for testing.
+
+usage: python scripts/bootstrap_new_user.py
+
+"""
+
+
 import subprocess
 from argparse import ArgumentParser
 from utils import aip, rpk, gather_user_ip_ports

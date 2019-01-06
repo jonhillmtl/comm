@@ -37,7 +37,7 @@ def command_header(
     args: Namespace
 ) -> str:
     """
-    print a header for a command with its arguments
+    print a header for a command with its arguments.
     """
 
     return colored("{}\n*\n* {}\n*\n{}\n*\n{}\n\n".format(
@@ -135,7 +135,7 @@ def encrypt_symmetric(content, password, callback=None):
 
 def decrypt_symmetric(content, password, decode=True):
     """
-    decrypt some content based on a password
+    decrypt some content based on a password.
 
     Parameters
     ----------
@@ -171,7 +171,7 @@ def decrypt_symmetric(content, password, decode=True):
 
 def normalize_path(path):
     """
-    return a normalized and absolute path that maybe had to exapnd tildes as well
+    return a normalized and absolute path that maybe had to exapnd tildes as well.
 
     Parameters
     ----------
@@ -189,7 +189,7 @@ def normalize_path(path):
 
 def is_binary(mt):
     """
-    determines if the media type is a binary media type
+    determine if the media type is a binary media type.
 
     Parameters
     ----------
@@ -207,7 +207,7 @@ def is_binary(mt):
 
 def send_frame_users(frame, user1, user2):
     """
-    send a frame from user1 to user2
+    send a frame from user1 to user2.
 
     Parameters
     ----------

@@ -1,3 +1,13 @@
+"""
+
+use this script to generate a chart of the local network connections.
+
+this is for testing purposes only.
+
+usage: pckr_plot_nt
+
+"""
+
 import os
 import json
 

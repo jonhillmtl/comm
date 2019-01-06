@@ -1,3 +1,11 @@
+"""
+
+this file contains all scaffolding code for the pckr client.
+
+everything required to parse command line arguments and run commands is contained here.
+
+"""
+
 import argparse
 import os
 import pprint
@@ -18,6 +26,16 @@ from .message import Message
 def init_user(args: argparse.Namespace) -> bool:
     """
     initialize a user with args.username as their username.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
     """
 
     user = User(args.username)
@@ -34,10 +52,21 @@ def init_user(args: argparse.Namespace) -> bool:
 
 def challenge_user_pk(args: argparse.Namespace) -> bool:
     """
-    challenge a user's public key... ie: send them a challenge asking them if they can decrypt.
-    something that we encrypted with what we believe is their public key
+    challenge a user's public key... ie: send them a challenge asking them if they can decrypt a challenge.
+
+    the challenge is what we encrypted with what we believe is their public key
 
     the challenged user is specified by args.user2
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
     """
 
     user = User(args.username)
@@ -58,6 +87,16 @@ def challenge_user_has_pk(args: argparse.Namespace) -> bool:
     public key
 
     the challenged user is specified by args.user2
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
     """
 
     user = User(args.username)
@@ -75,6 +114,16 @@ def request_public_key(args: argparse.Namespace) -> bool:
     request another user's public key.
 
     the requested user is specified by args.user2
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
     """
 
     user = User(args.username)
@@ -227,6 +276,16 @@ def ipcache(args: argparse.Namespace) -> bool:
 def messages(args: argparse.Namespace) -> bool:
     """
     print out the user ip cache
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the arguments
+
+    Returns
+    -------
+    bool
+        usually True
     """
 
     user = User(args.username)

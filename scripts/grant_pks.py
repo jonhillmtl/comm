@@ -1,3 +1,11 @@
+"""
+
+use this script to grant public keys between all users.
+
+usage: python scripts/grant_pks.py
+
+"""
+
 from utils import rpk, gather_user_ip_ports
 
 
