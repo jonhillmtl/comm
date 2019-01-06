@@ -251,7 +251,7 @@ class User:
         return os.path.join(self.path, "seek_tokens")
 
     @property
-    def seek_tokens(self):
+    def seek_tokens(self) -> list:
         sts = []
         for sd in os.listdir(self.seek_tokens_path):
             path = os.path.join(self.seek_tokens_path, sd)
@@ -261,7 +261,7 @@ class User:
             )
         return sts
 
-    def seek_user(self, user2):
+    def seek_user(self, user2: str) -> bool:
         public_key_text = self.get_contact_public_key(user2)
         if public_key_text is None:
             return False
@@ -309,14 +309,14 @@ class User:
 
         return True
 
-    def get_contact_public_key(self, contact):
+    def get_contact_public_key(self, contact: str) -> str:
         try:
             path = os.path.join(self.public_keys_path, contact, "public.key")
             return open(path).read()
         except FileNotFoundError:
             return None
 
-    def init_directory_structure(self):
+    def init_directory_structure(self) -> bool:
         assert os.path.exists(self.path) is False
         os.makedirs(self.path)
 
@@ -343,7 +343,7 @@ class User:
 
         return True
 
-    def init_rsa(self):
+    def init_rsa(self) -> bool:
         new_key = generate_rsa_pub_priv()
         with open(self.public_key_path, "wb") as f:
             f.write(new_key.publickey().exportKey("PEM"))
@@ -353,7 +353,7 @@ class User:
 
         return True
 
-    def ping_user(self, user2):
+    def ping_user(self, user2) -> bool:
         frame = Frame(action="ping", payload=dict())
         response = send_frame_users(frame, self, user2)
         return response['success']
@@ -365,7 +365,7 @@ class User:
     # challenge_user_pk
     #
     # -----------------------------------------------------------------------------------------
-    def challenge_user_pk(self, user2):
+    def challenge_user_pk(self, user2: str) -> bool:
         public_key_text = self.get_contact_public_key(user2)
         if public_key_text is not None:
             challenge_text = str(uuid.uuid4())
@@ -388,7 +388,7 @@ class User:
 
         return False
 
-    def challenge_user_has_pk(self, user2):
+    def challenge_user_has_pk(self, user2: str) -> bool:
         challenge_text = str(uuid.uuid4())
 
         frame = Frame(
@@ -420,7 +420,7 @@ class User:
     #
     # -----------------------------------------------------------------------------------------
     @property
-    def public_key_requests_path(self):
+    def public_key_requests_path(self) -> str:
         return os.path.join(self.path, "public_key_requests")
 
     @property
@@ -436,7 +436,7 @@ class User:
                         requests.append(request)
         return requests
 
-    def store_volunteered_public_key(self, request):
+    def store_volunteered_public_key(self, request: dict) -> bool:
         public_keys_path = os.path.join(self.public_keys_path, request['payload']['user2'])
         if not os.path.exists(public_keys_path):
             os.makedirs(public_keys_path)
@@ -447,7 +447,7 @@ class User:
 
         return True
 
-    def store_public_key_request(self, request):
+    def store_public_key_request(self, request: dict) -> bool:
         request_path = os.path.join(
             self.public_key_requests_path,
             request['payload']['user2']
@@ -460,7 +460,7 @@ class User:
 
         return True
 
-    def process_public_key_request(self, request):
+    def process_public_key_request(self, request: dict) -> bool:
         print("request_public_key message from: {}".format(request['user2']))
         print(request)
 
@@ -480,9 +480,10 @@ class User:
 
         frame_response = send_frame_users(frame, self, request['user2'])
         pprint.pprint(frame_response)
+
         return True
 
-    def remove_public_key_request(self, request):
+    def remove_public_key_request(self, request: dict) -> bool:
         request_path = os.path.join(self.public_key_requests_path, request['user2'], 'request.json')
         if os.path.exists(request_path):
             os.remove(request_path)
@@ -498,7 +499,7 @@ class User:
     #
     # -----------------------------------------------------------------------------------------
     @property
-    def public_key_responses_path(self):
+    def public_key_responses_path(self) -> str:
         return os.path.join(self.path, "public_key_responses")
 
     @property
@@ -563,7 +564,7 @@ class User:
     # -----------------------------------------------------------------------------------------
 
     @property
-    def ipcache_path(self):
+    def ipcache_path(self) -> str:
         """
         the path for the directory holding the ipcache.
 
@@ -576,7 +577,7 @@ class User:
         return os.path.join(self.path, "ipcache")
 
     @property
-    def ipcache(self):
+    def ipcache(self) -> dict:
         """
         load the ipcache from disk and return it as a dict.
 
@@ -594,7 +595,7 @@ class User:
         except FileNotFoundError:
             return dict()
 
-    def remove_contact_ip_port(self, username):
+    def remove_contact_ip_port(self, username: str) -> bool:
         """
         remove the cached ip:port for a user identified by their username.
 
@@ -620,7 +621,7 @@ class User:
 
         return True
 
-    def get_contact_ip_port(self, username):
+    def get_contact_ip_port(self, username: str) -> bool:
         """
         get the cached ip:port for a user identified by their username.
 
@@ -640,7 +641,7 @@ class User:
         except KeyError:
             return None, None
 
-    def set_contact_ip_port(self, username, ip, port):
+    def set_contact_ip_port(self, username: str, ip : str, port: int) -> bool:
         """
         cache the ip:port for username, and write it to disk for later user.
 
@@ -664,7 +665,7 @@ class User:
     # nt
     #
     # -----------------------------------------------------------------------------------------
-    def hashed_ipcache(self):
+    def hashed_ipcache(self) -> dict:
         """
         prepare a version of our ipcache where the usernames and the ip:port are hashed
 
@@ -686,7 +687,7 @@ class User:
 
         return hips
 
-    def flush_inconsistent_user(self, user2):
+    def flush_inconsistent_user(self, user2: str) -> bool:
         for k in self.ipcache.keys():
             # TODO JHILL: maybe challenge that user first? and if they fail the challenge
             # then flush them?
@@ -697,7 +698,7 @@ class User:
 
         return True
 
-    def check_net_topo(self, custody_chain=[], hashed_ipcaches=dict()):
+    def check_net_topo(self, custody_chain=[], hashed_ipcaches=dict()) -> bool:
         """
         see what everyone says about the state of the network togography.
 
