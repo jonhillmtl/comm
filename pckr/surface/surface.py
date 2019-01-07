@@ -273,6 +273,20 @@ class IncomingFrameThread(threading.Thread):
         self,
         request_frame: dict
     ) -> dict:
+        """
+        process the challenge user pk message.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
+        """
+
         assert 'payload' in request_frame, "payload not in request"
         assert 'challenge_text' in request_frame['payload'], "challenge_text not in request_frame['payload']"
 
@@ -296,6 +310,20 @@ class IncomingFrameThread(threading.Thread):
         self,
         request_frame: dict
     ) -> dict:
+        """
+        process the challenge user has pk message.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
+        """
+
         assert 'payload' in request_frame, 'payload not in request'
         assert 'user2' in request_frame['payload'], "user2 not in request['payload']"
         assert 'challenge_text' in request_frame['payload'], "challenge_text not in request_frame['payload']"
@@ -321,6 +349,20 @@ class IncomingFrameThread(threading.Thread):
         self,
         request_frame: dict
     ) -> dict:
+        """
+        process the send_message frame.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
+        """
+
         password_decrypted = decrypt_rsa(
             hexstr2bytes(request_frame['payload']['password']),
             self.user.private_key_text
@@ -370,6 +412,20 @@ class IncomingFrameThread(threading.Thread):
         self,
         request_frame: dict
     ) -> dict:
+        """
+        process the send_message_term frame.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
+        """
+
         assert 'payload' in request_frame, 'payload not in request_frame'
         assert 'password' in request_frame['payload'], "password not in request_frame['payload']"
         assert 'term' in request_frame['payload'], "term not in request_frame['payload']"
@@ -424,6 +480,20 @@ class IncomingFrameThread(threading.Thread):
         self,
         request_frame: dict
     ) -> dict:
+        """
+        process the send_message_key frame.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
+        """
+
         print(request_frame)
 
         password_decrypted = decrypt_rsa(
@@ -453,6 +523,20 @@ class IncomingFrameThread(threading.Thread):
         self,
         request_frame: dict
     ) -> dict:
+        """
+        process the surface_user frame.
+
+        Parameters
+        ----------
+        frame: Frame # TODO JHILL: make this refactoring!
+            the frame that represents the action
+
+        Returns
+        -------
+        dict
+             dictionary that can be packaged into a Frame
+        """
+
         assert 'payload' in request_frame, 'payload not in request_frame'
         assert 'password' in request_frame['payload'], "password not in request_frame['payload']"
         assert 'host_info' in request_frame['payload'], "host_info not in request_frame['payload']"
@@ -506,6 +590,9 @@ class IncomingFrameThread(threading.Thread):
         """
 
         receive a seek_user_response frame and process it.
+    
+        Parameters
+        ----------
 
         """
         assert 'payload' in request_frame, 'payload not in request_frame'

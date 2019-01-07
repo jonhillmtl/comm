@@ -108,6 +108,20 @@ class User:
         return os.path.join(self.path, "message_keys")
 
     def pulse_network(self, custody_chain=[]):
+        """
+        pulse the user's network.
+
+        Parameters
+        ----------
+        custody_chain: list
+             a list of who has already seen this message
+
+        Returns
+        -------
+        bool
+            true or false
+        """
+
         custody_chain.append(str2hashed_hexstr(self.username))
 
         for k in self.ipcache.keys():
@@ -687,7 +701,24 @@ class User:
 
         return hips
 
-    def flush_inconsistent_user(self, user2: str) -> bool:
+    def flush_inconsistent_user(
+        self, 
+        user2: str
+    ) -> bool:
+        """
+        flush the ip/port cache for a user that has been found to be inconsistent in the network.
+
+        Parameters
+        ----------
+        user2: str
+            the user to flush
+
+        Returns
+        -------
+        bool
+            usually True
+        """
+
         for k in self.ipcache.keys():
             # TODO JHILL: maybe challenge that user first? and if they fail the challenge
             # then flush them?
@@ -698,7 +729,11 @@ class User:
 
         return True
 
-    def check_net_topo(self, custody_chain=[], hashed_ipcaches=dict()) -> bool:
+    def check_net_topo(
+        self,
+        custody_chain=[],
+        hashed_ipcaches=dict()
+    ) -> bool:
         """
         see what everyone says about the state of the network togography.
 
